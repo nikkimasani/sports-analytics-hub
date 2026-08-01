@@ -2373,47 +2373,13 @@ function renderLeaderboards() {
    ============================================================ */
 function renderAdvancedMetrics() {
     const sport = State.currentSport;
-
-    const metrics = {
-        nba: [
-            { name: 'PER (Player Efficiency Rating)', desc: 'All-in-one rating of per-minute production. League average is 15.0.', formula: 'PER = (1/min) × (3PM + AST×⅔ + FGM×(2-⅓×teamAST/teamFGM) + FTM×0.5 - TO - ...) × pace_adj' },
-            { name: 'True Shooting %', desc: 'Shooting efficiency accounting for free throws and three-pointers.', formula: 'TS% = PTS / (2 × (FGA + 0.44 × FTA))' },
-            { name: 'Box Plus/Minus (BPM)', desc: 'Box score estimate of points per 100 possessions above average.', formula: 'BPM = f(PTS, REB, AST, STL, BLK, TO, usage, position)' },
-            { name: 'Win Shares', desc: 'Estimate of wins contributed by a player through offense and defense.', formula: 'WS = OWS + DWS' },
-            { name: 'Usage Rate', desc: 'Percentage of team plays used while on court.', formula: 'USG% = 100 × ((FGA + 0.44×FTA + TO) × (Tm MP/5)) / (MP × (Tm FGA + 0.44×Tm FTA + Tm TO))' },
-            { name: 'VORP', desc: 'Value Over Replacement Player — total value above replacement level.', formula: 'VORP = [BPM − (−2.0)] × (% of minutes played) × (team games / 82)' },
-        ],
-        nfl: [
-            { name: 'EPA/Play', desc: 'Expected Points Added per play — the gold standard for play-level efficiency.', formula: 'EPA = EP_after - EP_before' },
-            { name: 'DVOA', desc: 'Defense-adjusted Value Over Average — compares performance to league average on every play.', formula: 'DVOA = Σ(success_value × opponent_adj) / plays' },
-            { name: 'QBR', desc: 'Total Quarterback Rating — measures QB contribution on every play.', formula: 'QBR = f(EPA, division by play type, clutch weighting)' },
-            { name: 'CPOE', desc: 'Completion Percentage Over Expected — actual vs. expected based on throw difficulty.', formula: 'CPOE = Actual_completion% − xCompletion%' },
-            { name: 'Yards After Catch (YAC)', desc: 'Yards gained after the reception — separates receiver skill from QB targeting.', formula: 'YAC = Receiving_yards − Air_yards' },
-            { name: 'Pressure Rate', desc: 'Percentage of dropbacks resulting in a pressure.', formula: 'Pressure% = Pressures / Dropbacks' },
-        ],
-        mlb: [
-            { name: 'WAR (Wins Above Replacement)', desc: 'Comprehensive value metric combining hitting, fielding, and baserunning.', formula: 'WAR = (Batting + Baserunning + Fielding + Positional + League) / RPW + Replacement' },
-            { name: 'OPS+ (Adjusted OPS)', desc: 'On-base plus slugging, normalized to league and park. 100 = average.', formula: 'OPS+ = 100 × (OBP/lgOBP + SLG/lgSLG − 1)' },
-            { name: 'wRC+ (Weighted Runs Created Plus)', desc: 'Park-adjusted offensive value. 100 = league average.', formula: 'wRC+ = ((wRC/PA − lgR/PA) + lgR/PA) × lgwRC/lgPA+R × 100' },
-            { name: 'FIP (Fielding Independent Pitching)', desc: 'ERA estimator based only on outcomes the pitcher controls.', formula: 'FIP = (13×HR + 3×(BB+HBP) − 2×K) / IP + cFIP' },
-            { name: 'xBA / xSLG / xwOBA', desc: 'Expected stats based on exit velocity and launch angle — removes fielding luck.', formula: 'xStat = f(exit_velocity, launch_angle, sprint_speed)' },
-            { name: 'Barrel Rate', desc: 'Percentage of batted balls with optimal exit velo (98+) and launch angle.', formula: 'Barrel% = Barrels / Batted Ball Events' },
-        ],
-        ncaa: [
-            { name: 'SP+ Rating', desc: 'Tempo-and opponent-adjusted measure of team efficiency.', formula: 'SP+ = Offensive_SP + Defensive_SP + Special_Teams' },
-            { name: 'Success Rate', desc: 'Percentage of plays that gain enough yards relative to down and distance.', formula: '1st: 50%+ of needed / 2nd: 70%+ / 3rd-4th: 100%+' },
-            { name: 'Havoc Rate', desc: 'Percentage of plays where the defense creates a TFL, forced fumble, or pass breakup.', formula: 'Havoc% = (TFL + FF + PBU + INT) / Defensive_Plays' },
-            { name: 'Explosiveness', desc: 'Average EPA on successful plays — measures big-play ability.', formula: 'IsoPPP = EPA on successful plays only' },
-        ],
-    };
-
-    const sportMetrics = metrics[sport] || metrics.nba;
     const players = PLAYERS[sport] || [];
-    const playerOpts = players.map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
+    const playerOpts = players.sort((a,b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
 
     document.getElementById('advancedMetrics').innerHTML = `
         <div class="card" style="margin-bottom:20px;">
-            <div class="card-title" style="margin-bottom:12px;">Analyze Player</div>
+            <div class="card-title" style="margin-bottom:12px;">Advanced Metrics Calculator</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Select a player to compute all advanced metrics from their stats.</p>
             <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
                 <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0;">
                     <label class="form-label">Select Player</label>
@@ -2422,19 +2388,16 @@ function renderAdvancedMetrics() {
                         ${playerOpts}
                     </select>
                 </div>
-                <button class="btn btn-primary" onclick="computeAdvancedMetrics()" style="margin-bottom:0;">Calculate</button>
-            </div>
-            <div id="advMetricResults" style="margin-top:16px;"></div>
-        </div>
-    ` + sportMetrics.map(m => `
-        <div class="card">
-            <div class="card-title" style="margin-bottom:8px;">${m.name}</div>
-            <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.5;margin-bottom:12px;">${m.desc}</p>
-            <div style="background:var(--bg-input);padding:10px 14px;border-radius:var(--radius);font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);overflow-x:auto;white-space:nowrap;">
-                ${m.formula}
             </div>
         </div>
-    `).join('');
+        <div id="advMetricResults">
+            <div class="card"><div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+                <div style="font-size:2rem;margin-bottom:12px;">📊</div>
+                <div style="font-size:1rem;font-weight:600;margin-bottom:6px;">Select a player above</div>
+                <div style="font-size:0.85rem;">All advanced metrics will be computed from their stats</div>
+            </div></div>
+        </div>
+    `;
 }
 
 function computeAdvancedMetrics() {
@@ -2443,61 +2406,253 @@ function computeAdvancedMetrics() {
     const id = parseInt(document.getElementById('advMetricPlayer').value);
     const p = players.find(pl => pl.id === id);
     const container = document.getElementById('advMetricResults');
-    if (!p) { container.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">Select a player to see their advanced metrics.</div>'; return; }
+    if (!p) { container.innerHTML = '<div class="card"><div style="text-align:center;padding:40px 20px;color:var(--text-muted);"><div style="font-size:2rem;margin-bottom:12px;">📊</div><div style="font-size:1rem;font-weight:600;margin-bottom:6px;">Select a player above</div><div style="font-size:0.85rem;">All advanced metrics will be computed from their stats</div></div></div>'; return; }
 
-    let results = [];
+    let metricCards = '';
+
     if (sport === 'nba') {
         const per = p.per || 15;
-        const ts = p.ts || (p.fg ? (p.fg / 100 * 1.1).toFixed(3) : '.500');
-        const bpm = p.bpm || 0;
-        const ws = p.ws || 0;
+        const ts = p.ts || (p.ppg && p.fg ? (p.ppg / (2 * (p.ppg / (p.fg/100) + 0.44 * (p.ppg * 0.3 / (p.ft/100 || 0.75))))) * 100 : 50).toFixed ? parseFloat((p.ts || 50).toFixed(1)) : 50;
+        const bpm = p.bpm || ((p.ppg - 15) * 0.3 + (p.rpg - 5) * 0.2 + (p.apg - 3) * 0.3 + (p.spg || 0) * 1.5 + (p.bpg || 0) * 1.0 - (p.tpg || 2) * 0.8);
+        const ws = p.ws || ((per - 10) * (p.mpg || 30) / 36 * 82 / 30);
         const usg = p.usg || 20;
-        const vorp = p.bpm ? ((p.bpm - (-2.0)) * 0.8 * (82/82)).toFixed(1) : '—';
-        results = [
-            { label: 'PER', value: per, desc: per > 25 ? 'All-Star level' : per > 20 ? 'Above average' : per > 15 ? 'Average' : 'Below average', color: per > 25 ? 'var(--success)' : per > 15 ? 'var(--accent)' : 'var(--danger)' },
-            { label: 'TS%', value: ts, desc: ts > 62 ? 'Elite efficiency' : ts > 57 ? 'Good efficiency' : 'Below-avg efficiency', color: ts > 60 ? 'var(--success)' : 'var(--warning)' },
-            { label: 'BPM', value: bpm, desc: bpm > 6 ? 'MVP-caliber impact' : bpm > 3 ? 'All-Star impact' : bpm > 0 ? 'Positive impact' : 'Negative impact', color: bpm > 3 ? 'var(--success)' : bpm > 0 ? 'var(--accent)' : 'var(--danger)' },
-            { label: 'Win Shares', value: ws, desc: ws > 10 ? 'Elite contributor' : ws > 5 ? 'Solid starter' : 'Role player', color: ws > 10 ? 'var(--success)' : 'var(--accent)' },
-            { label: 'Usage %', value: usg + '%', desc: usg > 30 ? 'Primary option' : usg > 25 ? 'Featured scorer' : 'Supporting role', color: 'var(--accent)' },
-            { label: 'VORP', value: vorp, desc: 'Value over replacement player', color: 'var(--accent)' },
-        ];
+        const vorp = ((bpm - (-2.0)) * ((p.mpg || 30) / 48) * (82/82));
+        const offRtg = 100 + (p.ppg - 15) * 1.2 + (p.apg - 3) * 0.8 - (p.tpg || 2) * 1.5;
+        const defRtg = 110 - (p.spg || 0) * 2.5 - (p.bpg || 0) * 2.0 - (p.rpg - 5) * 0.3;
+        const astTo = p.apg / Math.max(p.tpg || 1, 0.1);
+        const gameScore = p.ppg + 0.4 * (p.fg/100 * p.ppg/0.45 || 0) - 0.7 * ((1-p.fg/100) * p.ppg/0.45 || 0) - 0.4 * ((1-p.ft/100) * p.ppg*0.3/0.75 || 0) + p.rpg * 0.7 + p.apg * 0.7 + (p.spg||0) * 1.0 + (p.bpg||0) * 0.7 - (p.tpg||2) * 0.7;
+
+        const tierPER = per >= 30 ? 'MVP' : per >= 25 ? 'All-NBA' : per >= 20 ? 'All-Star' : per >= 15 ? 'Starter' : per >= 12 ? 'Rotation' : 'Bench';
+        const tierBPM = bpm >= 8 ? 'MVP' : bpm >= 5 ? 'All-NBA' : bpm >= 2 ? 'All-Star' : bpm >= 0 ? 'Starter' : 'Below Avg';
+
+        metricCards = `
+            <div class="card" style="margin-bottom:16px;">
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                    ${playerAvatarHtml(p, 64)}
+                    <div>
+                        <div style="font-weight:800;font-size:1.3rem;">${p.name}</div>
+                        <div style="color:var(--text-muted);font-size:0.9rem;">${p.team} · ${p.pos} · ${p.age}y · ${p.exp}y exp</div>
+                        <div style="margin-top:4px;"><span class="badge badge-nba">${tierPER}</span></div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
+                    ${[
+                        { label:'PER', val:per.toFixed(1), sub:'Lg avg: 15.0', color: per>25?'var(--success)':per>15?'var(--accent)':'var(--danger)' },
+                        { label:'TS%', val:(typeof ts==='number'?ts:parseFloat(ts)).toFixed(1)+'%', sub:'Lg avg: 57.0%', color: ts>62?'var(--success)':ts>57?'var(--accent)':'var(--danger)' },
+                        { label:'BPM', val:bpm.toFixed(1), sub:tierBPM+' tier', color: bpm>5?'var(--success)':bpm>0?'var(--accent)':'var(--danger)' },
+                        { label:'Win Shares', val:ws.toFixed(1), sub:ws>10?'Elite':''+Math.round(ws)+' wins added', color: ws>10?'var(--success)':'var(--accent)' },
+                        { label:'Usage %', val:usg.toFixed(1)+'%', sub:usg>30?'Primary option':usg>25?'Featured scorer':'Support', color:'var(--accent)' },
+                        { label:'VORP', val:vorp.toFixed(1), sub:'Value over repl.', color: vorp>5?'var(--success)':vorp>2?'var(--accent)':'var(--text-muted)' },
+                        { label:'Off Rating', val:offRtg.toFixed(0), sub:'pts/100 poss', color: offRtg>115?'var(--success)':offRtg>105?'var(--accent)':'var(--danger)' },
+                        { label:'Def Rating', val:defRtg.toFixed(0), sub:'pts allowed/100', color: defRtg<105?'var(--success)':defRtg<112?'var(--accent)':'var(--danger)' },
+                        { label:'AST/TO', val:astTo.toFixed(2), sub:astTo>3?'Elite':''+Math.round(astTo*10)/10+'x ratio', color: astTo>2.5?'var(--success)':'var(--accent)' },
+                        { label:'Game Score', val:gameScore.toFixed(1), sub:'Avg per-game impact', color: gameScore>20?'var(--success)':gameScore>12?'var(--accent)':'var(--danger)' },
+                    ].map(m => `
+                        <div style="background:var(--bg-input);border-radius:var(--radius);padding:14px;text-align:center;">
+                            <div style="font-family:var(--font-mono);font-weight:800;font-size:1.4rem;color:${m.color};">${m.val}</div>
+                            <div style="font-weight:700;font-size:0.78rem;margin:4px 0 2px;">${m.label}</div>
+                            <div style="font-size:0.68rem;color:var(--text-muted);">${m.sub}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="card" style="margin-bottom:16px;">
+                <div class="card-title" style="margin-bottom:12px;">Percentile Rankings vs. ${SPORT_CONFIG[sport].label}</div>
+                ${[
+                    { label:'PPG', val:p.ppg, max:35 },
+                    { label:'RPG', val:p.rpg, max:15 },
+                    { label:'APG', val:p.apg, max:12 },
+                    { label:'PER', val:per, max:35 },
+                    { label:'TS%', val:typeof ts==='number'?ts:parseFloat(ts), max:70 },
+                    { label:'FPTS', val:p.fantasyPts||0, max:65 },
+                ].map(s => {
+                    const pct = Math.min(100, (s.val / s.max) * 100);
+                    const color = pct > 80 ? 'var(--success)' : pct > 50 ? 'var(--accent)' : 'var(--danger)';
+                    return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                        <div style="width:50px;font-size:0.78rem;font-weight:700;text-align:right;">${s.label}</div>
+                        <div style="flex:1;height:10px;background:var(--bg-input);border-radius:5px;overflow:hidden;">
+                            <div style="height:100%;width:${pct}%;background:${color};border-radius:5px;transition:width .4s;"></div>
+                        </div>
+                        <div style="width:55px;font-family:var(--font-mono);font-weight:700;font-size:0.82rem;color:${color};">${s.val}</div>
+                    </div>`;
+                }).join('')}
+            </div>
+            <div class="card">
+                <div class="card-title" style="margin-bottom:12px;">Base Stats</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;">
+                    ${[
+                        {l:'PPG',v:p.ppg},{l:'RPG',v:p.rpg},{l:'APG',v:p.apg},{l:'SPG',v:p.spg},{l:'BPG',v:p.bpg},
+                        {l:'FG%',v:p.fg},{l:'FT%',v:p.ft},{l:'TPG',v:p.tpg},{l:'MPG',v:p.mpg},{l:'FPTS',v:p.fantasyPts?.toFixed(1)}
+                    ].map(s => `<div style="background:var(--bg-input);border-radius:var(--radius);padding:10px;text-align:center;">
+                        <div style="font-family:var(--font-mono);font-weight:700;font-size:1.1rem;">${s.v ?? '—'}</div>
+                        <div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">${s.l}</div>
+                    </div>`).join('')}
+                </div>
+            </div>`;
+
     } else if (sport === 'nfl') {
-        const epa = p.passYds ? (p.passYds * 0.04 + (p.passTd || 0) * 4 - (p.ints || 0) * 2).toFixed(1) : (p.rushYds ? (p.rushYds * 0.1).toFixed(1) : '0');
-        const cpoe = p.comp ? (p.comp - 63).toFixed(1) : '—';
-        results = [
-            { label: 'Est. EPA/Game', value: epa, desc: epa > 15 ? 'Elite production' : epa > 8 ? 'Above average' : 'Below average', color: epa > 12 ? 'var(--success)' : 'var(--accent)' },
-            { label: 'CPOE', value: cpoe !== '—' ? cpoe + '%' : '—', desc: 'Completion % over expected', color: 'var(--accent)' },
-            { label: 'Fantasy Pts', value: p.fantasyPts?.toFixed(1) || '—', desc: 'Projected per game', color: 'var(--success)' },
-        ];
+        const isQB = !!(p.passYds && p.passYds > 500);
+        const isRB = !!(p.rushYds && p.rushYds > 200 && !isQB);
+        const isWR = !!(p.rec && p.rec > 10);
+
+        let epaPlay, dvoa, qbr, cpoe, yac, fantasyEff;
+        if (isQB) {
+            const attempts = p.passYds / 7.5;
+            epaPlay = ((p.passTd || 0) * 4 - (p.ints || 0) * 3.5 + p.passYds * 0.04 + (p.rushYds || 0) * 0.1) / Math.max(attempts, 1);
+            dvoa = ((p.comp || 63) - 60) * 0.5 + ((p.passTd || 0) / Math.max(attempts/16, 1) - 1.5) * 8 + ((p.ints || 0) / Math.max(attempts/16, 1)) * -12;
+            qbr = p.qbr || Math.min(99, Math.max(10, 50 + (p.comp || 63 - 60) * 0.8 + (p.passTd || 0) / 17 * 5 - (p.ints || 0) / 17 * 8));
+            cpoe = p.comp ? (p.comp - 63).toFixed(1) : '—';
+            yac = '—';
+            fantasyEff = p.fantasyPts ? (p.fantasyPts / 17).toFixed(1) : '—';
+        } else if (isRB) {
+            const carries = p.rushYds / 4.5;
+            epaPlay = ((p.rushTd || 0) * 6 + p.rushYds * 0.1 + (p.recYds || 0) * 0.1 + (p.rec || 0) * 1) / Math.max(carries + (p.rec || 0), 1);
+            dvoa = (p.rushYds / Math.max(carries, 1) - 4.0) * 5 + (p.rushTd || 0) * 2;
+            qbr = '—';
+            cpoe = '—';
+            yac = p.recYds ? Math.round(p.recYds * 0.55) : '—';
+            fantasyEff = p.fantasyPts ? (p.fantasyPts / 17).toFixed(1) : '—';
+        } else {
+            const tgts = (p.rec || 0) * 1.5;
+            epaPlay = ((p.recTd || p.rushTd || 0) * 6 + (p.recYds || 0) * 0.1 + (p.rec || 0) * 1) / Math.max(tgts, 1);
+            dvoa = ((p.recYds || 0) / Math.max(p.rec || 1, 1) - 10) * 0.8 + (p.recTd || p.rushTd || 0) * 3;
+            qbr = '—';
+            cpoe = '—';
+            yac = p.recYds ? Math.round(p.recYds * 0.48) : '—';
+            fantasyEff = p.fantasyPts ? (p.fantasyPts / 17).toFixed(1) : '—';
+        }
+
+        metricCards = `
+            <div class="card" style="margin-bottom:16px;">
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                    ${playerAvatarHtml(p, 64)}
+                    <div>
+                        <div style="font-weight:800;font-size:1.3rem;">${p.name}</div>
+                        <div style="color:var(--text-muted);font-size:0.9rem;">${p.team} · ${p.pos}</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
+                    ${[
+                        { label:'EPA/Play', val:typeof epaPlay==='number'?epaPlay.toFixed(2):epaPlay, sub:epaPlay>0.15?'Elite efficiency':'', color:epaPlay>0.15?'var(--success)':epaPlay>0?'var(--accent)':'var(--danger)' },
+                        { label:'DVOA', val:typeof dvoa==='number'?dvoa.toFixed(1)+'%':dvoa, sub:'vs league avg', color:dvoa>10?'var(--success)':dvoa>0?'var(--accent)':'var(--danger)' },
+                        ...(qbr!=='—'?[{ label:'QBR', val:typeof qbr==='number'?qbr.toFixed(1):qbr, sub:qbr>70?'Elite':qbr>50?'Above avg':'Below avg', color:qbr>70?'var(--success)':qbr>45?'var(--accent)':'var(--danger)' }]:[]),
+                        ...(cpoe!=='—'?[{ label:'CPOE', val:cpoe+'%', sub:'Comp% over expected', color:parseFloat(cpoe)>3?'var(--success)':parseFloat(cpoe)>0?'var(--accent)':'var(--danger)' }]:[]),
+                        ...(yac!=='—'?[{ label:'Est. YAC', val:yac, sub:'Yards after catch', color:'var(--accent)' }]:[]),
+                        { label:'FPTS/Game', val:fantasyEff, sub:'Fantasy efficiency', color:'var(--success)' },
+                        { label:'Fantasy Pts', val:p.fantasyPts?.toFixed(1)||'—', sub:'Season total', color:'var(--success)' },
+                    ].map(m => `
+                        <div style="background:var(--bg-input);border-radius:var(--radius);padding:14px;text-align:center;">
+                            <div style="font-family:var(--font-mono);font-weight:800;font-size:1.4rem;color:${m.color};">${m.val}</div>
+                            <div style="font-weight:700;font-size:0.78rem;margin:4px 0 2px;">${m.label}</div>
+                            <div style="font-size:0.68rem;color:var(--text-muted);">${m.sub}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title" style="margin-bottom:12px;">Base Stats</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;">
+                    ${[
+                        ...(isQB ? [{l:'Pass Yds',v:p.passYds},{l:'Pass TD',v:p.passTd},{l:'INT',v:p.ints},{l:'Comp%',v:p.comp},{l:'QBR',v:p.qbr},{l:'Rush Yds',v:p.rushYds}] : []),
+                        ...(isRB ? [{l:'Rush Yds',v:p.rushYds},{l:'Rush TD',v:p.rushTd},{l:'Rec',v:p.rec},{l:'Rec Yds',v:p.recYds}] : []),
+                        ...(!isQB && !isRB ? [{l:'Rec',v:p.rec},{l:'Rec Yds',v:p.recYds},{l:'Rec TD',v:p.recTd||p.rushTd},{l:'Targets',v:p.targets}] : []),
+                        {l:'FPTS',v:p.fantasyPts?.toFixed(1)}
+                    ].map(s => `<div style="background:var(--bg-input);border-radius:var(--radius);padding:10px;text-align:center;">
+                        <div style="font-family:var(--font-mono);font-weight:700;font-size:1.1rem;">${s.v ?? '—'}</div>
+                        <div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">${s.l}</div>
+                    </div>`).join('')}
+                </div>
+            </div>`;
+
     } else if (sport === 'mlb') {
-        const ops = p.ops || (p.obp && p.slg ? (p.obp + p.slg).toFixed(3) : '—');
-        const war = p.war || '—';
-        const wrc = p.wrc || '—';
-        results = [
-            { label: 'WAR', value: war, desc: war > 6 ? 'MVP caliber' : war > 3 ? 'All-Star' : war > 1 ? 'Starter' : 'Bench', color: war > 5 ? 'var(--success)' : 'var(--accent)' },
-            { label: 'OPS', value: ops, desc: ops > 0.9 ? 'Elite hitter' : ops > 0.75 ? 'Above average' : 'Below average', color: ops > 0.85 ? 'var(--success)' : 'var(--accent)' },
-            { label: 'wRC+', value: wrc, desc: wrc > 130 ? 'Elite' : wrc > 100 ? 'Above avg (100 = avg)' : 'Below average', color: wrc > 120 ? 'var(--success)' : 'var(--accent)' },
-        ];
+        const isPitcher = !!(p.era !== undefined || p.wins !== undefined || p.so !== undefined);
+        const isHitter = !!(p.avg !== undefined || p.hr !== undefined);
+
+        if (isHitter) {
+            const ops = p.ops || (p.obp && p.slg ? +(p.obp + p.slg).toFixed(3) : 0);
+            const war = p.war || 0;
+            const wrc = p.wrc || (ops > 0 ? Math.round((ops / 0.75) * 100) : 100);
+            const opsPlus = ops > 0 ? Math.round((ops / 0.710) * 100) : 100;
+            const iso = p.slg && p.avg ? +(p.slg - p.avg).toFixed(3) : 0;
+            const bbRate = p.obp && p.avg ? +((p.obp - p.avg) / (1 - p.avg) * 100).toFixed(1) : 8;
+            const abPerHr = p.hr > 0 ? Math.round(550 / p.hr) : '—';
+
+            metricCards = `
+                <div class="card" style="margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                        ${playerAvatarHtml(p, 64)}
+                        <div>
+                            <div style="font-weight:800;font-size:1.3rem;">${p.name}</div>
+                            <div style="color:var(--text-muted);font-size:0.9rem;">${p.team} · ${p.pos}</div>
+                            <div style="margin-top:4px;"><span class="badge badge-mlb">${war >= 6 ? 'MVP Caliber' : war >= 3 ? 'All-Star' : war >= 1 ? 'Starter' : 'Role Player'}</span></div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
+                        ${[
+                            { label:'WAR', val:typeof war==='number'?war.toFixed(1):war, sub:war>=6?'MVP tier':'', color:war>5?'var(--success)':war>2?'var(--accent)':'var(--text-muted)' },
+                            { label:'OPS', val:ops.toFixed(3), sub:ops>.900?'Elite':ops>.750?'Above avg':'Below avg', color:ops>.900?'var(--success)':ops>.750?'var(--accent)':'var(--danger)' },
+                            { label:'OPS+', val:opsPlus, sub:'100 = league avg', color:opsPlus>130?'var(--success)':opsPlus>100?'var(--accent)':'var(--danger)' },
+                            { label:'wRC+', val:wrc, sub:'100 = league avg', color:wrc>130?'var(--success)':wrc>100?'var(--accent)':'var(--danger)' },
+                            { label:'ISO', val:iso.toFixed(3), sub:'Isolated power', color:iso>.200?'var(--success)':iso>.130?'var(--accent)':'var(--text-muted)' },
+                            { label:'BB%', val:bbRate.toFixed(1)+'%', sub:'Walk rate', color:bbRate>12?'var(--success)':bbRate>8?'var(--accent)':'var(--text-muted)' },
+                            { label:'AB/HR', val:abPerHr, sub:'At-bats per HR', color:typeof abPerHr==='number'&&abPerHr<18?'var(--success)':'var(--accent)' },
+                            { label:'Fantasy', val:p.fantasyPts?.toFixed(1)||'—', sub:'Total FPTS', color:'var(--success)' },
+                        ].map(m => `
+                            <div style="background:var(--bg-input);border-radius:var(--radius);padding:14px;text-align:center;">
+                                <div style="font-family:var(--font-mono);font-weight:800;font-size:1.4rem;color:${m.color};">${m.val}</div>
+                                <div style="font-weight:700;font-size:0.78rem;margin:4px 0 2px;">${m.label}</div>
+                                <div style="font-size:0.68rem;color:var(--text-muted);">${m.sub}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:16px;">
+                    <div class="card-title" style="margin-bottom:12px;">Slash Line & Counting Stats</div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px;">
+                        ${[{l:'AVG',v:p.avg?.toFixed(3)},{l:'OBP',v:p.obp?.toFixed(3)},{l:'SLG',v:p.slg?.toFixed(3)},{l:'HR',v:p.hr},{l:'RBI',v:p.rbi},{l:'R',v:p.r},{l:'SB',v:p.sb}].map(s => `<div style="background:var(--bg-input);border-radius:var(--radius);padding:10px;text-align:center;">
+                            <div style="font-family:var(--font-mono);font-weight:700;font-size:1.1rem;">${s.v ?? '—'}</div>
+                            <div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">${s.l}</div>
+                        </div>`).join('')}
+                    </div>
+                </div>`;
+        } else if (isPitcher) {
+            const fip = p.fip || (p.era ? +(p.era * 0.92 + 0.3).toFixed(2) : 0);
+            const kPer9 = p.so && p.ip ? +(p.so / p.ip * 9).toFixed(1) : 0;
+            const warP = p.war || 0;
+
+            metricCards = `
+                <div class="card" style="margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                        ${playerAvatarHtml(p, 64)}
+                        <div>
+                            <div style="font-weight:800;font-size:1.3rem;">${p.name}</div>
+                            <div style="color:var(--text-muted);font-size:0.9rem;">${p.team} · ${p.pos}</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
+                        ${[
+                            { label:'WAR', val:warP.toFixed(1), sub:warP>=5?'Ace tier':'', color:warP>4?'var(--success)':warP>2?'var(--accent)':'var(--text-muted)' },
+                            { label:'FIP', val:fip.toFixed(2), sub:'Fielding indep.', color:fip<3.2?'var(--success)':fip<4?'var(--accent)':'var(--danger)' },
+                            { label:'ERA', val:p.era?.toFixed(2)||'—', sub:p.era<3?'Elite':'', color:p.era<3?'var(--success)':p.era<4?'var(--accent)':'var(--danger)' },
+                            { label:'WHIP', val:p.whip?.toFixed(2)||'—', sub:p.whip<1.1?'Elite':'', color:p.whip<1.1?'var(--success)':p.whip<1.3?'var(--accent)':'var(--danger)' },
+                            { label:'K/9', val:kPer9, sub:'Strikeouts per 9', color:kPer9>10?'var(--success)':kPer9>7?'var(--accent)':'var(--text-muted)' },
+                            { label:'ERA-FIP', val:(p.era-fip).toFixed(2), sub:p.era-fip>0.5?'Unlucky':'Lucky/Skilled', color:Math.abs(p.era-fip)<0.3?'var(--success)':'var(--warning)' },
+                        ].map(m => `
+                            <div style="background:var(--bg-input);border-radius:var(--radius);padding:14px;text-align:center;">
+                                <div style="font-family:var(--font-mono);font-weight:800;font-size:1.4rem;color:${m.color};">${m.val}</div>
+                                <div style="font-weight:700;font-size:0.78rem;margin:4px 0 2px;">${m.label}</div>
+                                <div style="font-size:0.68rem;color:var(--text-muted);">${m.sub}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+        }
+
+    } else {
+        metricCards = `<div class="card"><div style="text-align:center;padding:20px;color:var(--text-muted);">Advanced metrics for NCAA coming soon.</div></div>`;
     }
 
-    container.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-            ${playerAvatarHtml(p, 48)}
-            <div>
-                <div style="font-weight:800;font-size:1.1rem;">${p.name}</div>
-                <div style="color:var(--text-muted);font-size:0.82rem;">${p.team} · ${p.pos}</div>
-            </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;">
-            ${results.map(r => `
-                <div style="background:var(--bg-input);border-radius:var(--radius);padding:14px;text-align:center;">
-                    <div style="font-family:var(--font-mono);font-weight:800;font-size:1.4rem;color:${r.color};">${r.value}</div>
-                    <div style="font-weight:700;font-size:0.78rem;margin:4px 0 2px;">${r.label}</div>
-                    <div style="font-size:0.7rem;color:var(--text-muted);">${r.desc}</div>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    container.innerHTML = metricCards;
 }
 
 /* ============================================================
@@ -5607,8 +5762,6 @@ document.addEventListener('DOMContentLoaded', () => {
     populateHeadshots();
     renderDashboard();
     refreshScoreTicker();
-    // Auto-import full ESPN rosters for all sports (enriches stats beyond headshots)
-    autoImportAllRosters();
 });
 
 async function autoImportAllRosters() {

@@ -5211,9 +5211,12 @@ async function importESPNPlayers(sport, silent) {
 
                 if (existingNames.has(name.toLowerCase())) {
                     const existing = existingPlayers.find(p => p.name.toLowerCase() === name.toLowerCase());
-                    if (existing && !existing.headshot && hsUrl) {
-                        existing.headshot = hsUrl;
+                    if (existing) {
+                        // Always update team from live ESPN data
+                        existing.team = t.abbreviation || t.shortName || existing.team;
+                        if (!existing.headshot && hsUrl) existing.headshot = hsUrl;
                         existing.espnId = existing.espnId || a.id;
+                        if (a.position?.abbreviation) existing.pos = a.position.abbreviation;
                     }
                     return;
                 }
@@ -6836,13 +6839,21 @@ async function renderNewsFeed() {
 document.addEventListener('DOMContentLoaded', () => {
     populateHeadshots();
     const restored = restoreCachedRosters();
-    if (restored > 0) populateHeadshots(); // headshots for restored players too
+    if (restored > 0) populateHeadshots();
     renderDashboard();
     refreshScoreTicker();
     const total = Object.values(PLAYERS).reduce((s, arr) => s + arr.length, 0);
     if (restored > 0) {
         showToast(`Restored ${restored} cached players (${total} total)`, 'info');
     }
+    // Auto-load live ESPN rosters in background (updates teams, adds new players)
+    setTimeout(() => {
+        loadFullRosters().then(() => {
+            console.log('[StatVault] Live ESPN roster sync complete');
+        }).catch(() => {
+            console.warn('[StatVault] ESPN roster sync failed — using cached/static data');
+        });
+    }, 2000);
 });
 
 

@@ -1250,6 +1250,33 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
 .position-tag, .model-tag { background:rgba(65,90,119,.22); color:var(--chalk-dim); }
 @media (max-width:900px) { .sidebar.mobile-open { top:calc(var(--header-height) + 36px); height:calc(100vh - var(--header-height) - 36px); } }
 @media (max-width:600px) { .ticker-track { font-size:.62rem; } .ticker-wrap { height:30px; } }
+
+/* Mobile / Tablet responsive enhancements */
+@media (max-width: 768px) {
+    .sidebar { display: none; position: fixed; z-index: 100; top: 0; left: 0; height: 100vh; width: 260px; transform: translateX(-100%); transition: transform .3s; }
+    .sidebar.open { transform: translateX(0); display: flex; flex-direction: column; }
+    .main-content { margin-left: 0 !important; }
+    .header-search { display: none; }
+    .sport-pills { gap: 4px !important; }
+    .sport-pill { padding: 6px 10px !important; font-size: 0.72rem !important; }
+    .card-grid-3 { grid-template-columns: 1fr !important; }
+    .card-grid-2 { grid-template-columns: 1fr !important; }
+    .dashboard-hero { flex-direction: column; }
+    .data-table { font-size: 0.75rem; }
+    .data-table th, .data-table td { padding: 6px 8px; }
+    h2 { font-size: 1.3rem !important; }
+    .mobile-menu-btn { display: block !important; }
+}
+
+@media (max-width: 480px) {
+    .card { padding: 14px !important; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+.sidebar-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99; }
+@media (max-width: 768px) {
+    .sidebar.open ~ .sidebar-overlay { display:block; }
+}
     </style>
 </head>
 <body>
@@ -1383,6 +1410,7 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 </div>
             </div>
         </nav>
+        <div class="sidebar-overlay" onclick="document.getElementById('sidebar').classList.remove('open','mobile-open');"></div>
 
         <!-- MAIN CONTENT -->
         <main class="main-content" id="mainContent">
@@ -2035,11 +2063,13 @@ function showView(viewId) {
 
     if (window.innerWidth <= 900) {
         document.getElementById('sidebar').classList.remove('mobile-open');
+        document.getElementById('sidebar').classList.remove('open');
     }
 }
 
 function toggleMobileNav() {
     document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebar').classList.toggle('open');
 }
 
 function setSport(sport) {
@@ -2482,22 +2512,22 @@ function computeAdvancedMetrics() {
                     ${playerAvatarHtml(p, 64)}
                     <div>
                         <div style="font-weight:800;font-size:1.3rem;">${p.name}</div>
-                        <div style="color:var(--text-muted);font-size:0.9rem;">${p.team} · ${p.pos} · ${p.age}y · ${p.exp}y exp</div>
+                        <div style="color:var(--text-muted);font-size:0.9rem;">${p.team} · ${p.pos} · ${p.age||'—'}y${p.exp ? ' · '+p.exp+'y exp' : ''}</div>
                         <div style="margin-top:4px;"><span class="badge badge-nba">${tierPER}</span></div>
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
                     ${[
-                        { label:'PER', val:per.toFixed(1), sub:'Lg avg: 15.0', color: per>25?'var(--success)':per>15?'var(--accent)':'var(--danger)' },
-                        { label:'TS%', val:(typeof ts==='number'?ts:parseFloat(ts)).toFixed(1)+'%', sub:'Lg avg: 57.0%', color: ts>62?'var(--success)':ts>57?'var(--accent)':'var(--danger)' },
-                        { label:'BPM', val:bpm.toFixed(1), sub:tierBPM+' tier', color: bpm>5?'var(--success)':bpm>0?'var(--accent)':'var(--danger)' },
-                        { label:'Win Shares', val:ws.toFixed(1), sub:ws>10?'Elite':''+Math.round(ws)+' wins added', color: ws>10?'var(--success)':'var(--accent)' },
-                        { label:'Usage %', val:usg.toFixed(1)+'%', sub:usg>30?'Primary option':usg>25?'Featured scorer':'Support', color:'var(--accent)' },
-                        { label:'VORP', val:vorp.toFixed(1), sub:'Value over repl.', color: vorp>5?'var(--success)':vorp>2?'var(--accent)':'var(--text-muted)' },
-                        { label:'Off Rating', val:offRtg.toFixed(0), sub:'pts/100 poss', color: offRtg>115?'var(--success)':offRtg>105?'var(--accent)':'var(--danger)' },
-                        { label:'Def Rating', val:defRtg.toFixed(0), sub:'pts allowed/100', color: defRtg<105?'var(--success)':defRtg<112?'var(--accent)':'var(--danger)' },
-                        { label:'AST/TO', val:astTo.toFixed(2), sub:astTo>3?'Elite':''+Math.round(astTo*10)/10+'x ratio', color: astTo>2.5?'var(--success)':'var(--accent)' },
-                        { label:'Game Score', val:gameScore.toFixed(1), sub:'Avg per-game impact', color: gameScore>20?'var(--success)':gameScore>12?'var(--accent)':'var(--danger)' },
+                        { label:'PER', val:sf(per,1), sub:'Lg avg: 15.0', color: per>25?'var(--success)':per>15?'var(--accent)':'var(--danger)' },
+                        { label:'TS%', val:sf(typeof ts==='number'?ts:parseFloat(ts),1)+'%', sub:'Lg avg: 57.0%', color: ts>62?'var(--success)':ts>57?'var(--accent)':'var(--danger)' },
+                        { label:'BPM', val:sf(bpm,1), sub:tierBPM+' tier', color: bpm>5?'var(--success)':bpm>0?'var(--accent)':'var(--danger)' },
+                        { label:'Win Shares', val:sf(ws,1), sub:ws>10?'Elite':''+sf(ws,0)+' wins added', color: ws>10?'var(--success)':'var(--accent)' },
+                        { label:'Usage %', val:sf(usg,1)+'%', sub:usg>30?'Primary option':usg>25?'Featured scorer':'Support', color:'var(--accent)' },
+                        { label:'VORP', val:sf(vorp,1), sub:'Value over repl.', color: vorp>5?'var(--success)':vorp>2?'var(--accent)':'var(--text-muted)' },
+                        { label:'Off Rating', val:sf(offRtg,0), sub:'pts/100 poss', color: offRtg>115?'var(--success)':offRtg>105?'var(--accent)':'var(--danger)' },
+                        { label:'Def Rating', val:sf(defRtg,0), sub:'pts allowed/100', color: defRtg<105?'var(--success)':defRtg<112?'var(--accent)':'var(--danger)' },
+                        { label:'AST/TO', val:sf(astTo,2), sub:astTo>3?'Elite':''+sf(astTo,1)+'x ratio', color: astTo>2.5?'var(--success)':'var(--accent)' },
+                        { label:'Game Score', val:sf(gameScore,1), sub:'Avg per-game impact', color: gameScore>20?'var(--success)':gameScore>12?'var(--accent)':'var(--danger)' },
                     ].map(m => `
                         <div style="background:var(--bg-input);border-radius:var(--radius);padding:14px;text-align:center;">
                             <div style="font-family:var(--font-mono);font-weight:800;font-size:1.4rem;color:${m.color};">${m.val}</div>
@@ -2598,8 +2628,8 @@ function computeAdvancedMetrics() {
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
                     ${[
-                        { label:'EPA/Play', val:typeof epaPlay==='number'?epaPlay.toFixed(2):epaPlay, sub:epaPlay>0.15?'Elite efficiency':'', color:epaPlay>0.15?'var(--success)':epaPlay>0?'var(--accent)':'var(--danger)' },
-                        { label:'DVOA', val:typeof dvoa==='number'?dvoa.toFixed(1)+'%':dvoa, sub:'vs league avg', color:dvoa>10?'var(--success)':dvoa>0?'var(--accent)':'var(--danger)' },
+                        { label:'EPA/Play', val:typeof epaPlay==='number'?sf(epaPlay,2):epaPlay, sub:epaPlay>0.15?'Elite efficiency':'', color:epaPlay>0.15?'var(--success)':epaPlay>0?'var(--accent)':'var(--danger)' },
+                        { label:'DVOA', val:typeof dvoa==='number'?sf(dvoa,1)+'%':dvoa, sub:'vs league avg', color:dvoa>10?'var(--success)':dvoa>0?'var(--accent)':'var(--danger)' },
                         ...(qbr!=='—'?[{ label:'QBR', val:typeof qbr==='number'?qbr.toFixed(1):qbr, sub:qbr>70?'Elite':qbr>50?'Above avg':'Below avg', color:qbr>70?'var(--success)':qbr>45?'var(--accent)':'var(--danger)' }]:[]),
                         ...(cpoe!=='—'?[{ label:'CPOE', val:cpoe+'%', sub:'Comp% over expected', color:parseFloat(cpoe)>3?'var(--success)':parseFloat(cpoe)>0?'var(--accent)':'var(--danger)' }]:[]),
                         ...(yac!=='—'?[{ label:'Est. YAC', val:yac, sub:'Yards after catch', color:'var(--accent)' }]:[]),
@@ -2666,12 +2696,12 @@ function computeAdvancedMetrics() {
                     </div>
                     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
                         ${[
-                            { label:'WAR', val:typeof war==='number'?war.toFixed(1):war, sub:war>=6?'MVP tier':'', color:war>5?'var(--success)':war>2?'var(--accent)':'var(--text-muted)' },
-                            { label:'OPS', val:ops.toFixed(3), sub:ops>.900?'Elite':ops>.750?'Above avg':'Below avg', color:ops>.900?'var(--success)':ops>.750?'var(--accent)':'var(--danger)' },
+                            { label:'WAR', val:typeof war==='number'?sf(war,1):war, sub:war>=6?'MVP tier':'', color:war>5?'var(--success)':war>2?'var(--accent)':'var(--text-muted)' },
+                            { label:'OPS', val:sf(ops,3), sub:ops>.900?'Elite':ops>.750?'Above avg':'Below avg', color:ops>.900?'var(--success)':ops>.750?'var(--accent)':'var(--danger)' },
                             { label:'OPS+', val:opsPlus, sub:'100 = league avg', color:opsPlus>130?'var(--success)':opsPlus>100?'var(--accent)':'var(--danger)' },
                             { label:'wRC+', val:wrc, sub:'100 = league avg', color:wrc>130?'var(--success)':wrc>100?'var(--accent)':'var(--danger)' },
-                            { label:'ISO', val:iso.toFixed(3), sub:'Isolated power', color:iso>.200?'var(--success)':iso>.130?'var(--accent)':'var(--text-muted)' },
-                            { label:'BB%', val:bbRate.toFixed(1)+'%', sub:'Walk rate', color:bbRate>12?'var(--success)':bbRate>8?'var(--accent)':'var(--text-muted)' },
+                            { label:'ISO', val:sf(iso,3), sub:'Isolated power', color:iso>.200?'var(--success)':iso>.130?'var(--accent)':'var(--text-muted)' },
+                            { label:'BB%', val:sf(bbRate,1)+'%', sub:'Walk rate', color:bbRate>12?'var(--success)':bbRate>8?'var(--accent)':'var(--text-muted)' },
                             { label:'AB/HR', val:abPerHr, sub:'At-bats per HR', color:typeof abPerHr==='number'&&abPerHr<18?'var(--success)':'var(--accent)' },
                             { label:'Fantasy', val:p.fantasyPts?.toFixed(1)||'—', sub:'Total FPTS', color:'var(--success)' },
                         ].map(m => `
@@ -2720,12 +2750,12 @@ function computeAdvancedMetrics() {
                     </div>
                     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
                         ${[
-                            { label:'WAR', val:warP.toFixed(1), sub:warP>=5?'Ace tier':'', color:warP>4?'var(--success)':warP>2?'var(--accent)':'var(--text-muted)' },
-                            { label:'FIP', val:fip.toFixed(2), sub:'Fielding indep.', color:fip<3.2?'var(--success)':fip<4?'var(--accent)':'var(--danger)' },
+                            { label:'WAR', val:sf(warP,1), sub:warP>=5?'Ace tier':'', color:warP>4?'var(--success)':warP>2?'var(--accent)':'var(--text-muted)' },
+                            { label:'FIP', val:sf(fip,2), sub:'Fielding indep.', color:fip<3.2?'var(--success)':fip<4?'var(--accent)':'var(--danger)' },
                             { label:'ERA', val:p.era?.toFixed(2)||'—', sub:p.era<3?'Elite':'', color:p.era<3?'var(--success)':p.era<4?'var(--accent)':'var(--danger)' },
                             { label:'WHIP', val:p.whip?.toFixed(2)||'—', sub:p.whip<1.1?'Elite':'', color:p.whip<1.1?'var(--success)':p.whip<1.3?'var(--accent)':'var(--danger)' },
                             { label:'K/9', val:kPer9, sub:'Strikeouts per 9', color:kPer9>10?'var(--success)':kPer9>7?'var(--accent)':'var(--text-muted)' },
-                            { label:'ERA-FIP', val:(p.era-fip).toFixed(2), sub:p.era-fip>0.5?'Unlucky':'Lucky/Skilled', color:Math.abs(p.era-fip)<0.3?'var(--success)':'var(--warning)' },
+                            { label:'ERA-FIP', val:sf(p.era-fip,2), sub:(p.era-fip)>0.5?'Unlucky':'Lucky/Skilled', color:Math.abs(p.era-fip)<0.3?'var(--success)':'var(--warning)' },
                         ].map(m => `
                             <div style="background:var(--bg-input);border-radius:var(--radius);padding:14px;text-align:center;">
                                 <div style="font-family:var(--font-mono);font-weight:800;font-size:1.4rem;color:${m.color};">${m.val}</div>
@@ -2746,6 +2776,27 @@ function computeAdvancedMetrics() {
                         <span style="font-weight:700;font-size:0.82rem;min-width:120px;">${f.name}</span>
                         <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);text-align:right;">${f.formula}</span>
                     </div>`).join('')}
+                </div>`;
+        } else {
+            // Generic MLB player (neither hitter nor pitcher detected)
+            metricCards = `
+                <div class="card" style="margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                        ${playerAvatarHtml(p, 64)}
+                        <div>
+                            <div style="font-weight:800;font-size:1.3rem;">${p.name}</div>
+                            <div style="color:var(--text-muted);font-size:0.9rem;">${p.team} · ${p.pos}</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
+                        ${[
+                            { label:'WAR', val:sf(p.war||0,1), sub:'Wins above replacement', color:(p.war||0)>3?'var(--success)':(p.war||0)>1?'var(--accent)':'var(--text-muted)' },
+                            { label:'Fantasy', val:p.fantasyPts?.toFixed(1)||'—', sub:'Total FPTS', color:'var(--success)' },
+                        ].map(m => '<div style="background:var(--bg-input);border-radius:var(--radius);padding:14px;text-align:center;"><div style="font-family:var(--font-mono);font-weight:800;font-size:1.4rem;color:'+m.color+';">'+m.val+'</div><div style="font-weight:700;font-size:0.78rem;margin:4px 0 2px;">'+m.label+'</div><div style="font-size:0.68rem;color:var(--text-muted);">'+m.sub+'</div></div>').join('')}
+                    </div>
+                    <div style="margin-top:16px;padding:16px;background:var(--bg-input);border-radius:var(--radius);color:var(--text-muted);text-align:center;font-size:0.85rem;">
+                        Limited advanced metrics available for this player. Select a hitter or pitcher for full analytics.
+                    </div>
                 </div>`;
         }
 
@@ -2950,6 +3001,7 @@ function renderEloCalculator() {
                         ${teamOpts}
                     </select>
                     <input type="number" class="form-input" id="eloRatingA" value="1500" oninput="calculateElo()" style="margin-top:6px;" placeholder="Rating">
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Team strength rating. 1500 = average. 1600+ = elite. 1300- = weak.</div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Team B</label>
@@ -2958,6 +3010,7 @@ function renderEloCalculator() {
                         ${teamOpts}
                     </select>
                     <input type="number" class="form-input" id="eloRatingB" value="1500" oninput="calculateElo()" style="margin-top:6px;" placeholder="Rating">
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Team strength rating. 1500 = average. 1600+ = elite. 1300- = weak.</div>
                 </div>
             </div>
             <div class="form-group">
@@ -2967,8 +3020,18 @@ function renderEloCalculator() {
                     <option value="32" selected>32 (Default)</option>
                     <option value="40">40 (More volatile)</option>
                 </select>
+                <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">How much each game matters. Higher = more volatile. NFL: 20, NBA: 16, Chess: 10-40.</div>
             </div>
             <div id="eloResult" style="margin-top:16px;"></div>
+            <details style="margin-top:16px;">
+                <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--accent);">How It Works</summary>
+                <div style="margin-top:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;line-height:1.6;">
+                    <strong>Elo Rating System</strong> — Originally designed for chess, now widely used in sports analytics.<br><br>
+                    <strong>Win Probability:</strong> E<sub>A</sub> = 1 / (1 + 10<sup>(R<sub>B</sub> - R<sub>A</sub>) / 400</sup>)<br>
+                    <strong>New Rating:</strong> R'<sub>A</sub> = R<sub>A</sub> + K × (S<sub>A</sub> - E<sub>A</sub>)<br><br>
+                    Where S<sub>A</sub> = 1 for a win, 0 for a loss. The K-factor controls sensitivity: higher K means ratings change faster after each game. A 100-point Elo gap translates to roughly a 64% win probability.
+                </div>
+            </details>
         </div>
     `;
 }
@@ -3028,10 +3091,12 @@ function renderPoissonPredictor() {
                     <div class="form-group">
                         <label class="form-label">Team A Avg Scored</label>
                         <input type="number" class="form-input" id="poissonA_scored" value="105" step="0.1" oninput="calculatePoisson()">
+                        <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Average points/goals scored per game this season.</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Team A Avg Allowed</label>
                         <input type="number" class="form-input" id="poissonA_allowed" value="102" step="0.1" oninput="calculatePoisson()">
+                        <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Average points/goals allowed per game (defensive strength).</div>
                     </div>
                 </div>
                 <div>
@@ -3045,14 +3110,26 @@ function renderPoissonPredictor() {
                     <div class="form-group">
                         <label class="form-label">Team B Avg Scored</label>
                         <input type="number" class="form-input" id="poissonB_scored" value="100" step="0.1" oninput="calculatePoisson()">
+                        <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Average points/goals scored per game this season.</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Team B Avg Allowed</label>
                         <input type="number" class="form-input" id="poissonB_allowed" value="98" step="0.1" oninput="calculatePoisson()">
+                        <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Average points/goals allowed per game (defensive strength).</div>
                     </div>
                 </div>
             </div>
             <div id="poissonResult" style="margin-top:16px;"></div>
+            <details style="margin-top:16px;">
+                <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--accent);">How It Works</summary>
+                <div style="margin-top:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;line-height:1.6;">
+                    <strong>Poisson Match Prediction</strong> — Models scoring as a Poisson process to estimate win probability and spread.<br><br>
+                    <strong>Expected Score:</strong> ExpA = (A_scored + B_allowed) / 2<br>
+                    <strong>Spread:</strong> ExpA - ExpB<br>
+                    <strong>Win Prob:</strong> Uses normal approximation with sigma = sqrt(ExpA + ExpB) x 0.4 and the error function to convert the z-score into a probability.<br><br>
+                    The model assumes each team's scoring follows a Poisson distribution. It combines offensive strength with opponent defensive weakness to project the matchup.
+                </div>
+            </details>
         </div>
     `;
 }
@@ -3823,19 +3900,29 @@ async function renderStandings() {
         const groups = (data.children || []);
         if (!groups.length) throw new Error('No standings data returned');
 
-        // Flatten: each group may have sub-children (divisions) or direct standings
-        const sections = [];
+        // Build conference-level and division-level sections
+        const confSections = [];
+        const divSections = [];
         for (const group of groups) {
+            // Conference-level standings (if available)
+            if (group.standings?.entries?.length) {
+                confSections.push({ name: group.name || group.abbreviation || 'Conference', entries: group.standings.entries });
+            }
             if (group.children && group.children.length) {
                 for (const sub of group.children) {
-                    sections.push({ name: `${group.name} — ${sub.name}`, entries: sub.standings?.entries || [] });
+                    divSections.push({ name: `${group.name} — ${sub.name}`, entries: sub.standings?.entries || [] });
                 }
-            } else if (group.standings?.entries?.length) {
-                sections.push({ name: group.name || group.abbreviation || 'Division', entries: group.standings.entries });
+            } else if (!group.standings?.entries?.length) {
+                // No children, no standings at conf level — treat as flat group
+                if (group.standings?.entries?.length) {
+                    divSections.push({ name: group.name || group.abbreviation || 'Division', entries: group.standings.entries });
+                }
             }
         }
 
-        if (!sections.length) throw new Error('No standings entries found');
+        // Use divisions as primary; conferences as secondary if available
+        const sections = divSections.length ? divSections : confSections;
+        if (!sections.length && !confSections.length) throw new Error('No standings entries found');
 
         const extraCols = sport === 'nba' ? ['Home','Road','vs. Conf.','Last Ten Games'] :
                           sport === 'nfl' ? ['Home','Road','vs. Div.','pointsFor','pointsAgainst'] :
@@ -3844,69 +3931,87 @@ async function renderStandings() {
         const extraHeaders = sport === 'nfl' ? ['Home','Road','Div','PF','PA'] :
                              extraCols.map(c => c === 'Last Ten Games' ? 'L10' : c === 'vs. Conf.' ? 'Conf' : c === 'vs. Div.' ? 'Div' : c);
 
-        container.innerHTML = sections.map(section => {
-            const rows = section.entries.map((entry, idx) => {
-                const team = entry.team || {};
-                const name = team.displayName || team.name || '\u2014';
-                const logo = team.logos?.[0]?.href || '';
-                const stats = {};
-                (entry.stats || []).forEach(s => { stats[s.name] = s.displayValue ?? s.value; });
-                const w = stats['wins'] ?? '\u2014';
-                const l = stats['losses'] ?? '\u2014';
-                const pct = stats['winPercent'] ?? '\u2014';
-                const gb = stats['gamesBehind'] ?? '\u2014';
-                const streak = stats['streak'] ?? '\u2014';
-                const seed = stats['playoffSeed'] ?? '';
-                const clinch = stats['clincher'] ?? '';
-                const clinchBadge = clinch === 'z' ? '<span title="Clinched best record" style="color:var(--success);font-weight:700;margin-left:4px;">z</span>' :
-                                    clinch === 'x' ? '<span title="Clinched playoff spot" style="color:var(--accent);font-weight:700;margin-left:4px;">x</span>' :
-                                    clinch === 'y' ? '<span title="Clinched division" style="color:var(--success);font-weight:700;margin-left:4px;">y</span>' :
-                                    clinch === 'e' ? '<span title="Eliminated" style="color:var(--danger);font-weight:700;margin-left:4px;">e</span>' : '';
+        // Helper to render a list of sections into standings cards
+        function buildStandingsHtml(sectionList) {
+            return sectionList.map(section => {
+                const rows = section.entries.map((entry, idx) => {
+                    const team = entry.team || {};
+                    const name = team.displayName || team.name || '\u2014';
+                    const logo = team.logos?.[0]?.href || '';
+                    const stats = {};
+                    (entry.stats || []).forEach(s => { stats[s.name] = s.displayValue ?? s.value; });
+                    const w = stats['wins'] ?? '\u2014';
+                    const l = stats['losses'] ?? '\u2014';
+                    const pct = stats['winPercent'] ?? '\u2014';
+                    const gb = stats['gamesBehind'] ?? '\u2014';
+                    const streak = stats['streak'] ?? '\u2014';
+                    const seed = stats['playoffSeed'] ?? '';
+                    const clinch = stats['clincher'] ?? '';
+                    const clinchBadge = clinch === 'z' ? '<span title="Clinched best record" style="color:var(--success);font-weight:700;margin-left:4px;">z</span>' :
+                                        clinch === 'x' ? '<span title="Clinched playoff spot" style="color:var(--accent);font-weight:700;margin-left:4px;">x</span>' :
+                                        clinch === 'y' ? '<span title="Clinched division" style="color:var(--success);font-weight:700;margin-left:4px;">y</span>' :
+                                        clinch === 'e' ? '<span title="Eliminated" style="color:var(--danger);font-weight:700;margin-left:4px;">e</span>' : '';
 
-                const extraTds = extraCols.map(col => {
-                    const val = stats[col] ?? '\u2014';
-                    return `<td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-size:0.82rem;">${val}</td>`;
+                    const extraTds = extraCols.map(col => {
+                        const val = stats[col] ?? '\u2014';
+                        return `<td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-size:0.82rem;">${val}</td>`;
+                    }).join('');
+
+                    const streakColor = typeof streak === 'string' && streak.startsWith('W') ? 'var(--success)' :
+                                        typeof streak === 'string' && streak.startsWith('L') ? 'var(--danger)' : 'inherit';
+
+                    return `<tr style="border-bottom:1px solid var(--border);${idx < 6 && sport === 'nba' ? 'background:rgba(99,102,241,0.03);' : ''}${idx < 7 && sport === 'nfl' ? 'background:rgba(99,102,241,0.03);' : ''}">
+                        <td style="padding:8px 12px;font-weight:600;white-space:nowrap;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                ${seed ? `<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);width:16px;text-align:right;">${seed}</span>` : ''}
+                                ${logo ? `<img src="${logo}" width="22" height="22" style="border-radius:2px;" onerror="this.style.display='none'">` : ''}
+                                <span>${name}</span>${clinchBadge}
+                            </div>
+                        </td>
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;">${w}</td>
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${l}</td>
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${pct}</td>
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${gb}</td>
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:600;color:${streakColor};">${streak}</td>
+                        ${extraTds}
+                    </tr>`;
                 }).join('');
-
-                const streakColor = typeof streak === 'string' && streak.startsWith('W') ? 'var(--success)' :
-                                    typeof streak === 'string' && streak.startsWith('L') ? 'var(--danger)' : 'inherit';
-
-                return `<tr style="border-bottom:1px solid var(--border);${idx < 6 && sport === 'nba' ? 'background:rgba(99,102,241,0.03);' : ''}${idx < 7 && sport === 'nfl' ? 'background:rgba(99,102,241,0.03);' : ''}">
-                    <td style="padding:8px 12px;font-weight:600;white-space:nowrap;">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            ${seed ? `<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);width:16px;text-align:right;">${seed}</span>` : ''}
-                            ${logo ? `<img src="${logo}" width="22" height="22" style="border-radius:2px;" onerror="this.style.display='none'">` : ''}
-                            <span>${name}</span>${clinchBadge}
-                        </div>
-                    </td>
-                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;">${w}</td>
-                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${l}</td>
-                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${pct}</td>
-                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${gb}</td>
-                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:600;color:${streakColor};">${streak}</td>
-                    ${extraTds}
-                </tr>`;
+                return `<div class="card" style="margin-bottom:20px;">
+                    <div class="card-title" style="margin-bottom:14px;">${section.name}</div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:0.87rem;">
+                            <thead>
+                                <tr style="border-bottom:2px solid var(--border);">
+                                    <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">Team</th>
+                                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">W</th>
+                                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">L</th>
+                                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">PCT</th>
+                                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">GB</th>
+                                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">STRK</th>
+                                    ${extraHeaders.map(h => `<th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">${h}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>${rows || '<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--text-muted);">No team data</td></tr>'}</tbody>
+                        </table>
+                    </div>
+                </div>`;
             }).join('');
-            return `<div class="card" style="margin-bottom:20px;">
-                <div class="card-title" style="margin-bottom:14px;">${section.name}</div>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%;border-collapse:collapse;font-size:0.87rem;">
-                        <thead>
-                            <tr style="border-bottom:2px solid var(--border);">
-                                <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">Team</th>
-                                <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">W</th>
-                                <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">L</th>
-                                <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">PCT</th>
-                                <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">GB</th>
-                                <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">STRK</th>
-                                ${extraHeaders.map(h => `<th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">${h}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>${rows || '<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--text-muted);">No team data</td></tr>'}</tbody>
-                    </table>
-                </div>
-            </div>`;
-        }).join('');
+        }
+
+        const hasConf = confSections.length > 0;
+        const hasDiv = divSections.length > 0;
+        const hasBoth = hasConf && hasDiv;
+
+        const toggleHtml = hasBoth ? `
+            <div style="display:flex;gap:6px;margin-bottom:18px;">
+                <button id="standingsToggleDiv" onclick="document.getElementById('standingsDivView').style.display='';document.getElementById('standingsConfView').style.display='none';this.style.background='var(--accent)';this.style.color='var(--night)';document.getElementById('standingsToggleConf').style.background='var(--bg-input)';document.getElementById('standingsToggleConf').style.color='var(--text-primary)';" style="padding:7px 16px;border-radius:4px;font-family:var(--font-mono);font-size:0.78rem;font-weight:700;background:var(--accent);color:var(--night);border:none;cursor:pointer;">Division</button>
+                <button id="standingsToggleConf" onclick="document.getElementById('standingsConfView').style.display='';document.getElementById('standingsDivView').style.display='none';this.style.background='var(--accent)';this.style.color='var(--night)';document.getElementById('standingsToggleDiv').style.background='var(--bg-input)';document.getElementById('standingsToggleDiv').style.color='var(--text-primary)';" style="padding:7px 16px;border-radius:4px;font-family:var(--font-mono);font-size:0.78rem;font-weight:700;background:var(--bg-input);color:var(--text-primary);border:none;cursor:pointer;">Conference</button>
+            </div>` : '';
+
+        const divHtml = hasDiv ? `<div id="standingsDivView">${buildStandingsHtml(divSections)}</div>` : '';
+        const confHtml = hasConf ? `<div id="standingsConfView" style="${hasBoth ? 'display:none;' : ''}">${buildStandingsHtml(confSections)}</div>` : '';
+
+        container.innerHTML = toggleHtml + divHtml + confHtml;
     } catch(e) {
         container.innerHTML = `<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Could Not Load Standings</div><div class="subtitle">${e.message}</div></div>`;
     }
@@ -5114,16 +5219,26 @@ function renderRaptorCalculator() {
                         ${playerOptions}
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">Points/Game</label><input type="number" class="form-input" id="raptorPPG" value="25" step="0.1" oninput="calculateRaptor()"></div>
-                <div class="form-group"><label class="form-label">Rebounds/Game</label><input type="number" class="form-input" id="raptorRPG" value="7" step="0.1" oninput="calculateRaptor()"></div>
-                <div class="form-group"><label class="form-label">Assists/Game</label><input type="number" class="form-input" id="raptorAPG" value="5" step="0.1" oninput="calculateRaptor()"></div>
-                <div class="form-group"><label class="form-label">Steals/Game</label><input type="number" class="form-input" id="raptorSPG" value="1.2" step="0.1" oninput="calculateRaptor()"></div>
-                <div class="form-group"><label class="form-label">Blocks/Game</label><input type="number" class="form-input" id="raptorBPG" value="0.8" step="0.1" oninput="calculateRaptor()"></div>
-                <div class="form-group"><label class="form-label">Turnovers/Game</label><input type="number" class="form-input" id="raptorTPG" value="2.5" step="0.1" oninput="calculateRaptor()"></div>
-                <div class="form-group"><label class="form-label">Minutes/Game</label><input type="number" class="form-input" id="raptorMPG" value="34" step="0.1" oninput="calculateRaptor()"></div>
-                <div class="form-group"><label class="form-label">TS% (True Shooting)</label><input type="number" class="form-input" id="raptorTS" value="58" step="0.1" oninput="calculateRaptor()"></div>
+                <div class="form-group"><label class="form-label">Points/Game</label><input type="number" class="form-input" id="raptorPPG" value="25" step="0.1" oninput="calculateRaptor()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">NBA avg ~15. Elite scorers 28+.</div></div>
+                <div class="form-group"><label class="form-label">Rebounds/Game</label><input type="number" class="form-input" id="raptorRPG" value="7" step="0.1" oninput="calculateRaptor()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">NBA avg ~5. Elite rebounders 11+.</div></div>
+                <div class="form-group"><label class="form-label">Assists/Game</label><input type="number" class="form-input" id="raptorAPG" value="5" step="0.1" oninput="calculateRaptor()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">NBA avg ~3. Elite playmakers 9+.</div></div>
+                <div class="form-group"><label class="form-label">Steals/Game</label><input type="number" class="form-input" id="raptorSPG" value="1.2" step="0.1" oninput="calculateRaptor()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">NBA avg ~0.7. Elite defenders 1.5+.</div></div>
+                <div class="form-group"><label class="form-label">Blocks/Game</label><input type="number" class="form-input" id="raptorBPG" value="0.8" step="0.1" oninput="calculateRaptor()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">NBA avg ~0.5. Elite shot blockers 2.0+.</div></div>
+                <div class="form-group"><label class="form-label">Turnovers/Game</label><input type="number" class="form-input" id="raptorTPG" value="2.5" step="0.1" oninput="calculateRaptor()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">NBA avg ~2. Lower is better. High-usage players 3+.</div></div>
+                <div class="form-group"><label class="form-label">Minutes/Game</label><input type="number" class="form-input" id="raptorMPG" value="34" step="0.1" oninput="calculateRaptor()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Per-36 normalization applied. Starters: 30-38 min.</div></div>
+                <div class="form-group"><label class="form-label">TS% (True Shooting)</label><input type="number" class="form-input" id="raptorTS" value="58" step="0.1" oninput="calculateRaptor()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Shooting efficiency. NBA avg ~57%. Elite 62%+.</div></div>
             </div>
             <div id="raptorResult" style="margin-top:16px;"></div>
+            <details style="margin-top:16px;">
+                <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--accent);">How It Works</summary>
+                <div style="margin-top:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;line-height:1.6;">
+                    <strong>RAPTOR (Robust Algorithm using Player Tracking and On/Off Ratings)</strong> — FiveThirtyEight's player impact metric.<br><br>
+                    <strong>O-RAPTOR:</strong> Offensive box score component = (PPG x 0.8 + APG x 1.2 + RPG x 0.3 - TPG x 1.5) x (TS/57) x (36/MPG), normalized to pts above average per 100 possessions.<br>
+                    <strong>D-RAPTOR:</strong> Defensive component = (SPG x 2.5 + BPG x 2.0 + RPG x 0.5) x (36/MPG), normalized similarly.<br>
+                    <strong>Total RAPTOR:</strong> O-RAPTOR + D-RAPTOR. Positive = above average. +5 = All-NBA. +8 = MVP tier.<br>
+                    <strong>WAR estimate:</strong> ((Total + 2) x MPG/36 x 82) / 30
+                </div>
+            </details>
         </div>`;
 }
 
@@ -5202,14 +5317,24 @@ function renderWARCalculator() {
                         ${playerOptions}
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">wOBA</label><input type="number" class="form-input" id="warWOBA" value=".350" step="0.001" oninput="calculateWAR()"></div>
-                <div class="form-group"><label class="form-label">PA (Plate App.)</label><input type="number" class="form-input" id="warPA" value="600" oninput="calculateWAR()"></div>
-                <div class="form-group"><label class="form-label">League wOBA</label><input type="number" class="form-input" id="warLgWOBA" value=".310" step="0.001" oninput="calculateWAR()"></div>
-                <div class="form-group"><label class="form-label">BsR (Baserunning Runs)</label><input type="number" class="form-input" id="warBSR" value="2" step="0.1" oninput="calculateWAR()"></div>
-                <div class="form-group"><label class="form-label">Fld (Fielding Runs)</label><input type="number" class="form-input" id="warFLD" value="5" step="0.1" oninput="calculateWAR()"></div>
-                <div class="form-group"><label class="form-label">Positional Adj.</label><input type="number" class="form-input" id="warPOS" value="-5" step="0.1" oninput="calculateWAR()"></div>
+                <div class="form-group"><label class="form-label">wOBA</label><input type="number" class="form-input" id="warWOBA" value=".350" step="0.001" oninput="calculateWAR()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Weighted on-base average. League avg ~.310. Elite .400+.</div></div>
+                <div class="form-group"><label class="form-label">PA (Plate App.)</label><input type="number" class="form-input" id="warPA" value="600" oninput="calculateWAR()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Full season ~600-700 PA. More PA = more counting value.</div></div>
+                <div class="form-group"><label class="form-label">League wOBA</label><input type="number" class="form-input" id="warLgWOBA" value=".310" step="0.001" oninput="calculateWAR()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">League average wOBA for the season. Typically .305-.320.</div></div>
+                <div class="form-group"><label class="form-label">BsR (Baserunning Runs)</label><input type="number" class="form-input" id="warBSR" value="2" step="0.1" oninput="calculateWAR()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Runs above avg from baserunning. 0 = avg. Elite base stealers 5-8.</div></div>
+                <div class="form-group"><label class="form-label">Fld (Fielding Runs)</label><input type="number" class="form-input" id="warFLD" value="5" step="0.1" oninput="calculateWAR()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Runs saved above avg via defense. 0 = avg. Gold Glove 10+.</div></div>
+                <div class="form-group"><label class="form-label">Positional Adj.</label><input type="number" class="form-input" id="warPOS" value="-5" step="0.1" oninput="calculateWAR()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Position scarcity adjustment. C/SS positive, 1B/DH negative.</div></div>
             </div>
             <div id="warResult" style="margin-top:16px;"></div>
+            <details style="margin-top:16px;">
+                <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--accent);">How It Works</summary>
+                <div style="margin-top:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;line-height:1.6;">
+                    <strong>WAR (Wins Above Replacement)</strong> — The gold standard for total player value in baseball.<br><br>
+                    <strong>Batting Runs:</strong> wRAA = ((wOBA - lgWOBA) / 1.15) x PA<br>
+                    <strong>Total Runs:</strong> Batting + Baserunning + Fielding + Positional Adj + Replacement (~20 runs for 600 PA)<br>
+                    <strong>WAR:</strong> Total Runs / ~10 (runs per win)<br><br>
+                    A 0 WAR player is replacement level (freely available). 2 WAR = solid starter. 5+ = All-Star. 8+ = MVP candidate. The replacement level baseline (~20 runs) represents what a freely available minor-leaguer would produce.
+                </div>
+            </details>
         </div>`;
 }
 
@@ -5283,22 +5408,34 @@ function renderEPACalculator() {
                         <option value="1">1st Down</option><option value="2">2nd Down</option>
                         <option value="3">3rd Down</option><option value="4">4th Down</option>
                     </select>
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Current down. Later downs have lower expected points.</div>
                 </div>
-                <div class="form-group"><label class="form-label">Distance (yards)</label><input type="number" class="form-input" id="epaDistance" value="10" oninput="calculateEPA()"></div>
-                <div class="form-group"><label class="form-label">Yard Line (own)</label><input type="number" class="form-input" id="epaYardLine" value="25" min="1" max="99" oninput="calculateEPA()"></div>
-                <div class="form-group"><label class="form-label">Play Result (yards)</label><input type="number" class="form-input" id="epaResult" value="8" oninput="calculateEPA()"></div>
+                <div class="form-group"><label class="form-label">Distance (yards)</label><input type="number" class="form-input" id="epaDistance" value="10" oninput="calculateEPA()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Yards needed for a first down. Typical: 10 on 1st down.</div></div>
+                <div class="form-group"><label class="form-label">Yard Line (own)</label><input type="number" class="form-input" id="epaYardLine" value="25" min="1" max="99" oninput="calculateEPA()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Distance from own end zone. 1-99. Own 25 = 75 yards to score.</div></div>
+                <div class="form-group"><label class="form-label">Play Result (yards)</label><input type="number" class="form-input" id="epaResult" value="8" oninput="calculateEPA()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Yards gained on the play. Negative for losses/sacks.</div></div>
                 <div class="form-group"><label class="form-label">Turnover?</label>
                     <select class="form-select" id="epaTurnover" onchange="calculateEPA()">
                         <option value="0">No</option><option value="1">Fumble/INT</option>
                     </select>
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Turnovers cause a large negative EPA swing.</div>
                 </div>
                 <div class="form-group"><label class="form-label">Touchdown?</label>
                     <select class="form-select" id="epaTD" onchange="calculateEPA()">
                         <option value="0">No</option><option value="1">Yes</option>
                     </select>
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Touchdowns set EP After to 7 (includes expected XP).</div>
                 </div>
             </div>
             <div id="epaResult_display" style="margin-top:16px;"></div>
+            <details style="margin-top:16px;">
+                <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--accent);">How It Works</summary>
+                <div style="margin-top:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;line-height:1.6;">
+                    <strong>EPA (Expected Points Added)</strong> — Measures how much a play changes the offense's expected scoring.<br><br>
+                    <strong>EP Model:</strong> EP = -2 + (yard_line / 100) x 9, adjusted for down and distance.<br>
+                    <strong>EPA:</strong> EP_after - EP_before<br><br>
+                    Every play starts with an expected point value based on down, distance, and field position. After the play, the new game state has a new expected value. The difference is EPA. Positive EPA = the offense improved its scoring outlook. A touchdown from the 1-yard line adds less EPA than from the 50 because the expectation was already high.
+                </div>
+            </details>
         </div>`;
 }
 
@@ -5368,18 +5505,30 @@ function renderBayesianCalculator() {
                         ${playerOptions}
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">Prior Mean (Preseason Proj)</label><input type="number" class="form-input" id="bayesPriorMean" value="18.5" step="0.1" oninput="calculateBayesian()"></div>
-                <div class="form-group"><label class="form-label">Prior Std Dev</label><input type="number" class="form-input" id="bayesPriorSD" value="4.0" step="0.1" oninput="calculateBayesian()"></div>
-                <div class="form-group"><label class="form-label">Observed Mean (Season Avg)</label><input type="number" class="form-input" id="bayesObsMean" value="22.3" step="0.1" oninput="calculateBayesian()"></div>
-                <div class="form-group"><label class="form-label">Observed Std Dev</label><input type="number" class="form-input" id="bayesObsSD" value="5.5" step="0.1" oninput="calculateBayesian()"></div>
-                <div class="form-group"><label class="form-label">Games Played</label><input type="number" class="form-input" id="bayesGames" value="20" min="1" max="82" oninput="calculateBayesian()"></div>
+                <div class="form-group"><label class="form-label">Prior Mean (Preseason Proj)</label><input type="number" class="form-input" id="bayesPriorMean" value="18.5" step="0.1" oninput="calculateBayesian()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Preseason projection or career average. Your initial belief.</div></div>
+                <div class="form-group"><label class="form-label">Prior Std Dev</label><input type="number" class="form-input" id="bayesPriorSD" value="4.0" step="0.1" oninput="calculateBayesian()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Uncertainty in the prior. Higher = less confident in projection.</div></div>
+                <div class="form-group"><label class="form-label">Observed Mean (Season Avg)</label><input type="number" class="form-input" id="bayesObsMean" value="22.3" step="0.1" oninput="calculateBayesian()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Actual season average so far. The new data point.</div></div>
+                <div class="form-group"><label class="form-label">Observed Std Dev</label><input type="number" class="form-input" id="bayesObsSD" value="5.5" step="0.1" oninput="calculateBayesian()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Game-to-game variance. Higher = noisier performance.</div></div>
+                <div class="form-group"><label class="form-label">Games Played</label><input type="number" class="form-input" id="bayesGames" value="20" min="1" max="82" oninput="calculateBayesian()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">More games = observed data gets more weight vs prior.</div></div>
                 <div class="form-group"><label class="form-label">Confidence Level</label>
                     <select class="form-select" id="bayesConf" onchange="calculateBayesian()">
                         <option value="0.90">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option>
                     </select>
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Width of credible interval. 95% is standard.</div>
                 </div>
             </div>
             <div id="bayesResult" style="margin-top:20px;"></div>
+            <details style="margin-top:16px;">
+                <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--accent);">How It Works</summary>
+                <div style="margin-top:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;line-height:1.6;">
+                    <strong>Bayesian Updating</strong> — Combines prior beliefs with observed data to produce a posterior estimate.<br><br>
+                    <strong>Prior precision:</strong> 1 / sigma_prior^2<br>
+                    <strong>Observed precision:</strong> n / sigma_obs^2<br>
+                    <strong>Posterior mean:</strong> (prior_prec x prior_mean + obs_prec x obs_mean) / (prior_prec + obs_prec)<br>
+                    <strong>Posterior SD:</strong> sqrt(1 / (prior_prec + obs_prec))<br><br>
+                    Early in the season (few games), the posterior leans toward preseason projections. As more games are played, the observed data dominates. This naturally handles small sample sizes without over-reacting to hot/cold streaks.
+                </div>
+            </details>
         </div>`;
 }
 
@@ -5453,16 +5602,27 @@ function renderInjuryImpactCalculator() {
             <div class="card-title" style="margin-bottom:16px;">Injury Impact Model</div>
             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Estimate team-level performance impact when a key player is absent, using replacement-level analysis and usage redistribution.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                <div class="form-group"><label class="form-label">Player FPTS/Game</label><input type="number" class="form-input" id="injPlayerFpts" value="28.5" step="0.1" oninput="calculateInjuryImpact()"></div>
-                <div class="form-group"><label class="form-label">Team Total FPTS/Game</label><input type="number" class="form-input" id="injTeamFpts" value="110" step="0.1" oninput="calculateInjuryImpact()"></div>
-                <div class="form-group"><label class="form-label">Replacement Player FPTS/Game</label><input type="number" class="form-input" id="injReplaceFpts" value="12.0" step="0.1" oninput="calculateInjuryImpact()"></div>
-                <div class="form-group"><label class="form-label">Usage Rate %</label><input type="number" class="form-input" id="injUsage" value="30" min="0" max="100" step="0.1" oninput="calculateInjuryImpact()"></div>
-                <div class="form-group"><label class="form-label">Games Missed</label><input type="number" class="form-input" id="injGames" value="10" min="1" max="82" oninput="calculateInjuryImpact()"></div>
+                <div class="form-group"><label class="form-label">Player FPTS/Game</label><input type="number" class="form-input" id="injPlayerFpts" value="28.5" step="0.1" oninput="calculateInjuryImpact()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Fantasy points per game of the injured player.</div></div>
+                <div class="form-group"><label class="form-label">Team Total FPTS/Game</label><input type="number" class="form-input" id="injTeamFpts" value="110" step="0.1" oninput="calculateInjuryImpact()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Combined team fantasy output per game. NBA ~110, NFL ~25.</div></div>
+                <div class="form-group"><label class="form-label">Replacement Player FPTS/Game</label><input type="number" class="form-input" id="injReplaceFpts" value="12.0" step="0.1" oninput="calculateInjuryImpact()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Expected output from the backup filling in.</div></div>
+                <div class="form-group"><label class="form-label">Usage Rate %</label><input type="number" class="form-input" id="injUsage" value="30" min="0" max="100" step="0.1" oninput="calculateInjuryImpact()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">% of team possessions used. High-usage stars 28-35%.</div></div>
+                <div class="form-group"><label class="form-label">Games Missed</label><input type="number" class="form-input" id="injGames" value="10" min="1" max="82" oninput="calculateInjuryImpact()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Expected games missed. Minor: 3-5. Major: 15+.</div></div>
                 <div class="form-group"><label class="form-label">Teammates Boost %</label><input type="number" class="form-input" id="injBoost" value="5" min="0" max="30" step="0.5" oninput="calculateInjuryImpact()">
-                    <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">Usage redistributed to other players</div>
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Usage redistributed to other players. Typically 3-8%.</div>
                 </div>
             </div>
             <div id="injResult" style="margin-top:20px;"></div>
+            <details style="margin-top:16px;">
+                <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--accent);">How It Works</summary>
+                <div style="margin-top:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;line-height:1.6;">
+                    <strong>Injury Impact Model</strong> — Estimates team-level performance loss when a key player is absent.<br><br>
+                    <strong>Direct Loss:</strong> Player FPTS - Replacement FPTS<br>
+                    <strong>Teammate Boost:</strong> (Team FPTS - Player FPTS) x Boost%<br>
+                    <strong>Net Impact:</strong> Direct Loss - Teammate Boost (per game)<br>
+                    <strong>Season Impact:</strong> Net Impact x Games Missed<br><br>
+                    The model accounts for usage redistribution: when a star is out, remaining players absorb some of their touches, partially offsetting the loss.
+                </div>
+            </details>
         </div>`;
 }
 
@@ -5532,26 +5692,40 @@ function renderDraftValueCalculator() {
             <div class="card-title" style="margin-bottom:16px;">Draft Value Analyzer</div>
             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Compare a player's ADP against projected value to identify steals and reaches in fantasy drafts.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                <div class="form-group"><label class="form-label">Player ADP</label><input type="number" class="form-input" id="dvADP" value="25" step="1" oninput="calculateDraftValue()"></div>
-                <div class="form-group"><label class="form-label">Projected FPTS/Game</label><input type="number" class="form-input" id="dvProjFpts" value="22.0" step="0.1" oninput="calculateDraftValue()"></div>
+                <div class="form-group"><label class="form-label">Player ADP</label><input type="number" class="form-input" id="dvADP" value="25" step="1" oninput="calculateDraftValue()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Average Draft Position. Lower = drafted earlier. 1 = first pick.</div></div>
+                <div class="form-group"><label class="form-label">Projected FPTS/Game</label><input type="number" class="form-input" id="dvProjFpts" value="22.0" step="0.1" oninput="calculateDraftValue()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Expected fantasy points per game. Top players 25+.</div></div>
                 <div class="form-group"><label class="form-label">League Size</label>
                     <select class="form-select" id="dvLeagueSize" onchange="calculateDraftValue()">
                         <option value="8">8 Teams</option><option value="10" selected>10 Teams</option><option value="12">12 Teams</option><option value="14">14 Teams</option>
                     </select>
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">More teams = higher replacement level = more value in elite players.</div>
                 </div>
-                <div class="form-group"><label class="form-label">Roster Spots</label><input type="number" class="form-input" id="dvRoster" value="15" min="10" max="25" oninput="calculateDraftValue()"></div>
+                <div class="form-group"><label class="form-label">Roster Spots</label><input type="number" class="form-input" id="dvRoster" value="15" min="10" max="25" oninput="calculateDraftValue()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Total roster size per team. Standard: 13-16.</div></div>
                 <div class="form-group"><label class="form-label">Positional Scarcity</label>
                     <select class="form-select" id="dvScarcity" onchange="calculateDraftValue()">
                         <option value="1.0">Low (deep position)</option><option value="1.15" selected>Medium</option><option value="1.35">High (thin position)</option>
                     </select>
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Scarce positions (TE, C) get a value boost vs deep ones (WR, OF).</div>
                 </div>
                 <div class="form-group"><label class="form-label">Injury Risk</label>
                     <select class="form-select" id="dvInjury" onchange="calculateDraftValue()">
                         <option value="1.0">Low</option><option value="0.92" selected>Medium</option><option value="0.82">High</option>
                     </select>
+                    <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Discounts projected value. High risk = 18% reduction.</div>
                 </div>
             </div>
             <div id="dvResult" style="margin-top:20px;"></div>
+            <details style="margin-top:16px;">
+                <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--accent);">How It Works</summary>
+                <div style="margin-top:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;line-height:1.6;">
+                    <strong>Draft Value Analysis</strong> — Compares a player's projected value against what you should expect at their ADP.<br><br>
+                    <strong>VORP:</strong> (Projected FPTS - Replacement FPTS) x Injury Mult x Scarcity<br>
+                    <strong>Expected VORP at ADP:</strong> 35 - ADP x 0.3 (value decays with later picks)<br>
+                    <strong>Surplus:</strong> Actual VORP - Expected VORP. Positive = steal, negative = reach.<br>
+                    <strong>Fair ADP:</strong> (35 - VORP) / 0.3<br><br>
+                    A positive surplus means the player delivers more value than typical at that draft slot. Look for 5+ surplus for steals.
+                </div>
+            </details>
         </div>`;
 }
 
@@ -5623,14 +5797,26 @@ function renderHierarchicalCalculator() {
             <div class="card-title" style="margin-bottom:16px;">Hierarchical Sports Model</div>
             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Multi-level model decomposing performance into player talent, team system effects, and league-wide trends. Estimates partial pooling to separate signal from noise.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
-                <div class="form-group"><label class="form-label">Player Raw Stat</label><input type="number" class="form-input" id="hierPlayerStat" value="24.5" step="0.1" oninput="calculateHierarchical()"></div>
-                <div class="form-group"><label class="form-label">Team Avg at Position</label><input type="number" class="form-input" id="hierTeamAvg" value="18.0" step="0.1" oninput="calculateHierarchical()"></div>
-                <div class="form-group"><label class="form-label">League Avg at Position</label><input type="number" class="form-input" id="hierLeagueAvg" value="16.5" step="0.1" oninput="calculateHierarchical()"></div>
-                <div class="form-group"><label class="form-label">Games Played</label><input type="number" class="form-input" id="hierGames" value="35" min="1" max="82" oninput="calculateHierarchical()"></div>
-                <div class="form-group"><label class="form-label">Player Variance</label><input type="number" class="form-input" id="hierPlayerVar" value="6.0" step="0.1" oninput="calculateHierarchical()"></div>
-                <div class="form-group"><label class="form-label">Team System Boost %</label><input type="number" class="form-input" id="hierTeamBoost" value="8" min="-20" max="30" step="0.5" oninput="calculateHierarchical()"></div>
+                <div class="form-group"><label class="form-label">Player Raw Stat</label><input type="number" class="form-input" id="hierPlayerStat" value="24.5" step="0.1" oninput="calculateHierarchical()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Player's raw per-game stat (PPG, FPTS, etc.).</div></div>
+                <div class="form-group"><label class="form-label">Team Avg at Position</label><input type="number" class="form-input" id="hierTeamAvg" value="18.0" step="0.1" oninput="calculateHierarchical()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Average stat for this position on the player's team.</div></div>
+                <div class="form-group"><label class="form-label">League Avg at Position</label><input type="number" class="form-input" id="hierLeagueAvg" value="16.5" step="0.1" oninput="calculateHierarchical()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">League-wide average for this position. The baseline.</div></div>
+                <div class="form-group"><label class="form-label">Games Played</label><input type="number" class="form-input" id="hierGames" value="35" min="1" max="82" oninput="calculateHierarchical()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">More games = less shrinkage toward league mean.</div></div>
+                <div class="form-group"><label class="form-label">Player Variance</label><input type="number" class="form-input" id="hierPlayerVar" value="6.0" step="0.1" oninput="calculateHierarchical()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Game-to-game standard deviation. Higher = noisier signal.</div></div>
+                <div class="form-group"><label class="form-label">Team System Boost %</label><input type="number" class="form-input" id="hierTeamBoost" value="8" min="-20" max="30" step="0.5" oninput="calculateHierarchical()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">% of stats attributable to team system (pace, usage). Negative for bad systems.</div></div>
             </div>
             <div id="hierResult" style="margin-top:20px;"></div>
+            <details style="margin-top:16px;">
+                <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--accent);">How It Works</summary>
+                <div style="margin-top:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;line-height:1.6;">
+                    <strong>Hierarchical Model</strong> — Decomposes performance into player talent, team system, and noise using partial pooling.<br><br>
+                    <strong>Shrinkage:</strong> reliability = games / (games + 20). Small samples get regressed toward league mean.<br>
+                    <strong>Shrunk estimate:</strong> league_avg + reliability x (raw_stat - league_avg)<br>
+                    <strong>Team effect:</strong> team_avg - league_avg<br>
+                    <strong>System effect:</strong> raw_stat x team_boost%<br>
+                    <strong>True talent:</strong> Shrunk estimate minus team and system effects<br><br>
+                    This separates signal from noise. A player scoring 30 PPG in 5 games gets heavily regressed; one doing it over 60 games is trusted. Context-neutral removes team system inflation.
+                </div>
+            </details>
         </div>`;
 }
 
@@ -5713,17 +5899,27 @@ function renderTrackingMetricsCalculator() {
             <div class="card-title" style="margin-bottom:16px;">Player Tracking Metrics Analyzer</div>
             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Analyze NBA player tracking data — speed, distance, touches, and shot quality — to build a composite hustle + impact score.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
-                <div class="form-group"><label class="form-label">Avg Speed (mph)</label><input type="number" class="form-input" id="trkSpeed" value="4.5" step="0.1" oninput="calculateTracking()"></div>
-                <div class="form-group"><label class="form-label">Distance/Game (mi)</label><input type="number" class="form-input" id="trkDistance" value="2.6" step="0.1" oninput="calculateTracking()"></div>
-                <div class="form-group"><label class="form-label">Touches/Game</label><input type="number" class="form-input" id="trkTouches" value="65" step="1" oninput="calculateTracking()"></div>
-                <div class="form-group"><label class="form-label">Avg Touch Time (sec)</label><input type="number" class="form-input" id="trkTouchTime" value="2.8" step="0.1" oninput="calculateTracking()"></div>
-                <div class="form-group"><label class="form-label">Contested Shot %</label><input type="number" class="form-input" id="trkContested" value="42" min="0" max="100" step="1" oninput="calculateTracking()"></div>
-                <div class="form-group"><label class="form-label">Open Shot %</label><input type="number" class="form-input" id="trkOpen" value="38" min="0" max="100" step="1" oninput="calculateTracking()"></div>
-                <div class="form-group"><label class="form-label">Rebounds Chances/Game</label><input type="number" class="form-input" id="trkRebChances" value="12" step="0.1" oninput="calculateTracking()"></div>
-                <div class="form-group"><label class="form-label">Reb Chance Conversion %</label><input type="number" class="form-input" id="trkRebConv" value="55" min="0" max="100" step="1" oninput="calculateTracking()"></div>
-                <div class="form-group"><label class="form-label">Deflections/Game</label><input type="number" class="form-input" id="trkDeflections" value="3.2" step="0.1" oninput="calculateTracking()"></div>
+                <div class="form-group"><label class="form-label">Avg Speed (mph)</label><input type="number" class="form-input" id="trkSpeed" value="4.5" step="0.1" oninput="calculateTracking()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Average movement speed. NBA range: 3.5-5.5 mph.</div></div>
+                <div class="form-group"><label class="form-label">Distance/Game (mi)</label><input type="number" class="form-input" id="trkDistance" value="2.6" step="0.1" oninput="calculateTracking()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Total distance covered. NBA avg ~2.5 mi/game.</div></div>
+                <div class="form-group"><label class="form-label">Touches/Game</label><input type="number" class="form-input" id="trkTouches" value="65" step="1" oninput="calculateTracking()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Ball touches per game. Primary ball handlers 70-90.</div></div>
+                <div class="form-group"><label class="form-label">Avg Touch Time (sec)</label><input type="number" class="form-input" id="trkTouchTime" value="2.8" step="0.1" oninput="calculateTracking()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Seconds per touch. Lower = quicker decisions. Elite < 2.0s.</div></div>
+                <div class="form-group"><label class="form-label">Contested Shot %</label><input type="number" class="form-input" id="trkContested" value="42" min="0" max="100" step="1" oninput="calculateTracking()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">% of shots taken with a defender close. Higher = tougher shots.</div></div>
+                <div class="form-group"><label class="form-label">Open Shot %</label><input type="number" class="form-input" id="trkOpen" value="38" min="0" max="100" step="1" oninput="calculateTracking()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">% of shots taken wide open (6+ ft from defender).</div></div>
+                <div class="form-group"><label class="form-label">Rebounds Chances/Game</label><input type="number" class="form-input" id="trkRebChances" value="12" step="0.1" oninput="calculateTracking()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Rebound opportunities (within 3.5 ft of ball). Bigs: 12-15.</div></div>
+                <div class="form-group"><label class="form-label">Reb Chance Conversion %</label><input type="number" class="form-input" id="trkRebConv" value="55" min="0" max="100" step="1" oninput="calculateTracking()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">% of rebound chances secured. Elite rebounders 60%+.</div></div>
+                <div class="form-group"><label class="form-label">Deflections/Game</label><input type="number" class="form-input" id="trkDeflections" value="3.2" step="0.1" oninput="calculateTracking()"><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">Passes deflected per game. Hustle metric. Elite 3.5+.</div></div>
             </div>
             <div id="trkResult" style="margin-top:20px;"></div>
+            <details style="margin-top:16px;">
+                <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--accent);">How It Works</summary>
+                <div style="margin-top:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;line-height:1.6;">
+                    <strong>Player Tracking Composite</strong> — Combines NBA tracking data into offense and defense scores.<br><br>
+                    <strong>Offense Score:</strong> Touches(30%) + Quick Decisions(20%) + Shot Quality(25%) + Shot Difficulty(25%)<br>
+                    <strong>Defense Score:</strong> Hustle/Deflections(35%) + Rebound Efficiency(30%) + Speed(20%) + Distance(15%)<br>
+                    <strong>Overall Impact:</strong> (Offense + Defense) / 2, graded A+ through D<br><br>
+                    Each metric is normalized to a 0-100 scale based on NBA ranges. The composite reveals whether a player's impact comes from offense, defense, or hustle — insights that traditional box scores miss.
+                </div>
+            </details>
         </div>`;
 }
 

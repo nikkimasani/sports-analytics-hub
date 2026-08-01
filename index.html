@@ -6,52 +6,64 @@
     <title>StatVault — Sports Analytics & Fantasy Hub</title>
     <meta name="description" content="Advanced sports statistics, analytics, and fantasy draft assistant for NBA, NFL, MLB, and NCAA">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#f8f9fa">
+    <meta name="theme-color" content="#0B1622">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
     <style>
 /* ============================================================
    CSS VARIABLES & RESET
    ============================================================ */
 :root {
-    --bg-primary: #f8f9fa;
-    --bg-secondary: #ffffff;
-    --bg-card: #ffffff;
-    --bg-card-hover: #f8f8f8;
-    --bg-input: #f5f5f5;
-    --border: #e5e7eb;
-    --border-hover: #d1d5db;
-    --text-primary: #1a1a2e;
-    --text-secondary: rgba(0,0,0,0.7);
-    --text-muted: rgba(0,0,0,0.45);
+    /* Dark palette — The Huddle design system */
+    --night: #0B1622;
+    --night-2: #0F2233;
+    --card: #122436;
+    --chalk: #F1FAEE;
+    --chalk-dim: #B9C7D6;
+    --turf: #1B4332;
+    --turf-light: #52B788;
+    --amber: #FFB703;
+    --hash: #415A77;
+    --danger: #E63946;
+
+    --bg-primary: var(--night);
+    --bg-secondary: var(--night-2);
+    --bg-card: var(--card);
+    --bg-card-hover: #172d42;
+    --bg-input: #0e1e2e;
+    --border: rgba(65,90,119,0.4);
+    --border-hover: rgba(65,90,119,0.7);
+    --text-primary: var(--chalk);
+    --text-secondary: var(--chalk-dim);
+    --text-muted: rgba(185,199,214,0.5);
 
     /* Sport accent colors */
     --nba-color: #ff7e00;
-    --nba-glow: rgba(255, 126, 0, 0.1);
-    --nfl-color: #1a73e8;
-    --nfl-glow: rgba(26, 115, 232, 0.1);
-    --mlb-color: #c62828;
-    --mlb-glow: rgba(198, 40, 40, 0.1);
-    --ncaa-color: #2e7d32;
-    --ncaa-glow: rgba(46, 125, 50, 0.1);
+    --nba-glow: rgba(255, 126, 0, 0.12);
+    --nfl-color: #4a90d9;
+    --nfl-glow: rgba(74, 144, 217, 0.12);
+    --mlb-color: #e85555;
+    --mlb-glow: rgba(232, 85, 85, 0.12);
+    --ncaa-color: var(--turf-light);
+    --ncaa-glow: rgba(82, 183, 136, 0.12);
 
-    --accent: #ff7e00;
-    --accent-glow: rgba(255, 126, 0, 0.08);
-    --success: #2e7d32;
-    --warning: #e65100;
-    --danger: #c62828;
+    --accent: var(--amber);
+    --accent-glow: rgba(255, 183, 3, 0.1);
+    --success: var(--turf-light);
+    --warning: #e67e22;
+    /* --danger already defined above */
 
     --radius-sm: 6px;
-    --radius: 10px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
+    --radius: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
 
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-    --shadow: 0 4px 12px rgba(0,0,0,0.08);
-    --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+    --shadow: 0 4px 12px rgba(0,0,0,0.3);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.4);
 
-    --font-sans: 'Open Sans', -apple-system, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-sans: 'Inter', -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
 
     --sidebar-width: 260px;
     --header-height: 60px;
@@ -70,15 +82,15 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-a { color: var(--accent); text-decoration: none; }
+a { color: var(--amber); text-decoration: none; }
 button { cursor: pointer; font-family: inherit; border: none; background: none; color: inherit; }
-input, select, textarea { font-family: inherit; color: inherit; }
+input, select, textarea { font-family: inherit; color: var(--chalk); }
 
-/* Scrollbar */
+/* Scrollbar — dark */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #c4c4c4; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #999; }
+::-webkit-scrollbar-track { background: var(--night); }
+::-webkit-scrollbar-thumb { background: var(--hash); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #5a7a9a; }
 
 /* ============================================================
    LAYOUT
@@ -99,8 +111,8 @@ input, select, textarea { font-family: inherit; color: inherit; }
     align-items: center;
     justify-content: space-between;
     padding: 0 24px;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
+    background: var(--night-2);
+    border-bottom: 2px solid var(--hash);
     z-index: 100;
     position: sticky;
     top: 0;
@@ -110,16 +122,30 @@ input, select, textarea { font-family: inherit; color: inherit; }
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 1.25rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
+    font-family: 'Anton', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--chalk);
+}
+
+.header-brand .version-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--amber);
+    border: 1px solid var(--amber);
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    font-weight: 600;
 }
 
 .header-brand .logo-icon {
     width: 36px;
     height: 36px;
     border-radius: var(--radius);
-    background: linear-gradient(135deg, #ff7e00, #ff9a33);
+    background: linear-gradient(135deg, var(--turf), var(--turf-light));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -140,15 +166,17 @@ input, select, textarea { font-family: inherit; color: inherit; }
 .header-search input {
     width: 100%;
     padding: 8px 16px 8px 36px;
-    background: var(--bg-input);
+    background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     font-size: 0.87rem;
     outline: none;
     transition: border-color 0.2s;
+    color: var(--chalk);
 }
 
-.header-search input:focus { border-color: var(--accent); }
+.header-search input::placeholder { color: var(--chalk-dim); opacity: 0.5; }
+.header-search input:focus { border-color: var(--amber); }
 
 .header-search .search-icon {
     position: absolute;
@@ -165,29 +193,28 @@ input, select, textarea { font-family: inherit; color: inherit; }
 }
 
 .sport-pill {
-    padding: 5px 14px;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: 1px solid transparent;
-    transition: all 0.2s;
-    opacity: 0.6;
+    letter-spacing: 0.05em;
+    border: 1px solid var(--hash);
+    color: var(--chalk-dim);
+    transition: all 0.15s ease;
+    background: none;
 }
 
-.sport-pill:hover, .sport-pill.active { opacity: 1; }
-.sport-pill[data-sport="nba"] { background: var(--nba-glow); color: var(--nba-color); border-color: var(--nba-color); }
-.sport-pill[data-sport="nfl"] { background: var(--nfl-glow); color: var(--nfl-color); border-color: var(--nfl-color); }
-.sport-pill[data-sport="mlb"] { background: var(--mlb-glow); color: var(--mlb-color); border-color: var(--mlb-color); }
-.sport-pill[data-sport="ncaa"] { background: var(--ncaa-glow); color: var(--ncaa-color); border-color: var(--ncaa-color); }
+.sport-pill:hover { border-color: var(--turf-light); color: var(--chalk); }
+.sport-pill.active { background: var(--turf-light); border-color: var(--turf-light); color: var(--night); }
 
 /* ============================================================
    SIDEBAR
    ============================================================ */
 .sidebar {
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border);
+    background: var(--night-2);
+    border-right: 1px solid var(--hash);
     padding: 16px 0;
     overflow-y: auto;
     height: calc(100vh - var(--header-height));
@@ -199,11 +226,12 @@ input, select, textarea { font-family: inherit; color: inherit; }
 
 .sidebar-section-title {
     padding: 8px 20px 6px;
-    font-size: 0.68rem;
-    font-weight: 700;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    color: var(--hash);
 }
 
 .sidebar-item {
@@ -213,27 +241,27 @@ input, select, textarea { font-family: inherit; color: inherit; }
     padding: 9px 20px;
     font-size: 0.88rem;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--chalk-dim);
     transition: all 0.15s;
     cursor: pointer;
     border-left: 3px solid transparent;
 }
 
 .sidebar-item:hover {
-    background: rgba(0,0,0,0.06);
-    color: var(--text-primary);
+    background: rgba(65,90,119,0.15);
+    color: var(--chalk);
 }
 
 .sidebar-item.active {
-    color: var(--accent);
-    background: var(--accent-glow);
-    border-left-color: var(--accent);
+    color: var(--amber);
+    background: rgba(255,183,3,0.08);
+    border-left-color: var(--amber);
     font-weight: 600;
 }
 
 .sidebar-item .icon { font-size: 1.05rem; width: 22px; text-align: center; }
 
-.sidebar-divider { height: 1px; background: var(--border); margin: 12px 16px; }
+.sidebar-divider { height: 1px; background: var(--hash); margin: 12px 16px; opacity: 0.4; }
 
 /* ============================================================
    MAIN CONTENT
@@ -251,15 +279,15 @@ input, select, textarea { font-family: inherit; color: inherit; }
    CARDS
    ============================================================ */
 .card {
-    background: var(--bg-card);
+    background: var(--card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: 6px;
     padding: 24px;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .card:hover {
-    border-color: var(--border-hover);
+    border-color: var(--hash);
     box-shadow: var(--shadow);
 }
 
@@ -350,27 +378,28 @@ input, select, textarea { font-family: inherit; color: inherit; }
 .data-table thead th {
     padding: 10px 12px;
     text-align: left;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.06em;
+    color: var(--chalk-dim);
+    border-bottom: 1px solid var(--hash);
     position: sticky;
     top: 0;
-    background: var(--bg-card);
+    background: var(--card);
     cursor: pointer;
     user-select: none;
 }
 
-.data-table thead th:hover { color: var(--text-secondary); }
+.data-table thead th:hover { color: var(--amber); }
 
 .data-table tbody tr {
-    border-bottom: 1px solid rgba(0,0,0,0.06);
+    border-bottom: 1px solid var(--border);
     transition: background 0.15s;
 }
 
-.data-table tbody tr:hover { background: rgba(0,0,0,0.03); }
+.data-table tbody tr:hover { background: rgba(65,90,119,0.14); }
 
 .data-table td {
     padding: 10px 12px;
@@ -405,25 +434,26 @@ input, select, textarea { font-family: inherit; color: inherit; }
 
 .btn-primary {
     background: var(--accent);
-    color: white;
+    color: var(--night);
 }
 
-.btn-primary:hover { background: #e06800; box-shadow: 0 0 20px var(--accent-glow); }
+.btn-primary:hover { filter: brightness(1.08); box-shadow: 0 0 20px rgba(255,183,3,0.2); }
 
 .btn-secondary {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    background: none;
+    border: 1px solid var(--hash);
+    color: var(--chalk-dim);
 }
 
-.btn-secondary:hover { border-color: var(--border-hover); background: var(--bg-card-hover); }
+.btn-secondary:hover { border-color: var(--turf-light); color: var(--chalk); }
 
 .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
 .btn-lg { padding: 12px 28px; font-size: 0.95rem; }
 
-.btn-sport-nba { background: var(--nba-color); color: white; }
-.btn-sport-nfl { background: var(--nfl-color); color: white; }
-.btn-sport-mlb { background: var(--mlb-color); color: white; }
-.btn-sport-ncaa { background: var(--ncaa-color); color: white; }
+.btn-sport-nba { background: var(--nba-color); color: var(--night); }
+.btn-sport-nfl { background: var(--nfl-color); color: var(--night); }
+.btn-sport-mlb { background: var(--mlb-color); color: var(--night); }
+.btn-sport-ncaa { background: var(--ncaa-color); color: var(--night); }
 
 /* ============================================================
    TABS (within views)
@@ -432,7 +462,8 @@ input, select, textarea { font-family: inherit; color: inherit; }
     display: flex;
     gap: 2px;
     margin-bottom: 24px;
-    background: var(--bg-secondary);
+    background: var(--night-2);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 3px;
     width: fit-content;
@@ -440,15 +471,18 @@ input, select, textarea { font-family: inherit; color: inherit; }
 
 .view-tab {
     padding: 8px 20px;
-    font-size: 0.82rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
     font-weight: 600;
     border-radius: var(--radius-sm);
     transition: all 0.2s;
-    color: var(--text-muted);
+    color: var(--chalk-dim);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
-.view-tab:hover { color: var(--text-secondary); }
-.view-tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+.view-tab:hover { color: var(--chalk); }
+.view-tab.active { background: var(--card); color: var(--amber); box-shadow: var(--shadow-sm); }
 
 /* ============================================================
    FORM CONTROLS
@@ -468,17 +502,19 @@ input, select, textarea { font-family: inherit; color: inherit; }
 .form-input, .form-select {
     width: 100%;
     padding: 10px 14px;
-    background: var(--bg-input);
+    background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     font-size: 0.88rem;
+    color: var(--chalk);
     outline: none;
     transition: border-color 0.2s;
 }
 
-.form-input:focus, .form-select:focus { border-color: var(--accent); }
+.form-input::placeholder, .form-select::placeholder { color: var(--chalk-dim); opacity: 0.5; }
+.form-input:focus, .form-select:focus { border-color: var(--amber); }
 
-.form-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+.form-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23B9C7D6' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
 
 /* ============================================================
    BADGES & TAGS
@@ -486,28 +522,32 @@ input, select, textarea { font-family: inherit; color: inherit; }
 .badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.06em;
 }
 
-.badge-nba { background: var(--nba-glow); color: var(--nba-color); }
-.badge-nfl { background: var(--nfl-glow); color: var(--nfl-color); }
-.badge-mlb { background: var(--mlb-glow); color: var(--mlb-color); }
-.badge-ncaa { background: var(--ncaa-glow); color: var(--ncaa-color); }
+.badge-nba { background: var(--nba-glow); color: var(--nba-color); border: 1px solid var(--nba-color); }
+.badge-nfl { background: var(--nfl-glow); color: var(--nfl-color); border: 1px solid var(--nfl-color); }
+.badge-mlb { background: var(--mlb-glow); color: var(--mlb-color); border: 1px solid var(--mlb-color); }
+.badge-ncaa { background: var(--ncaa-glow); color: var(--ncaa-color); border: 1px solid var(--ncaa-color); }
+.badge-live { background: rgba(82,183,136,0.15); color: var(--turf-light); border: 1px solid var(--turf-light); }
+.badge-demo { background: rgba(255,183,3,0.12); color: var(--amber); border: 1px solid var(--amber); }
+.badge-snap { background: rgba(65,90,119,0.25); color: var(--chalk-dim); border: 1px solid var(--hash); }
 
 .position-tag {
     display: inline-block;
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: 3px;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     font-family: var(--font-mono);
-    background: rgba(0,0,0,0.06);
-    color: var(--text-secondary);
+    background: var(--hash);
+    color: var(--chalk-dim);
 }
 
 /* ============================================================
@@ -556,7 +596,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     border: 1px solid transparent;
 }
 
-.draft-player-card:hover { background: rgba(0,0,0,0.06); }
+.draft-player-card:hover { background: rgba(65,90,119,0.14); }
 .draft-player-card.selected { background: var(--accent-glow); border-color: var(--accent); }
 .draft-player-card.drafted { opacity: 0.35; pointer-events: none; }
 
@@ -648,7 +688,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     font-size: 0.85rem;
 }
 
-.pick-row.my-pick { background: var(--accent-glow); border: 1px solid rgba(99,102,241,0.3); }
+.pick-row.my-pick { background: rgba(255,183,3,0.1); border: 1px solid var(--amber); }
 
 .pick-number {
     font-family: var(--font-mono);
@@ -838,7 +878,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     justify-content: center;
     font-size: 2.5rem;
     font-weight: 900;
-    color: white;
+    color: var(--night);
     flex-shrink: 0;
 }
 
@@ -907,7 +947,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     align-items: center;
     justify-content: space-between;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
+    border-bottom: 1px solid var(--border);
 }
 
 .toggle-row:last-child { border-bottom: none; }
@@ -935,7 +975,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: white;
+    background: var(--chalk);
     transition: transform 0.2s;
 }
 
@@ -1056,17 +1096,17 @@ input, select, textarea { font-family: inherit; color: inherit; }
    ECONOMETRICS / MODELS
    ============================================================ */
 .model-card {
-    background: var(--bg-card);
+    background: var(--card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: 6px;
     padding: 20px;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .model-card:hover {
-    border-color: var(--accent);
-    box-shadow: 0 0 30px var(--accent-glow);
+    border-color: var(--amber);
+    box-shadow: 0 0 20px rgba(255,183,3,0.1);
 }
 
 .model-card .model-name {
@@ -1088,12 +1128,14 @@ input, select, textarea { font-family: inherit; color: inherit; }
 }
 
 .model-tag {
-    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
     padding: 2px 8px;
-    border-radius: 4px;
-    background: rgba(0,0,0,0.06);
-    color: var(--text-secondary);
+    border-radius: 3px;
+    background: rgba(65,90,119,0.3);
+    color: var(--chalk-dim);
     font-weight: 600;
+    letter-spacing: 0.04em;
 }
 
 /* ============================================================
@@ -1141,17 +1183,58 @@ input, select, textarea { font-family: inherit; color: inherit; }
     animation: pulse 1.5s ease-in-out infinite;
     margin-right: 4px;
 }
+/* ============================================================
+   THE HUDDLE COMMAND-CENTER DETAILS
+   ============================================================ */
+.ticker-wrap { grid-column:1 / -1; grid-row:1; background:var(--turf); border-bottom:2px solid var(--turf-light); overflow:hidden; white-space:nowrap; height:36px; display:flex; align-items:center; }
+.ticker-track { display:inline-block; min-width:max-content; padding-left:100%; font-family:var(--font-mono); font-size:.75rem; font-weight:600; letter-spacing:.02em; animation:scroll-left 38s linear infinite; }
+.ticker-track span { margin-right:48px; color:var(--chalk); }
+.ticker-track b { color:var(--amber); }
+@keyframes scroll-left { from { transform:translateX(0); } to { transform:translateX(-100%); } }
+.app-container { grid-template-rows:36px var(--header-height) 1fr; }
+.app-header { grid-row:2; }
+.sidebar, .main-content { grid-row:3; }
+.sidebar { height:calc(100vh - var(--header-height) - 36px); top:calc(var(--header-height) + 36px); }
+.main-content { height:calc(100vh - var(--header-height) - 36px); }
+.hash-divider { display:flex; align-items:center; gap:6px; margin:18px 0 22px; }
+.hash-divider .line { flex:1; height:1px; background:var(--hash); opacity:.8; }
+.hash-divider .ticks { display:flex; gap:5px; }
+.hash-divider .ticks i { width:2px; height:10px; background:var(--hash); display:block; }
+.card, .model-card, .stat-tile, .draft-queue, .draft-recommendations { border-radius:6px; }
+.card { padding:16px; }
+.data-table tbody tr { border-bottom-color:var(--border); }
+.data-table tbody tr:hover { background:rgba(65,90,119,.14); }
+.data-table td:not(:first-child) { color:var(--chalk); }
+.data-table .value, .data-table .highlight, .metric-highlight { color:var(--amber); }
+.btn { border-radius:4px; font-family:var(--font-mono); font-size:.75rem; letter-spacing:.03em; }
+.btn-primary { color:var(--night); }
+.btn-primary:hover { background:#ffd166; }
+.btn-secondary { color:var(--chalk-dim); border-color:var(--hash); }
+.btn-secondary:hover { color:var(--chalk); border-color:var(--chalk-dim); }
+.form-input, .form-select, .header-search input { color:var(--chalk); border-color:var(--border); }
+.form-select option { background:var(--card); color:var(--chalk); }
+.badge { font-family:var(--font-mono); font-size:.66rem; letter-spacing:.06em; border-radius:3px; }
+.badge.live, .badge-live { background:rgba(82,183,136,.15); color:var(--turf-light); border:1px solid var(--turf-light); }
+.badge.demo, .badge-demo { background:rgba(255,183,3,.12); color:var(--amber); border:1px solid var(--amber); }
+.badge.snap, .badge-snap { background:rgba(65,90,119,.25); color:var(--chalk-dim); border:1px solid var(--hash); }
+.position-tag, .model-tag { background:rgba(65,90,119,.22); color:var(--chalk-dim); }
+@media (max-width:900px) { .sidebar.mobile-open { top:calc(var(--header-height) + 36px); height:calc(100vh - var(--header-height) - 36px); } }
+@media (max-width:600px) { .ticker-track { font-size:.68rem; } }
     </style>
 </head>
 <body>
     <div class="app-container">
+        <div class="ticker-wrap" aria-label="Live scores ticker">
+            <div class="ticker-track" id="scoreTicker"><span><b>LIVE</b> Loading today&rsquo;s score summaries&hellip;</span></div>
+        </div>
         <!-- HEADER -->
         <header class="app-header">
             <div style="display:flex;align-items:center;gap:16px;">
                 <button class="mobile-nav-btn" onclick="toggleMobileNav()">☰</button>
                 <div class="header-brand">
                     <div class="logo-icon">⚡</div>
-                    StatVault
+                    Stat Vault
+                    <span class="version-tag">v2.0</span>
                 </div>
             </div>
             <div class="header-right">
@@ -1271,6 +1354,8 @@ input, select, textarea { font-family: inherit; color: inherit; }
                     <!-- Populated by JS -->
                 </div>
 
+                <div class="hash-divider" aria-hidden="true"><div class="line"></div><div class="ticks"><i></i><i></i><i></i></div><div class="line"></div></div>
+
                 <div class="card-grid card-grid-2" style="margin-bottom:24px;">
                     <div class="card">
                         <div class="card-header">
@@ -1287,6 +1372,8 @@ input, select, textarea { font-family: inherit; color: inherit; }
                         <div id="fantasyRisers"></div>
                     </div>
                 </div>
+
+                <div class="hash-divider" aria-hidden="true"><div class="line"></div><div class="ticks"><i></i><i></i><i></i></div><div class="line"></div></div>
 
                 <div class="card">
                     <div class="card-header">
@@ -1434,10 +1521,10 @@ input, select, textarea { font-family: inherit; color: inherit; }
                             <div class="card-title">🎯 Platform Connection</div>
                         </div>
                         <div style="display:flex;gap:12px;margin-bottom:16px;">
-                            <button class="btn btn-lg" style="flex:1;background:#7c3aed;color:white;" onclick="connectPlatform('yahoo')">
+                            <button class="btn btn-lg" style="flex:1;background:#7c3aed;color:var(--chalk);" onclick="connectPlatform('yahoo')">
                                 🏈 Connect Yahoo Fantasy
                             </button>
-                            <button class="btn btn-lg" style="flex:1;background:#dc2626;color:white;" onclick="connectPlatform('espn')">
+                            <button class="btn btn-lg" style="flex:1;background:#dc2626;color:var(--chalk);" onclick="connectPlatform('espn')">
                                 ⭐ Connect ESPN Fantasy
                             </button>
                         </div>
@@ -1771,6 +1858,7 @@ function setSport(sport) {
     document.querySelectorAll('.sport-pill').forEach(p => {
         p.classList.toggle('active', p.dataset.sport === sport);
     });
+    refreshScoreTicker();
     initView(State.currentView);
 }
 
@@ -1829,7 +1917,7 @@ function renderDashboard() {
     // Trending players
     const trending = [...players].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 5);
     document.getElementById('trendingPlayers').innerHTML = trending.map((p, i) => `
-        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < 4 ? 'border-bottom:1px solid rgba(0,0,0,0.06);' : ''}">
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < 4 ? 'border-bottom:1px solid var(--border);' : ''}">
             <span style="font-family:var(--font-mono);font-weight:700;color:var(--text-muted);width:24px;">${i + 1}</span>
             ${playerAvatarHtml(p, 32)}
             <div style="flex:1;">
@@ -1846,7 +1934,7 @@ function renderDashboard() {
     // Fantasy risers
     const risers = players.filter(p => p.trend === 'up').slice(0, 5);
     document.getElementById('fantasyRisers').innerHTML = risers.length ? risers.map((p, i) => `
-        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < risers.length - 1 ? 'border-bottom:1px solid rgba(0,0,0,0.06);' : ''}">
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < risers.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
             <span style="color:var(--success);font-size:1.1rem;">▲</span>
             ${playerAvatarHtml(p, 28)}
             <div style="flex:1;">
@@ -2097,7 +2185,7 @@ function renderLeaderboards() {
             <div class="card">
                 <div class="card-title" style="margin-bottom:12px;">${config.statCols[i]} Leaders</div>
                 ${sorted.map((p, j) => `
-                    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;${j < sorted.length - 1 ? 'border-bottom:1px solid rgba(0,0,0,0.06);' : ''}">
+                    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;${j < sorted.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
                         <span style="font-family:var(--font-mono);font-weight:700;color:${j === 0 ? 'var(--warning)' : 'var(--text-muted)'};width:20px;">${j + 1}</span>
                         ${playerAvatarHtml(p, 26)}
                         <div style="flex:1;font-weight:600;font-size:0.85rem;">${p.name}</div>
@@ -2420,7 +2508,7 @@ function renderResearch() {
         <div class="card" style="cursor:pointer;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                 <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--accent);">${r.field}</span>
-                <span class="badge" style="background:rgba(0,0,0,0.04);color:var(--text-muted);">${r.sport}</span>
+                <span class="badge badge-snap">${r.sport}</span>
             </div>
             <div class="card-title" style="margin-bottom:6px;font-size:1rem;">${r.title}</div>
             <p style="font-size:0.82rem;color:var(--text-secondary);line-height:1.5;margin-bottom:10px;">${r.desc}</p>
@@ -2446,7 +2534,7 @@ function renderTrends() {
             <div class="card">
                 <div class="card-title" style="margin-bottom:12px;">📈 Rising Players</div>
                 ${risers.map(p => `
-                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);">
                         <span style="color:var(--success);font-size:1.1rem;">▲</span>
                         ${playerAvatarHtml(p, 30)}
                         <div style="flex:1;">
@@ -2461,7 +2549,7 @@ function renderTrends() {
             <div class="card">
                 <div class="card-title" style="margin-bottom:12px;">📉 Falling Players</div>
                 ${fallers.length ? fallers.map(p => `
-                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);">
                         <span style="color:var(--danger);font-size:1.1rem;">▼</span>
                         ${playerAvatarHtml(p, 30)}
                         <div style="flex:1;">
@@ -2957,6 +3045,7 @@ async function renderLiveScores() {
     if (!sportGames.length) {
         sportGames = fallbackGames[sport] || [];
     }
+    updateScoreTicker(sportGames, sport);
 
     container.innerHTML = sportGames.length ? sportGames.map(g => `
         <div class="card" style="position:relative;overflow:hidden;">
@@ -2988,6 +3077,22 @@ async function renderLiveScores() {
 
     // Start auto-refresh if checked
     startLiveAutoRefresh();
+}
+
+function updateScoreTicker(games, sport = State.currentSport) {
+    const ticker = document.getElementById('scoreTicker');
+    if (!ticker) return;
+    const sportLabel = (sport || '').toUpperCase();
+    const summaries = games.length ? games.map(g => {
+        const state = g.status === 'live' ? `<b>LIVE</b> ${g.quarter || ''} ${g.time || ''}` : g.status === 'final' ? '<b>FINAL</b>' : (g.time || 'UP NEXT');
+        return `<span>${sportLabel} &middot; ${g.away} <b>${g.awayScore}</b> @ ${g.home} <b>${g.homeScore}</b> &middot; ${state}</span>`;
+    }).join('') : `<span><b>${sportLabel}</b> &middot; No live scores available right now &middot; Check back on game day</span>`;
+    ticker.innerHTML = summaries + summaries;
+}
+
+async function refreshScoreTicker() {
+    const games = await fetchESPNScoreboard(State.currentSport);
+    updateScoreTicker(games, State.currentSport);
 }
 
 let liveRefreshTimer = null;
@@ -3614,7 +3719,7 @@ function renderPlayerProfile() {
             <div class="card">
                 <div class="card-title" style="margin-bottom:12px;">Player Info</div>
                 ${bioItems.map(([l, v]) => `
-                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
                         <span style="color:var(--text-muted);font-size:0.85rem;">${l}</span>
                         <span style="font-weight:600;font-size:0.85rem;">${v}</span>
                     </div>
@@ -4519,10 +4624,10 @@ function calculateHierarchical() {
         <div style="margin-bottom:16px;">
             <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;">Variance Decomposition</div>
             <div style="display:flex;height:28px;border-radius:var(--radius);overflow:hidden;font-size:0.7rem;font-weight:700;">
-                <div style="flex:${Math.abs(leagueAvg)};background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;">League ${leagueAvg.toFixed(1)}</div>
-                <div style="flex:${Math.max(0.5,Math.abs(teamEffect))};background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;">Team ${teamEffect >= 0 ? '+' : ''}${teamEffect.toFixed(1)}</div>
-                <div style="flex:${Math.max(0.5,Math.abs(playerTalent))};background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;">Talent ${playerTalent >= 0 ? '+' : ''}${playerTalent.toFixed(1)}</div>
-                <div style="flex:${Math.max(0.5,Math.abs(residual))};background:var(--text-muted);color:#fff;display:flex;align-items:center;justify-content:center;">Noise ${residual >= 0 ? '+' : ''}${residual.toFixed(1)}</div>
+                <div style="flex:${Math.abs(leagueAvg)};background:var(--accent);color:var(--night);display:flex;align-items:center;justify-content:center;">League ${leagueAvg.toFixed(1)}</div>
+                <div style="flex:${Math.max(0.5,Math.abs(teamEffect))};background:#f59e0b;color:var(--night);display:flex;align-items:center;justify-content:center;">Team ${teamEffect >= 0 ? '+' : ''}${teamEffect.toFixed(1)}</div>
+                <div style="flex:${Math.max(0.5,Math.abs(playerTalent))};background:var(--success);color:var(--night);display:flex;align-items:center;justify-content:center;">Talent ${playerTalent >= 0 ? '+' : ''}${playerTalent.toFixed(1)}</div>
+                <div style="flex:${Math.max(0.5,Math.abs(residual))};background:var(--text-muted);color:var(--night);display:flex;align-items:center;justify-content:center;">Noise ${residual >= 0 ? '+' : ''}${residual.toFixed(1)}</div>
             </div>
         </div>
         <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;color:var(--text-secondary);">
@@ -4584,7 +4689,7 @@ function calculateTracking() {
     const gradeColor = overallImpact >= 70 ? 'var(--success)' : overallImpact >= 50 ? 'var(--warning)' : 'var(--danger)';
 
     function bar(label, value, color) {
-        return `<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px;"><span>${label}</span><span style="font-weight:700;">${value.toFixed(0)}</span></div><div style="height:6px;background:rgba(0,0,0,0.06);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${Math.min(100, value)}%;background:${color};border-radius:3px;transition:width 0.3s;"></div></div></div>`;
+        return `<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px;"><span>${label}</span><span style="font-weight:700;">${value.toFixed(0)}</span></div><div style="height:6px;background:rgba(65,90,119,0.22);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${Math.min(100, value)}%;background:${color};border-radius:3px;transition:width 0.3s;"></div></div></div>`;
     }
 
     document.getElementById('trkResult').innerHTML = `
@@ -4643,6 +4748,7 @@ async function fetchLiveOdds(sport) {
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
     renderDashboard();
+    refreshScoreTicker();
     // Pre-fetch ESPN headshots for current sport
     fetchESPNTeams(State.currentSport).then(teams => {
         const first5 = teams.slice(0, 5);

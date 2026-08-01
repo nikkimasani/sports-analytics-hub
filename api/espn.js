@@ -14,7 +14,7 @@ const https = require('https');
 
 const VALID_SPORTS = ['basketball', 'football', 'baseball'];
 const VALID_LEAGUES = ['nba', 'nfl', 'mlb', 'college-football', 'mens-college-basketball'];
-const VALID_ENDPOINTS = ['athletes', 'scoreboard', 'teams', 'standings', 'allteams'];
+const VALID_ENDPOINTS = ['athletes', 'scoreboard', 'teams', 'standings', 'allteams', 'athlete-stats'];
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -54,6 +54,11 @@ function buildEspnUrl(sport, league, endpoint, query) {
     return `${base}/${sport}/${league}/teams/${query.team}/roster`;
   }
 
+  // Individual athlete stats: /sports/{sport}/{league}/athletes/{athleteId}
+  if (endpoint === 'athlete-stats' && query.athleteId) {
+    return `${base}/${sport}/${league}/athletes/${query.athleteId}`;
+  }
+
   // All-teams helper: fetch the teams list, return just IDs + names
   if (endpoint === 'allteams') {
     const params = new URLSearchParams({ limit: '200' });
@@ -87,7 +92,7 @@ module.exports = async (req, res) => {
     return res.end(JSON.stringify({ error: 'Method not allowed' }));
   }
 
-  const { sport, league, endpoint, team, page, limit } = req.query || {};
+  const { sport, league, endpoint, team, page, limit, athleteId } = req.query || {};
 
   // --- Validation ---
   if (!sport || !league || !endpoint) {
@@ -122,8 +127,15 @@ module.exports = async (req, res) => {
     );
   }
 
+  if (endpoint === 'athlete-stats' && !req.query.athleteId) {
+    res.writeHead(400, { ...CORS_HEADERS, 'Content-Type': 'application/json' });
+    return res.end(
+      JSON.stringify({ error: 'athlete-stats endpoint requires an "athleteId" query param' })
+    );
+  }
+
   // --- Build URL & fetch ---
-  const url = buildEspnUrl(sport, league, endpoint, { team, page, limit });
+  const url = buildEspnUrl(sport, league, endpoint, { team, page, limit, athleteId });
   const cacheSec = getCacheSeconds(endpoint);
 
   try {

@@ -1962,7 +1962,7 @@ function renderTeamStats() {
                 <td>${t.players.length}</td>
                 <td>${(t.totalFpts / t.players.length).toFixed(1)}</td>
                 <td style="font-weight:700;">${t.totalFpts.toFixed(1)}</td>
-                <td>${top?.name || '—'}</td>
+                <td>${top ? `<div style="display:flex;align-items:center;gap:6px;">${playerAvatarHtml(top, 24)}${top.name}</div>` : '—'}</td>
             </tr>
         `;
     }).join('');
@@ -3717,6 +3717,7 @@ async function importESPNPlayers(sport) {
 
     let imported = 0;
     const existing = new Set((PLAYERS[sport] || []).map(p => p.name.toLowerCase()));
+    const newPlayers = [];
 
     // Fetch rosters for all teams (batched)
     const batchSize = 5;
@@ -3742,13 +3743,93 @@ async function importESPNPlayers(sport) {
                 };
                 if (!PLAYERS[sport]) PLAYERS[sport] = [];
                 PLAYERS[sport].push(newPlayer);
+                newPlayers.push(newPlayer);
                 imported++;
             });
         }));
     }
 
-    showToast(`Imported ${imported} players from ESPN for ${SPORT_CONFIG[sport]?.label || sport}`, 'success');
+    showToast(`Imported ${imported} players. Enriching stats...`, 'info');
     initView(State.currentView);
+
+    // Enrich stats in background (batch athlete-stats calls)
+    enrichESPNStats(sport, newPlayers);
+}
+
+async function enrichESPNStats(sport, players) {
+    const sportMap = { nba: {sport:'basketball',league:'nba'}, nfl: {sport:'football',league:'nfl'}, mlb: {sport:'baseball',league:'mlb'} };
+    const m = sportMap[sport];
+    if (!m) return;
+
+    let enriched = 0;
+    const batchSize = 8;
+    const toEnrich = players.filter(p => p.espnId).slice(0, 60);
+
+    for (let i = 0; i < toEnrich.length; i += batchSize) {
+        const batch = toEnrich.slice(i, i + batchSize);
+        await Promise.all(batch.map(async p => {
+            try {
+                const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=athlete-stats&athleteId=${p.espnId}`);
+                const data = await res.json();
+                const stats = extractESPNStats(sport, data);
+                if (stats) {
+                    Object.assign(p, stats);
+                    enriched++;
+                }
+            } catch(e) { /* skip failed lookups */ }
+        }));
+    }
+
+    if (enriched > 0) {
+        showToast(`Enriched ${enriched} players with ESPN stats`, 'success');
+        initView(State.currentView);
+    }
+}
+
+function extractESPNStats(sport, data) {
+    if (!data) return null;
+    const cats = data.statistics;
+    if (!cats || !cats.length) return null;
+
+    // ESPN returns stat categories; extract the season totals/averages
+    const statMap = {};
+    for (const cat of cats) {
+        const names = cat.names || cat.labels || [];
+        const values = cat.stats || cat.values || [];
+        const displayNames = cat.displayNames || names;
+        names.forEach((n, idx) => { statMap[n.toLowerCase()] = parseFloat(values[idx]) || 0; });
+        displayNames.forEach((n, idx) => { statMap[n.toLowerCase()] = parseFloat(values[idx]) || 0; });
+    }
+
+    if (sport === 'nba') {
+        const ppg = statMap['pts'] || statMap['points'] || statMap['avgpoints'] || 0;
+        const rpg = statMap['reb'] || statMap['rebounds'] || statMap['avgrebound'] || 0;
+        const apg = statMap['ast'] || statMap['assists'] || statMap['avgassists'] || 0;
+        const fgPct = statMap['fg%'] || statMap['fieldgoalpct'] || 0;
+        const fpts = ppg + rpg * 1.2 + apg * 1.5;
+        if (ppg === 0 && rpg === 0) return null;
+        return { ppg: +ppg.toFixed(1), rpg: +rpg.toFixed(1), apg: +apg.toFixed(1), per: +(fgPct || 0).toFixed(3), fantasyPts: +fpts.toFixed(1), trend: fpts > 25 ? 'up' : fpts < 12 ? 'down' : 'stable' };
+    }
+    if (sport === 'nfl') {
+        const passYds = statMap['passyds'] || statMap['passingyards'] || 0;
+        const rushYds = statMap['rushyds'] || statMap['rushingyards'] || 0;
+        const tds = statMap['passtd'] || statMap['passingtouchdowns'] || 0;
+        const rec = statMap['rec'] || statMap['receptions'] || 0;
+        const recYds = statMap['recyds'] || statMap['receivingyards'] || 0;
+        const fpts = passYds * 0.04 + rushYds * 0.1 + tds * 4 + rec * 1 + recYds * 0.1;
+        if (passYds === 0 && rushYds === 0 && rec === 0) return null;
+        return { passYds, rushYds, td: tds, rec, fantasyPts: +fpts.toFixed(1), trend: fpts > 20 ? 'up' : fpts < 8 ? 'down' : 'stable' };
+    }
+    if (sport === 'mlb') {
+        const avg = statMap['avg'] || statMap['battingaverage'] || 0;
+        const hr = statMap['hr'] || statMap['homeruns'] || 0;
+        const rbi = statMap['rbi'] || 0;
+        const sb = statMap['sb'] || statMap['stolenbases'] || 0;
+        const fpts = hr * 4 + rbi * 1 + sb * 2 + avg * 20;
+        if (avg === 0 && hr === 0 && rbi === 0) return null;
+        return { avg: +avg.toFixed(3), hr, rbi, sb, fantasyPts: +fpts.toFixed(1), trend: fpts > 15 ? 'up' : fpts < 5 ? 'down' : 'stable' };
+    }
+    return null;
 }
 
 function getHeadshot(playerName) {

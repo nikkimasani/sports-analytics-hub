@@ -6,7 +6,7 @@
     <title>StatVault — Sports Analytics & Fantasy Hub</title>
     <meta name="description" content="Advanced sports statistics, analytics, and fantasy draft assistant for NBA, NFL, MLB, and NCAA">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0a0e1a">
+    <meta name="theme-color" content="#f8f9fa">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -408,7 +408,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     color: white;
 }
 
-.btn-primary:hover { background: #5558e6; box-shadow: 0 0 20px var(--accent-glow); }
+.btn-primary:hover { background: #e06800; box-shadow: 0 0 20px var(--accent-glow); }
 
 .btn-secondary {
     background: var(--bg-card);
@@ -506,7 +506,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     font-size: 0.72rem;
     font-weight: 700;
     font-family: var(--font-mono);
-    background: rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.06);
     color: var(--text-secondary);
 }
 
@@ -684,7 +684,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     border-radius: var(--radius);
     border: 1px solid var(--border);
     margin-bottom: 10px;
-    background: rgba(255,255,255,0.01);
+    background: var(--bg-card);
 }
 
 .rec-label {
@@ -1003,7 +1003,19 @@ input, select, textarea { font-family: inherit; color: inherit; }
     .sport-pills { display: none; }
     .header-search { width: 140px; }
     .card-grid-4, .card-grid-2 { grid-template-columns: 1fr; }
-    .main-content { padding: 16px; }
+    .card-grid-3 { grid-template-columns: 1fr; }
+    .main-content { padding: 12px; }
+    .card { padding: 16px; }
+    .player-hero { padding: 20px; gap: 16px; }
+    .player-avatar { width: 72px !important; height: 72px !important; font-size: 1.5rem !important; }
+    .player-headline h1 { font-size: 1.4rem; }
+    .stat-tile .value { font-size: 1.5rem; }
+    .draft-board { grid-template-columns: 1fr; }
+    .view-tabs { flex-wrap: wrap; }
+    .data-table { font-size: 0.78rem; }
+    .data-table td, .data-table thead th { padding: 6px 8px; }
+    .model-card { padding: 14px; }
+    .btn-lg { padding: 10px 20px; font-size: 0.85rem; }
 }
 
 /* ============================================================
@@ -1079,9 +1091,55 @@ input, select, textarea { font-family: inherit; color: inherit; }
     font-size: 0.68rem;
     padding: 2px 8px;
     border-radius: 4px;
-    background: rgba(0,0,0,0.04);
-    color: var(--text-muted);
+    background: rgba(0,0,0,0.06);
+    color: var(--text-secondary);
     font-weight: 600;
+}
+
+/* ============================================================
+   PLAYER HEADSHOT
+   ============================================================ */
+.player-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.player-avatar.has-img {
+    background: var(--bg-input);
+    padding: 0;
+    overflow: hidden;
+}
+
+.headshot-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--bg-input);
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   SPARKLINE CANVAS
+   ============================================================ */
+.sparkline {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* ============================================================
+   LIVE INDICATOR
+   ============================================================ */
+.live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    animation: pulse 1.5s ease-in-out infinite;
+    margin-right: 4px;
 }
     </style>
 </head>
@@ -1268,6 +1326,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
                         <option value="2024-25">2024-25</option>
                         <option value="2023-24">2023-24</option>
                     </select>
+                    <button class="btn btn-primary btn-sm" onclick="importESPNPlayers(State.currentSport)" title="Fetch live rosters from ESPN">⚡ Import ESPN Rosters</button>
                 </div>
 
                 <div class="card">
@@ -1596,7 +1655,7 @@ const State = {
     fantasyPlatform: null,
     settings: {
         platform: 'yahoo',
-        darkMode: true,
+        darkMode: false,
         notifications: true,
         scoring: 'standard',
     },
@@ -1765,8 +1824,9 @@ function renderDashboard() {
                 <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
                 <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
             </div>
-            <div style="font-family:var(--font-mono);font-weight:700;${p.trend === 'up' ? 'color:var(--success)' : p.trend === 'down' ? 'color:var(--danger)' : 'color:var(--text-secondary)'}">
-                ${p.trend === 'up' ? '▲' : p.trend === 'down' ? '▼' : '—'} ${p.fantasyPts?.toFixed(1) || '—'}
+            <div style="display:flex;align-items:center;gap:8px;">
+                ${sparklineHtml(p, 50, 22)}
+                <span style="font-family:var(--font-mono);font-weight:700;${p.trend === 'up' ? 'color:var(--success)' : p.trend === 'down' ? 'color:var(--danger)' : 'color:var(--text-secondary)'}">${p.fantasyPts?.toFixed(1) || '—'}</span>
             </div>
         </div>
     `).join('');
@@ -1945,14 +2005,14 @@ function runComparison() {
         <div class="card">
             <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:24px;margin-bottom:24px;">
                 <div style="text-align:center;">
-                    <div class="player-avatar" style="width:72px;height:72px;font-size:1.5rem;margin:0 auto 8px;">${p1.name[0]}</div>
+                    <div style="margin:0 auto 8px;">${playerAvatarHtml(p1, 72)}</div>
                     <div style="font-weight:800;font-size:1.1rem;">${p1.name}</div>
                     <div style="color:var(--text-muted);font-size:0.85rem;">${p1.team} · ${p1.pos}</div>
                     <div style="font-family:var(--font-mono);font-weight:700;color:var(--success);margin-top:4px;">${p1.fantasyPts?.toFixed(1)} FPTS</div>
                 </div>
                 <div style="font-size:2rem;font-weight:900;color:var(--text-muted);align-self:center;">VS</div>
                 <div style="text-align:center;">
-                    <div class="player-avatar" style="width:72px;height:72px;font-size:1.5rem;margin:0 auto 8px;background:linear-gradient(135deg,var(--nba-color),#f59e0b);">${p2.name[0]}</div>
+                    <div style="margin:0 auto 8px;">${playerAvatarHtml(p2, 72, 'var(--nba-color), #f59e0b')}</div>
                     <div style="font-weight:800;font-size:1.1rem;">${p2.name}</div>
                     <div style="color:var(--text-muted);font-size:0.85rem;">${p2.team} · ${p2.pos}</div>
                     <div style="font-family:var(--font-mono);font-weight:700;color:var(--success);margin-top:4px;">${p2.fantasyPts?.toFixed(1)} FPTS</div>
@@ -2075,6 +2135,12 @@ function openModelTool(modelName) {
         toolHtml = renderFantasyOptimizer();
     } else if (modelName === 'Spread Predictor' || modelName === 'Win Probability Model') {
         toolHtml = renderPoissonPredictor();
+    } else if (modelName === 'RAPTOR Rating') {
+        toolHtml = renderRaptorCalculator();
+    } else if (modelName === 'WAR Calculator') {
+        toolHtml = renderWARCalculator();
+    } else if (modelName === 'EPA/Play Model') {
+        toolHtml = renderEPACalculator();
     } else {
         toolHtml = `<div class="card" style="margin-top:20px;text-align:center;padding:40px;" id="modelToolPanel">
             <div style="font-size:2rem;margin-bottom:12px;">🔧</div>
@@ -2095,6 +2161,9 @@ function openModelTool(modelName) {
     // Trigger initial calculation
     if (modelName === 'Elo Rating System') calculateElo();
     if (modelName === 'Spread Predictor' || modelName === 'Win Probability Model') calculatePoisson();
+    if (modelName === 'RAPTOR Rating') calculateRaptor();
+    if (modelName === 'WAR Calculator') calculateWAR();
+    if (modelName === 'EPA/Play Model') calculateEPA();
 }
 
 function renderEloCalculator() {
@@ -3072,8 +3141,36 @@ function renderProjections() {
 /* ============================================================
    BETTING MODELS
    ============================================================ */
-function renderBettingModels() {
+async function renderBettingModels() {
     const sport = State.currentSport;
+    const container = document.getElementById('bettingContainer');
+    container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Loading odds...</div></div>';
+
+    // Try live odds
+    const liveOdds = await fetchLiveOdds(sport);
+    if (liveOdds.length) {
+        const liveRows = liveOdds.slice(0, 10).map(ev => {
+            const bk = (ev.bookmakers || [])[0];
+            const h2h = bk?.markets?.find(m => m.key === 'h2h');
+            const spreads = bk?.markets?.find(m => m.key === 'spreads');
+            const totals = bk?.markets?.find(m => m.key === 'totals');
+            const home = ev.home_team || '?'; const away = ev.away_team || '?';
+            return `<tr>
+                <td style="font-family:var(--font-sans);font-weight:600;">${away} @ ${home}</td>
+                <td>${spreads?.outcomes?.[0]?.point || '—'}</td>
+                <td>${totals?.outcomes?.[0]?.point || '—'}</td>
+                <td>${h2h?.outcomes?.[0]?.price || '—'} / ${h2h?.outcomes?.[1]?.price || '—'}</td>
+                <td style="font-size:0.75rem;color:var(--text-muted);">${bk?.title || '—'}</td>
+            </tr>`;
+        }).join('');
+        container.innerHTML = `<div class="card" style="margin-bottom:20px;">
+            <div class="card-header"><div class="card-title">💰 Live Odds</div><span class="badge" style="background:rgba(16,185,129,0.15);color:var(--success);">LIVE</span></div>
+            <table class="data-table"><thead><tr><th>Matchup</th><th>Spread</th><th>O/U</th><th>Moneyline</th><th>Book</th></tr></thead>
+            <tbody>${liveRows}</tbody></table></div>`;
+        return;
+    }
+
+    // Fallback to hardcoded
     const games = {
         nba: [
             { away: 'BOS', home: 'MIL', spread: -3.5, total: 224.5, ml: -165, modelSpread: -4.2, modelTotal: 221.8, edge: 'Spread' },
@@ -3158,7 +3255,7 @@ function renderSettings() {
             <div class="toggle-row">
                 <div>
                     <div class="toggle-label">Dark Mode</div>
-                    <div class="toggle-desc">Use dark theme (recommended)</div>
+                    <div class="toggle-desc">Switch to dark theme</div>
                 </div>
                 <div class="toggle-switch ${State.settings.darkMode ? 'active' : ''}" onclick="this.classList.toggle('active');State.settings.darkMode=this.classList.contains('active');"></div>
             </div>
@@ -3383,7 +3480,7 @@ function renderPlayerProfile() {
     document.getElementById('profileDisplay').innerHTML = `
         <!-- HERO -->
         <div class="player-hero">
-            <div class="player-avatar" style="background:linear-gradient(135deg, ${config.color}, #ff9a33);">${p.name.split(' ').map(n=>n[0]).join('')}</div>
+            ${playerAvatarHtml(p, 100, config.color + ', #ff9a33')}
             <div class="player-headline" style="flex:1;">
                 <h1>${p.name}</h1>
                 <div class="team-pos">${p.team} · <span class="position-tag">${p.pos}</span> · <span class="badge badge-${sport}">${config.label}</span>
@@ -3395,6 +3492,7 @@ function renderPlayerProfile() {
                     <div class="player-quick-stat"><div class="qs-value">#${posRank}</div><div class="qs-label">${p.pos} Rank</div></div>
                     <div class="player-quick-stat"><div class="qs-value">${p.adp || '—'}</div><div class="qs-label">ADP</div></div>
                     <div class="player-quick-stat"><div class="qs-value" style="color:${p.trend==='up'?'var(--success)':p.trend==='down'?'var(--danger)':'var(--text-muted)'};">${p.trend === 'up' ? '▲ Rising' : p.trend === 'down' ? '▼ Falling' : '— Stable'}</div><div class="qs-label">Trend</div></div>
+                    <div class="player-quick-stat"><div style="margin-bottom:2px;">${sparklineHtml(p, 100, 32)}</div><div class="qs-label">Performance</div></div>
                 </div>
             </div>
         </div>
@@ -3514,10 +3612,421 @@ style.textContent = `
 document.head.appendChild(style);
 
 /* ============================================================
+   ESPN DYNAMIC PLAYER FETCHING
+   ============================================================ */
+const ESPN_CACHE = {};
+const ESPN_HEADSHOTS = {};
+
+async function fetchESPNTeams(sport) {
+    const sportMap = { nba: {sport:'basketball',league:'nba'}, nfl: {sport:'football',league:'nfl'}, mlb: {sport:'baseball',league:'mlb'} };
+    const m = sportMap[sport];
+    if (!m) return [];
+    const key = `teams_${sport}`;
+    if (ESPN_CACHE[key]) return ESPN_CACHE[key];
+    try {
+        const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=allteams`);
+        const data = await res.json();
+        ESPN_CACHE[key] = data.teams || [];
+        return ESPN_CACHE[key];
+    } catch(e) { return []; }
+}
+
+async function fetchESPNRoster(sport, teamId) {
+    const sportMap = { nba: {sport:'basketball',league:'nba'}, nfl: {sport:'football',league:'nfl'}, mlb: {sport:'baseball',league:'mlb'} };
+    const m = sportMap[sport];
+    if (!m) return [];
+    const key = `roster_${sport}_${teamId}`;
+    if (ESPN_CACHE[key]) return ESPN_CACHE[key];
+    try {
+        const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=athletes&team=${teamId}`);
+        const data = await res.json();
+        const athletes = (data.athletes || []).flatMap(group => group.items || []);
+        athletes.forEach(a => {
+            if (a.headshot?.href || a.headshot) {
+                ESPN_HEADSHOTS[a.displayName?.toLowerCase()] = a.headshot?.href || a.headshot;
+            }
+        });
+        ESPN_CACHE[key] = athletes;
+        return athletes;
+    } catch(e) { return []; }
+}
+
+async function importESPNPlayers(sport) {
+    showToast('Fetching live rosters from ESPN...', 'info');
+    const teams = await fetchESPNTeams(sport);
+    if (!teams.length) { showToast('Could not reach ESPN API', 'error'); return; }
+
+    let imported = 0;
+    const existing = new Set((PLAYERS[sport] || []).map(p => p.name.toLowerCase()));
+
+    // Fetch rosters for all teams (batched)
+    const batchSize = 5;
+    for (let i = 0; i < teams.length; i += batchSize) {
+        const batch = teams.slice(i, i + batchSize);
+        await Promise.all(batch.map(async t => {
+            const athletes = await fetchESPNRoster(sport, t.id);
+            athletes.forEach(a => {
+                const name = a.displayName || a.fullName;
+                if (!name || existing.has(name.toLowerCase())) return;
+                existing.add(name.toLowerCase());
+                const pos = a.position?.abbreviation || '?';
+                const newPlayer = {
+                    id: 10000 + Math.floor(Math.random() * 90000),
+                    name,
+                    team: t.abbreviation || t.shortName || t.name,
+                    pos,
+                    fantasyPts: 0,
+                    trend: 'stable',
+                    adp: 999,
+                    espnId: a.id,
+                    headshot: a.headshot?.href || null,
+                };
+                if (!PLAYERS[sport]) PLAYERS[sport] = [];
+                PLAYERS[sport].push(newPlayer);
+                imported++;
+            });
+        }));
+    }
+
+    showToast(`Imported ${imported} players from ESPN for ${SPORT_CONFIG[sport]?.label || sport}`, 'success');
+    initView(State.currentView);
+}
+
+function getHeadshot(playerName) {
+    if (!playerName) return null;
+    const cached = ESPN_HEADSHOTS[playerName.toLowerCase()];
+    if (cached) return cached;
+    // Construct ESPN headshot URL from name (common pattern)
+    const slug = playerName.toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, '-');
+    return null; // Only return confirmed headshots
+}
+
+function playerAvatarHtml(player, size, gradientColors) {
+    const sz = size || 72;
+    const grad = gradientColors || 'var(--accent), #ff9a33';
+    const hs = player.headshot || getHeadshot(player.name);
+    if (hs) {
+        return `<img src="${hs}" alt="${player.name}" style="width:${sz}px;height:${sz}px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="player-avatar" style="width:${sz}px;height:${sz}px;font-size:${sz*0.35}px;display:none;background:linear-gradient(135deg,${grad});">${player.name.split(' ').map(n=>n[0]).join('')}</div>`;
+    }
+    return `<div class="player-avatar" style="width:${sz}px;height:${sz}px;font-size:${sz*0.35}px;background:linear-gradient(135deg,${grad});">${player.name.split(' ').map(n=>n[0]).join('')}</div>`;
+}
+
+/* ============================================================
+   CANVAS SPARKLINE MINI-CHARTS
+   ============================================================ */
+function generateTrendData(player, points) {
+    const n = points || 10;
+    const base = player.fantasyPts || 20;
+    const data = [];
+    let val = base * 0.9;
+    for (let i = 0; i < n; i++) {
+        val += (Math.random() - 0.45) * (base * 0.15);
+        if (player.trend === 'up') val += base * 0.02;
+        if (player.trend === 'down') val -= base * 0.02;
+        val = Math.max(base * 0.5, Math.min(base * 1.4, val));
+        data.push(val);
+    }
+    if (player.trend === 'up') data[n-1] = Math.max(data[n-1], base * 1.05);
+    if (player.trend === 'down') data[n-1] = Math.min(data[n-1], base * 0.9);
+    return data;
+}
+
+function drawSparkline(canvasId, data, color) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.offsetWidth * 2;
+    const h = canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const dw = canvas.offsetWidth;
+    const dh = canvas.offsetHeight;
+
+    const min = Math.min(...data) * 0.95;
+    const max = Math.max(...data) * 1.05;
+    const range = max - min || 1;
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, 0, 0, dh);
+    grad.addColorStop(0, color + '30');
+    grad.addColorStop(1, color + '05');
+
+    ctx.beginPath();
+    ctx.moveTo(0, dh);
+    data.forEach((v, i) => {
+        const x = (i / (data.length - 1)) * dw;
+        const y = dh - ((v - min) / range) * (dh - 4);
+        if (i === 0) ctx.lineTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.lineTo(dw, dh);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    data.forEach((v, i) => {
+        const x = (i / (data.length - 1)) * dw;
+        const y = dh - ((v - min) / range) * (dh - 4);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // End dot
+    const lastX = dw;
+    const lastY = dh - ((data[data.length-1] - min) / range) * (dh - 4);
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+}
+
+function sparklineHtml(player, width, height) {
+    const w = width || 80;
+    const h = height || 28;
+    const id = 'spark-' + player.id + '-' + Math.random().toString(36).slice(2,6);
+    const color = player.trend === 'up' ? '#2e7d32' : player.trend === 'down' ? '#c62828' : '#666';
+    setTimeout(() => {
+        const data = generateTrendData(player);
+        drawSparkline(id, data, color);
+    }, 50);
+    return `<canvas id="${id}" style="width:${w}px;height:${h}px;"></canvas>`;
+}
+
+/* ============================================================
+   INTERACTIVE MODEL TOOLS: RAPTOR, WAR, EPA
+   ============================================================ */
+function renderRaptorCalculator() {
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">RAPTOR Rating Calculator</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Estimate a player's RAPTOR rating from box score and on/off stats.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group"><label class="form-label">Points/Game</label><input type="number" class="form-input" id="raptorPPG" value="25" step="0.1" oninput="calculateRaptor()"></div>
+                <div class="form-group"><label class="form-label">Rebounds/Game</label><input type="number" class="form-input" id="raptorRPG" value="7" step="0.1" oninput="calculateRaptor()"></div>
+                <div class="form-group"><label class="form-label">Assists/Game</label><input type="number" class="form-input" id="raptorAPG" value="5" step="0.1" oninput="calculateRaptor()"></div>
+                <div class="form-group"><label class="form-label">Steals/Game</label><input type="number" class="form-input" id="raptorSPG" value="1.2" step="0.1" oninput="calculateRaptor()"></div>
+                <div class="form-group"><label class="form-label">Blocks/Game</label><input type="number" class="form-input" id="raptorBPG" value="0.8" step="0.1" oninput="calculateRaptor()"></div>
+                <div class="form-group"><label class="form-label">Turnovers/Game</label><input type="number" class="form-input" id="raptorTPG" value="2.5" step="0.1" oninput="calculateRaptor()"></div>
+                <div class="form-group"><label class="form-label">Minutes/Game</label><input type="number" class="form-input" id="raptorMPG" value="34" step="0.1" oninput="calculateRaptor()"></div>
+                <div class="form-group"><label class="form-label">TS% (True Shooting)</label><input type="number" class="form-input" id="raptorTS" value="58" step="0.1" oninput="calculateRaptor()"></div>
+            </div>
+            <div id="raptorResult" style="margin-top:16px;"></div>
+        </div>`;
+}
+
+function calculateRaptor() {
+    const ppg = parseFloat(document.getElementById('raptorPPG').value) || 0;
+    const rpg = parseFloat(document.getElementById('raptorRPG').value) || 0;
+    const apg = parseFloat(document.getElementById('raptorAPG').value) || 0;
+    const spg = parseFloat(document.getElementById('raptorSPG').value) || 0;
+    const bpg = parseFloat(document.getElementById('raptorBPG').value) || 0;
+    const tpg = parseFloat(document.getElementById('raptorTPG').value) || 0;
+    const mpg = parseFloat(document.getElementById('raptorMPG').value) || 1;
+    const ts = parseFloat(document.getElementById('raptorTS').value) || 50;
+
+    // Simplified RAPTOR-style calculation
+    const offBox = (ppg * 0.8 + apg * 1.2 + rpg * 0.3 - tpg * 1.5) * (ts / 57) * (36 / mpg);
+    const defBox = (spg * 2.5 + bpg * 2.0 + rpg * 0.5) * (36 / mpg);
+    const oRaptor = (offBox - 10) * 0.6;
+    const dRaptor = (defBox - 5) * 0.4;
+    const total = oRaptor + dRaptor;
+    const war = ((total + 2) * (mpg / 36) * 82) / 30;
+
+    const tier = total >= 8 ? 'MVP Tier' : total >= 5 ? 'All-NBA' : total >= 2 ? 'All-Star' : total >= 0 ? 'Starter' : total >= -2 ? 'Rotation' : 'Below Average';
+    const tierColor = total >= 5 ? 'var(--success)' : total >= 0 ? 'var(--accent)' : 'var(--danger)';
+
+    document.getElementById('raptorResult').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;color:var(--accent);">${oRaptor.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">O-RAPTOR</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;color:var(--nfl-color);">${dRaptor.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">D-RAPTOR</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;color:${tierColor};">${total.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Total RAPTOR</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;">${war.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Est. WAR</div>
+            </div>
+        </div>
+        <div style="padding:14px;background:${tierColor}15;border:1px solid ${tierColor};border-radius:var(--radius);text-align:center;">
+            <span style="font-weight:800;color:${tierColor};font-size:1.1rem;">${tier}</span>
+            <span style="color:var(--text-secondary);font-size:0.85rem;"> — Estimated impact: ${total > 0 ? '+' : ''}${total.toFixed(1)} points per 100 possessions</span>
+        </div>`;
+}
+
+function renderWARCalculator() {
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">WAR Calculator (Position Player)</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Estimate Wins Above Replacement from batting, baserunning, and fielding components.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div class="form-group"><label class="form-label">wOBA</label><input type="number" class="form-input" id="warWOBA" value=".350" step="0.001" oninput="calculateWAR()"></div>
+                <div class="form-group"><label class="form-label">PA (Plate App.)</label><input type="number" class="form-input" id="warPA" value="600" oninput="calculateWAR()"></div>
+                <div class="form-group"><label class="form-label">League wOBA</label><input type="number" class="form-input" id="warLgWOBA" value=".310" step="0.001" oninput="calculateWAR()"></div>
+                <div class="form-group"><label class="form-label">BsR (Baserunning Runs)</label><input type="number" class="form-input" id="warBSR" value="2" step="0.1" oninput="calculateWAR()"></div>
+                <div class="form-group"><label class="form-label">Fld (Fielding Runs)</label><input type="number" class="form-input" id="warFLD" value="5" step="0.1" oninput="calculateWAR()"></div>
+                <div class="form-group"><label class="form-label">Positional Adj.</label><input type="number" class="form-input" id="warPOS" value="-5" step="0.1" oninput="calculateWAR()"></div>
+            </div>
+            <div id="warResult" style="margin-top:16px;"></div>
+        </div>`;
+}
+
+function calculateWAR() {
+    const woba = parseFloat(document.getElementById('warWOBA').value) || .310;
+    const pa = parseFloat(document.getElementById('warPA').value) || 600;
+    const lgWoba = parseFloat(document.getElementById('warLgWOBA').value) || .310;
+    const bsr = parseFloat(document.getElementById('warBSR').value) || 0;
+    const fld = parseFloat(document.getElementById('warFLD').value) || 0;
+    const pos = parseFloat(document.getElementById('warPOS').value) || 0;
+
+    const wRAA = ((woba - lgWoba) / 1.15) * pa;
+    const replacement = 20; // ~20 runs for 600 PA replacement level
+    const rpw = 10; // ~10 runs per win
+    const batting = wRAA;
+    const totalRuns = batting + bsr + fld + pos + replacement;
+    const war = totalRuns / rpw;
+
+    const tier = war >= 8 ? 'MVP Candidate' : war >= 5 ? 'All-Star' : war >= 3 ? 'Above Average' : war >= 1 ? 'Average Starter' : war >= 0 ? 'Bench Player' : 'Below Replacement';
+    const tierColor = war >= 5 ? 'var(--success)' : war >= 2 ? 'var(--accent)' : war >= 0 ? 'var(--warning)' : 'var(--danger)';
+
+    document.getElementById('warResult').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;">
+            <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:800;font-size:1.2rem;">${batting.toFixed(1)}</div>
+                <div style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;">Batting</div>
+            </div>
+            <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:800;font-size:1.2rem;">${bsr.toFixed(1)}</div>
+                <div style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;">BsR</div>
+            </div>
+            <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:800;font-size:1.2rem;">${fld.toFixed(1)}</div>
+                <div style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;">Fielding</div>
+            </div>
+            <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:800;font-size:1.2rem;">${pos.toFixed(1)}</div>
+                <div style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;">Position</div>
+            </div>
+            <div style="padding:12px;background:${tierColor}15;border:1px solid ${tierColor};border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:900;font-size:1.5rem;color:${tierColor};">${war.toFixed(1)}</div>
+                <div style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;">WAR</div>
+            </div>
+        </div>
+        <div style="padding:14px;background:${tierColor}15;border:1px solid ${tierColor};border-radius:var(--radius);text-align:center;">
+            <span style="font-weight:800;color:${tierColor};">${tier}</span>
+            <span style="color:var(--text-secondary);font-size:0.85rem;"> — ${totalRuns.toFixed(1)} total runs above replacement</span>
+        </div>`;
+}
+
+function renderEPACalculator() {
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">EPA/Play Calculator</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Calculate Expected Points Added for a play based on game context.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div class="form-group"><label class="form-label">Down</label>
+                    <select class="form-select" id="epaDown" onchange="calculateEPA()">
+                        <option value="1">1st Down</option><option value="2">2nd Down</option>
+                        <option value="3">3rd Down</option><option value="4">4th Down</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Distance (yards)</label><input type="number" class="form-input" id="epaDistance" value="10" oninput="calculateEPA()"></div>
+                <div class="form-group"><label class="form-label">Yard Line (own)</label><input type="number" class="form-input" id="epaYardLine" value="25" min="1" max="99" oninput="calculateEPA()"></div>
+                <div class="form-group"><label class="form-label">Play Result (yards)</label><input type="number" class="form-input" id="epaResult" value="8" oninput="calculateEPA()"></div>
+                <div class="form-group"><label class="form-label">Turnover?</label>
+                    <select class="form-select" id="epaTurnover" onchange="calculateEPA()">
+                        <option value="0">No</option><option value="1">Fumble/INT</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Touchdown?</label>
+                    <select class="form-select" id="epaTD" onchange="calculateEPA()">
+                        <option value="0">No</option><option value="1">Yes</option>
+                    </select>
+                </div>
+            </div>
+            <div id="epaResult_display" style="margin-top:16px;"></div>
+        </div>`;
+}
+
+function calculateEPA() {
+    const down = parseInt(document.getElementById('epaDown').value);
+    const dist = parseInt(document.getElementById('epaDistance').value) || 10;
+    const yl = parseInt(document.getElementById('epaYardLine').value) || 25;
+    const result = parseInt(document.getElementById('epaResult').value) || 0;
+    const turnover = parseInt(document.getElementById('epaTurnover').value);
+    const td = parseInt(document.getElementById('epaTD').value);
+
+    // Simplified EP model
+    function epFromYardLine(yard) { return -2 + (yard / 100) * 9; }
+    const epBefore = epFromYardLine(yl) - (down - 1) * 0.8 - Math.max(0, dist - 5) * 0.1;
+    let epAfter;
+    if (td) { epAfter = 7; }
+    else if (turnover) { epAfter = -(epFromYardLine(100 - yl - result)); }
+    else {
+        const newYL = Math.min(99, yl + result);
+        const newDown = result >= dist ? 1 : down + 1;
+        const newDist = result >= dist ? 10 : dist - result;
+        if (newDown > 4) { epAfter = -(epFromYardLine(100 - newYL)); }
+        else { epAfter = epFromYardLine(newYL) - (newDown - 1) * 0.8 - Math.max(0, newDist - 5) * 0.1; }
+    }
+
+    const epa = epAfter - epBefore;
+    const successRate = result >= (down <= 2 ? dist * 0.5 : dist) ? 'Successful' : 'Unsuccessful';
+    const srColor = successRate === 'Successful' ? 'var(--success)' : 'var(--danger)';
+
+    document.getElementById('epaResult_display').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">${epBefore.toFixed(2)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">EP Before</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">${epAfter.toFixed(2)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">EP After</div>
+            </div>
+            <div style="padding:16px;background:${epa >= 0 ? 'rgba(46,125,50,0.1)' : 'rgba(198,40,40,0.1)'};border:1px solid ${epa >= 0 ? 'var(--success)' : 'var(--danger)'};border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;color:${epa >= 0 ? 'var(--success)' : 'var(--danger)'};">${epa >= 0 ? '+' : ''}${epa.toFixed(2)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">EPA</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-weight:800;font-size:1.1rem;color:${srColor};">${successRate}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Play Grade</div>
+            </div>
+        </div>`;
+}
+
+/* ============================================================
+   LIVE ODDS INTEGRATION
+   ============================================================ */
+async function fetchLiveOdds(sport) {
+    try {
+        const res = await fetch(`/api/odds?sport=${sport}`);
+        const data = await res.json();
+        return data.events || [];
+    } catch(e) { return []; }
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
     renderDashboard();
+    // Pre-fetch ESPN headshots for current sport
+    fetchESPNTeams(State.currentSport).then(teams => {
+        const first5 = teams.slice(0, 5);
+        first5.forEach(t => fetchESPNRoster(State.currentSport, t.id));
+    });
 });
 
 /* ============================================================

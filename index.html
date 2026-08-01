@@ -1,0 +1,3019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatVault — Sports Analytics & Fantasy Hub</title>
+    <meta name="description" content="Advanced sports statistics, analytics, and fantasy draft assistant for NBA, NFL, MLB, and NCAA">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+/* ============================================================
+   CSS VARIABLES & RESET
+   ============================================================ */
+:root {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #111827;
+    --bg-card: #1a2235;
+    --bg-card-hover: #1e2a42;
+    --bg-input: #0f1729;
+    --border: #1e293b;
+    --border-hover: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+
+    /* Sport accent colors */
+    --nba-color: #ff6b2b;
+    --nba-glow: rgba(255, 107, 43, 0.15);
+    --nfl-color: #3b82f6;
+    --nfl-glow: rgba(59, 130, 246, 0.15);
+    --mlb-color: #ef4444;
+    --mlb-glow: rgba(239, 68, 68, 0.15);
+    --ncaa-color: #f59e0b;
+    --ncaa-glow: rgba(245, 158, 11, 0.15);
+
+    --accent: #6366f1;
+    --accent-glow: rgba(99, 102, 241, 0.2);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+
+    --font-sans: 'Inter', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --sidebar-width: 260px;
+    --header-height: 60px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 15px; scroll-behavior: smooth; }
+
+body {
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+button { cursor: pointer; font-family: inherit; border: none; background: none; color: inherit; }
+input, select, textarea { font-family: inherit; color: inherit; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app-container {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    grid-template-rows: var(--header-height) 1fr;
+    min-height: 100vh;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.app-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    position: sticky;
+    top: 0;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.header-brand .logo-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-search {
+    position: relative;
+    width: 320px;
+}
+
+.header-search input {
+    width: 100%;
+    padding: 8px 16px 8px 36px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.87rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.header-search input:focus { border-color: var(--accent); }
+
+.header-search .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.sport-pills {
+    display: flex;
+    gap: 6px;
+}
+
+.sport-pill {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.sport-pill:hover, .sport-pill.active { opacity: 1; }
+.sport-pill[data-sport="nba"] { background: var(--nba-glow); color: var(--nba-color); border-color: var(--nba-color); }
+.sport-pill[data-sport="nfl"] { background: var(--nfl-glow); color: var(--nfl-color); border-color: var(--nfl-color); }
+.sport-pill[data-sport="mlb"] { background: var(--mlb-glow); color: var(--mlb-color); border-color: var(--mlb-color); }
+.sport-pill[data-sport="ncaa"] { background: var(--ncaa-glow); color: var(--ncaa-color); border-color: var(--ncaa-color); }
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    overflow-y: auto;
+    height: calc(100vh - var(--header-height));
+    position: sticky;
+    top: var(--header-height);
+}
+
+.sidebar-section { margin-bottom: 8px; }
+
+.sidebar-section-title {
+    padding: 8px 20px 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-item:hover {
+    background: rgba(255,255,255,0.03);
+    color: var(--text-primary);
+}
+
+.sidebar-item.active {
+    color: var(--accent);
+    background: var(--accent-glow);
+    border-left-color: var(--accent);
+    font-weight: 600;
+}
+
+.sidebar-item .icon { font-size: 1.05rem; width: 22px; text-align: center; }
+
+.sidebar-divider { height: 1px; background: var(--border); margin: 12px 16px; }
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.main-content {
+    padding: 24px;
+    overflow-y: auto;
+    height: calc(100vh - var(--header-height));
+}
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.card-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* ============================================================
+   STAT TILES
+   ============================================================ */
+.stat-tile {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
+.stat-tile.nba::before { background: var(--nba-color); }
+.stat-tile.nfl::before { background: var(--nfl-color); }
+.stat-tile.mlb::before { background: var(--mlb-color); }
+.stat-tile.ncaa::before { background: var(--ncaa-color); }
+
+.stat-tile .label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.stat-tile .value {
+    font-size: 2rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    letter-spacing: -1px;
+}
+
+.stat-tile .change {
+    font-size: 0.78rem;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.stat-tile .change.up { color: var(--success); }
+.stat-tile .change.down { color: var(--danger); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.87rem;
+}
+
+.data-table thead th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg-card);
+    cursor: pointer;
+    user-select: none;
+}
+
+.data-table thead th:hover { color: var(--text-secondary); }
+
+.data-table tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s;
+}
+
+.data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+.data-table td {
+    padding: 10px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+}
+
+.data-table td:first-child {
+    font-family: var(--font-sans);
+    font-weight: 600;
+}
+
+.data-table .rank {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    width: 30px;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+    padding: 8px 18px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: white;
+}
+
+.btn-primary:hover { background: #5558e6; box-shadow: 0 0 20px var(--accent-glow); }
+
+.btn-secondary {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover { border-color: var(--border-hover); background: var(--bg-card-hover); }
+
+.btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+.btn-lg { padding: 12px 28px; font-size: 0.95rem; }
+
+.btn-sport-nba { background: var(--nba-color); color: white; }
+.btn-sport-nfl { background: var(--nfl-color); color: white; }
+.btn-sport-mlb { background: var(--mlb-color); color: white; }
+.btn-sport-ncaa { background: var(--ncaa-color); color: white; }
+
+/* ============================================================
+   TABS (within views)
+   ============================================================ */
+.view-tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 24px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 3px;
+    width: fit-content;
+}
+
+.view-tab {
+    padding: 8px 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    color: var(--text-muted);
+}
+
+.view-tab:hover { color: var(--text-secondary); }
+.view-tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+
+/* ============================================================
+   FORM CONTROLS
+   ============================================================ */
+.form-group { margin-bottom: 16px; }
+
+.form-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-input:focus, .form-select:focus { border-color: var(--accent); }
+
+.form-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+
+/* ============================================================
+   BADGES & TAGS
+   ============================================================ */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-nba { background: var(--nba-glow); color: var(--nba-color); }
+.badge-nfl { background: var(--nfl-glow); color: var(--nfl-color); }
+.badge-mlb { background: var(--mlb-glow); color: var(--mlb-color); }
+.badge-ncaa { background: var(--ncaa-glow); color: var(--ncaa-color); }
+
+.position-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    background: rgba(255,255,255,0.06);
+    color: var(--text-secondary);
+}
+
+/* ============================================================
+   DRAFT BOARD
+   ============================================================ */
+.draft-board {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    gap: 20px;
+    height: calc(100vh - var(--header-height) - 120px);
+}
+
+.draft-queue {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.draft-queue-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.draft-queue-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.draft-player-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+}
+
+.draft-player-card:hover { background: rgba(255,255,255,0.03); }
+.draft-player-card.selected { background: var(--accent-glow); border-color: var(--accent); }
+.draft-player-card.drafted { opacity: 0.35; pointer-events: none; }
+
+.draft-player-rank {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    width: 28px;
+    text-align: center;
+}
+
+.draft-player-info { flex: 1; }
+
+.draft-player-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    margin-bottom: 2px;
+}
+
+.draft-player-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.draft-player-score {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--success);
+}
+
+.draft-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.draft-round-indicator {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.draft-round-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.round-number {
+    font-size: 2rem;
+    font-weight: 900;
+    font-family: var(--font-mono);
+    color: var(--accent);
+}
+
+.round-details .round-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+.round-details .pick-info {
+    font-weight: 600;
+}
+
+.draft-picks-grid {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.pick-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 80px 60px;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+}
+
+.pick-row.my-pick { background: var(--accent-glow); border: 1px solid rgba(99,102,241,0.3); }
+
+.pick-number {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.draft-recommendations {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.draft-rec-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.draft-rec-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.rec-card {
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.01);
+}
+
+.rec-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--success);
+    margin-bottom: 6px;
+}
+
+.rec-player { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
+.rec-reason { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; }
+
+/* ============================================================
+   PLAYER COMPARISON
+   ============================================================ */
+.compare-container {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.compare-player {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+
+.compare-vs {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--text-muted);
+    align-self: center;
+    padding-top: 60px;
+}
+
+.compare-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.compare-bar .bar-label {
+    width: 80px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.compare-bar .bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-input);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.compare-bar .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.compare-bar .bar-value {
+    width: 50px;
+    text-align: right;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+/* ============================================================
+   CHART PLACEHOLDER
+   ============================================================ */
+.chart-container {
+    width: 100%;
+    height: 300px;
+    background: var(--bg-input);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.mini-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 50px;
+}
+
+.mini-chart .bar {
+    width: 6px;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.3s;
+}
+
+/* ============================================================
+   LOADING / EMPTY STATES
+   ============================================================ */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    color: var(--text-muted);
+}
+
+.empty-state .icon { font-size: 3rem; margin-bottom: 16px; }
+.empty-state .title { font-size: 1.1rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
+.empty-state .subtitle { font-size: 0.88rem; line-height: 1.5; max-width: 400px; margin: 0 auto; }
+
+/* ============================================================
+   PLAYER PROFILE
+   ============================================================ */
+.player-hero {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    margin-bottom: 32px;
+    padding: 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+}
+
+.player-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: white;
+    flex-shrink: 0;
+}
+
+.player-headline h1 {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+}
+
+.player-headline .team-pos {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.player-quick-stats {
+    display: flex;
+    gap: 24px;
+}
+
+.player-quick-stat {
+    text-align: center;
+}
+
+.player-quick-stat .qs-value {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.player-quick-stat .qs-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   FANTASY SETTINGS
+   ============================================================ */
+.settings-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.settings-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+
+.settings-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.toggle-row:last-child { border-bottom: none; }
+
+.toggle-label { font-size: 0.88rem; }
+.toggle-desc { font-size: 0.75rem; color: var(--text-muted); }
+
+.toggle-switch {
+    width: 44px;
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.toggle-switch.active { background: var(--accent); }
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s;
+}
+
+.toggle-switch.active::after { transform: translateX(20px); }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.toast {
+    padding: 12px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideUp 0.3s ease;
+    max-width: 360px;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--danger); }
+.toast.info { border-left: 3px solid var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1200px) {
+    .draft-board { grid-template-columns: 1fr; height: auto; }
+    .draft-queue, .draft-recommendations { max-height: 400px; }
+    .compare-container { grid-template-columns: 1fr; }
+    .compare-vs { padding: 0; text-align: center; }
+}
+
+@media (max-width: 900px) {
+    .app-container { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .sidebar.mobile-open { display: block; position: fixed; top: var(--header-height); left: 0; width: 280px; z-index: 200; height: calc(100vh - var(--header-height)); }
+    .card-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .card-grid-3 { grid-template-columns: 1fr 1fr; }
+    .settings-panel { grid-template-columns: 1fr; }
+    .header-search { width: 200px; }
+    .player-hero { flex-direction: column; text-align: center; }
+    .player-quick-stats { justify-content: center; }
+}
+
+@media (max-width: 600px) {
+    .sport-pills { display: none; }
+    .header-search { width: 140px; }
+    .card-grid-4, .card-grid-2 { grid-template-columns: 1fr; }
+    .main-content { padding: 16px; }
+}
+
+/* ============================================================
+   MOBILE NAV TOGGLE
+   ============================================================ */
+.mobile-nav-btn {
+    display: none;
+    padding: 8px;
+    font-size: 1.2rem;
+}
+
+@media (max-width: 900px) {
+    .mobile-nav-btn { display: block; }
+}
+
+/* ============================================================
+   RESEARCH PANEL
+   ============================================================ */
+.research-filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.research-filters .form-select, .research-filters .form-input {
+    width: auto;
+    min-width: 160px;
+}
+
+.metric-highlight {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--accent);
+}
+
+/* ============================================================
+   ECONOMETRICS / MODELS
+   ============================================================ */
+.model-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.model-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 30px var(--accent-glow);
+}
+
+.model-card .model-name {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.model-card .model-desc {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.model-card .model-tags {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.model-tag {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-muted);
+    font-weight: 600;
+}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="mobile-nav-btn" onclick="toggleMobileNav()">☰</button>
+                <div class="header-brand">
+                    <div class="logo-icon">⚡</div>
+                    StatVault
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="sport-pills">
+                    <button class="sport-pill active" data-sport="nba" onclick="setSport('nba')">NBA</button>
+                    <button class="sport-pill" data-sport="nfl" onclick="setSport('nfl')">NFL</button>
+                    <button class="sport-pill" data-sport="mlb" onclick="setSport('mlb')">MLB</button>
+                    <button class="sport-pill" data-sport="ncaa" onclick="setSport('ncaa')">NCAA</button>
+                </div>
+                <div class="header-search">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="Search players, teams, stats..." id="globalSearch" oninput="handleGlobalSearch(this.value)">
+                </div>
+            </div>
+        </header>
+
+        <!-- SIDEBAR -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Dashboard</div>
+                <div class="sidebar-item active" onclick="showView('dashboard')" data-view="dashboard">
+                    <span class="icon">📊</span> Overview
+                </div>
+                <div class="sidebar-item" onclick="showView('live')" data-view="live">
+                    <span class="icon">🔴</span> Live Scores
+                </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Statistics</div>
+                <div class="sidebar-item" onclick="showView('players')" data-view="players">
+                    <span class="icon">👤</span> Player Stats
+                </div>
+                <div class="sidebar-item" onclick="showView('teams')" data-view="teams">
+                    <span class="icon">🏟️</span> Team Stats
+                </div>
+                <div class="sidebar-item" onclick="showView('compare')" data-view="compare">
+                    <span class="icon">⚖️</span> Compare Players
+                </div>
+                <div class="sidebar-item" onclick="showView('leaders')" data-view="leaders">
+                    <span class="icon">🏆</span> Leaderboards
+                </div>
+                <div class="sidebar-item" onclick="showView('advanced')" data-view="advanced">
+                    <span class="icon">🧮</span> Advanced Metrics
+                </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Analytics</div>
+                <div class="sidebar-item" onclick="showView('models')" data-view="models">
+                    <span class="icon">🧠</span> Prediction Models
+                </div>
+                <div class="sidebar-item" onclick="showView('trends')" data-view="trends">
+                    <span class="icon">📈</span> Trends & Insights
+                </div>
+                <div class="sidebar-item" onclick="showView('research')" data-view="research">
+                    <span class="icon">📚</span> Research Papers
+                </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Fantasy</div>
+                <div class="sidebar-item" onclick="showView('fantasy-hub')" data-view="fantasy-hub">
+                    <span class="icon">🎯</span> Fantasy Hub
+                </div>
+                <div class="sidebar-item" onclick="showView('draft')" data-view="draft">
+                    <span class="icon">📋</span> Draft Assistant
+                </div>
+                <div class="sidebar-item" onclick="showView('mock-draft')" data-view="mock-draft">
+                    <span class="icon">🎲</span> Mock Draft
+                </div>
+                <div class="sidebar-item" onclick="showView('roster')" data-view="roster">
+                    <span class="icon">📦</span> Roster Optimizer
+                </div>
+                <div class="sidebar-item" onclick="showView('waiver')" data-view="waiver">
+                    <span class="icon">🔄</span> Waiver Wire
+                </div>
+                <div class="sidebar-item" onclick="showView('trade-analyzer')" data-view="trade-analyzer">
+                    <span class="icon">🤝</span> Trade Analyzer
+                </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Tools</div>
+                <div class="sidebar-item" onclick="showView('projections')" data-view="projections">
+                    <span class="icon">🔮</span> Projections
+                </div>
+                <div class="sidebar-item" onclick="showView('betting')" data-view="betting">
+                    <span class="icon">💰</span> Betting Models
+                </div>
+                <div class="sidebar-item" onclick="showView('settings')" data-view="settings">
+                    <span class="icon">⚙️</span> Settings
+                </div>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content" id="mainContent">
+
+            <!-- ============ DASHBOARD VIEW ============ -->
+            <div class="view active" id="view-dashboard">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Dashboard</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Your sports analytics command center</p>
+
+                <div class="card-grid card-grid-4" style="margin-bottom:24px;" id="dashboardStats">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="card-grid card-grid-2" style="margin-bottom:24px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📈 Trending Players</div>
+                            <button class="btn btn-sm btn-secondary" onclick="showView('players')">View All</button>
+                        </div>
+                        <div id="trendingPlayers"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">🔥 Fantasy Risers</div>
+                            <button class="btn btn-sm btn-secondary" onclick="showView('fantasy-hub')">Fantasy Hub</button>
+                        </div>
+                        <div id="fantasyRisers"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🏆 League Leaders — <span id="dashSportLabel">NBA</span></div>
+                        <div class="view-tabs" id="dashLeaderTabs"></div>
+                    </div>
+                    <div id="dashLeaderTable"></div>
+                </div>
+            </div>
+
+            <!-- ============ LIVE SCORES VIEW ============ -->
+            <div class="view" id="view-live">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Live Scores</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Real-time scores and game updates</p>
+                <div id="liveScoresContainer" class="card-grid card-grid-3"></div>
+            </div>
+
+            <!-- ============ PLAYER STATS VIEW ============ -->
+            <div class="view" id="view-players">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Player Statistics</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Deep-dive into player performance across all leagues</p>
+
+                <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+                    <select class="form-select" style="width:160px;" id="playerSportFilter" onchange="filterPlayers()">
+                        <option value="all">All Sports</option>
+                        <option value="nba">NBA</option>
+                        <option value="nfl">NFL</option>
+                        <option value="mlb">MLB</option>
+                        <option value="ncaa">NCAA</option>
+                    </select>
+                    <select class="form-select" style="width:160px;" id="playerPosFilter" onchange="filterPlayers()">
+                        <option value="all">All Positions</option>
+                    </select>
+                    <input type="text" class="form-input" style="width:240px;" placeholder="Search player..." id="playerSearch" oninput="filterPlayers()">
+                    <select class="form-select" style="width:140px;" id="playerSeasonFilter" onchange="filterPlayers()">
+                        <option value="2025-26">2025-26</option>
+                        <option value="2024-25">2024-25</option>
+                        <option value="2023-24">2023-24</option>
+                    </select>
+                </div>
+
+                <div class="card">
+                    <div style="overflow-x:auto;">
+                        <table class="data-table" id="playerTable">
+                            <thead><tr id="playerTableHead"></tr></thead>
+                            <tbody id="playerTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ TEAM STATS VIEW ============ -->
+            <div class="view" id="view-teams">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Team Statistics</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">League-wide team comparisons and breakdowns</p>
+                <div class="card">
+                    <div style="overflow-x:auto;">
+                        <table class="data-table" id="teamTable">
+                            <thead><tr id="teamTableHead"></tr></thead>
+                            <tbody id="teamTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ COMPARE VIEW ============ -->
+            <div class="view" id="view-compare">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Compare Players</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Head-to-head statistical comparison</p>
+
+                <div style="display:flex;gap:16px;margin-bottom:24px;">
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">Player 1</label>
+                        <select class="form-select" id="compare1" onchange="runComparison()"></select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">Player 2</label>
+                        <select class="form-select" id="compare2" onchange="runComparison()"></select>
+                    </div>
+                </div>
+
+                <div id="comparisonResult"></div>
+            </div>
+
+            <!-- ============ LEADERBOARDS VIEW ============ -->
+            <div class="view" id="view-leaders">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Leaderboards</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Top performers across every stat category</p>
+                <div class="view-tabs" id="leaderTabs" style="margin-bottom:20px;"></div>
+                <div class="card-grid card-grid-3" id="leaderCards"></div>
+            </div>
+
+            <!-- ============ ADVANCED METRICS VIEW ============ -->
+            <div class="view" id="view-advanced">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Advanced Metrics</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">PER, WAR, EPA, WPA, OPS+, and more</p>
+
+                <div class="card-grid card-grid-2" id="advancedMetrics"></div>
+            </div>
+
+            <!-- ============ PREDICTION MODELS VIEW ============ -->
+            <div class="view" id="view-models">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Prediction Models</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Statistical models for game outcomes, player projections, and win probability</p>
+
+                <div class="card-grid card-grid-3" id="modelCards"></div>
+            </div>
+
+            <!-- ============ TRENDS VIEW ============ -->
+            <div class="view" id="view-trends">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Trends & Insights</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Emerging patterns and historical analysis</p>
+                <div id="trendsContainer"></div>
+            </div>
+
+            <!-- ============ RESEARCH VIEW ============ -->
+            <div class="view" id="view-research">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Research & Papers</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Sports analytics research, econometrics, and data science</p>
+                <div class="card-grid card-grid-2" id="researchCards"></div>
+            </div>
+
+            <!-- ============ FANTASY HUB VIEW ============ -->
+            <div class="view" id="view-fantasy-hub">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Fantasy Hub</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Your fantasy command center — Yahoo & ESPN integrated</p>
+
+                <div class="card-grid card-grid-4" style="margin-bottom:24px;" id="fantasyStats"></div>
+
+                <div class="card-grid card-grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">🎯 Platform Connection</div>
+                        </div>
+                        <div style="display:flex;gap:12px;margin-bottom:16px;">
+                            <button class="btn btn-lg" style="flex:1;background:#7c3aed;color:white;" onclick="connectPlatform('yahoo')">
+                                🏈 Connect Yahoo Fantasy
+                            </button>
+                            <button class="btn btn-lg" style="flex:1;background:#dc2626;color:white;" onclick="connectPlatform('espn')">
+                                ⭐ Connect ESPN Fantasy
+                            </button>
+                        </div>
+                        <p style="font-size:0.82rem;color:var(--text-muted);">
+                            Link your Yahoo or ESPN fantasy account to sync leagues, rosters, and get personalized recommendations.
+                        </p>
+                        <div id="platformStatus" style="margin-top:12px;"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📅 Season Calendar</div>
+                        </div>
+                        <div id="seasonCalendar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ DRAFT ASSISTANT VIEW ============ -->
+            <div class="view" id="view-draft">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                    <div>
+                        <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:4px;">Draft Assistant</h2>
+                        <p style="color:var(--text-muted);font-size:0.9rem;">AI-powered live draft companion</p>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <select class="form-select" style="width:150px;" id="draftSport" onchange="initDraft()">
+                            <option value="nba">NBA Fantasy</option>
+                            <option value="nfl">NFL Fantasy</option>
+                            <option value="mlb">MLB Fantasy</option>
+                        </select>
+                        <select class="form-select" style="width:150px;" id="draftPlatform">
+                            <option value="yahoo">Yahoo Fantasy</option>
+                            <option value="espn">ESPN Fantasy</option>
+                        </select>
+                        <select class="form-select" style="width:120px;" id="draftFormat" onchange="initDraft()">
+                            <option value="snake">Snake</option>
+                            <option value="auction">Auction</option>
+                            <option value="dynasty">Dynasty</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="startDraft()">▶ Start Draft</button>
+                    </div>
+                </div>
+
+                <div class="draft-board" id="draftBoard">
+                    <!-- Available Players Queue -->
+                    <div class="draft-queue">
+                        <div class="draft-queue-header">
+                            <span>Available Players</span>
+                            <input type="text" class="form-input" style="width:130px;padding:5px 10px;font-size:0.78rem;" placeholder="Filter..." id="draftFilter" oninput="filterDraftPlayers()">
+                        </div>
+                        <div class="draft-queue-list" id="draftPlayerList"></div>
+                    </div>
+
+                    <!-- Draft Board Center -->
+                    <div class="draft-main">
+                        <div class="draft-round-indicator">
+                            <div class="draft-round-info">
+                                <div class="round-number" id="currentRound">1</div>
+                                <div class="round-details">
+                                    <div class="round-label">Round</div>
+                                    <div class="pick-info" id="currentPick">Pick 1 of 12</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-sm btn-secondary" onclick="undoPick()">↩ Undo</button>
+                                <button class="btn btn-sm btn-primary" onclick="autoPick()">⚡ Auto Pick</button>
+                            </div>
+                        </div>
+                        <div class="draft-picks-grid" id="draftPicksGrid">
+                            <div class="empty-state">
+                                <div class="icon">📋</div>
+                                <div class="title">Ready to Draft</div>
+                                <div class="subtitle">Configure your league settings and click Start Draft to begin your mock draft simulation.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Recommendations -->
+                    <div class="draft-recommendations">
+                        <div class="draft-rec-header">🧠 AI Recommendations</div>
+                        <div class="draft-rec-list" id="draftRecList">
+                            <div class="rec-card">
+                                <div class="rec-label">Best Available</div>
+                                <div class="rec-player">Start a draft to see picks</div>
+                                <div class="rec-reason">The AI will analyze positional scarcity, ADP value, and your team needs to suggest the optimal pick.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ MOCK DRAFT VIEW ============ -->
+            <div class="view" id="view-mock-draft">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Mock Draft Simulator</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Full mock draft simulation with AI-driven opponents</p>
+
+                <div class="card" style="margin-bottom:20px;">
+                    <div class="card-header">
+                        <div class="card-title">⚙️ Mock Draft Settings</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+                        <div class="form-group">
+                            <label class="form-label">League Size</label>
+                            <select class="form-select" id="mockLeagueSize">
+                                <option value="8">8 Teams</option>
+                                <option value="10" selected>10 Teams</option>
+                                <option value="12">12 Teams</option>
+                                <option value="14">14 Teams</option>
+                                <option value="16">16 Teams</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Your Pick</label>
+                            <select class="form-select" id="mockDraftPosition">
+                                <option value="1">1st Overall</option>
+                                <option value="2">2nd Overall</option>
+                                <option value="3">3rd Overall</option>
+                                <option value="4">4th Overall</option>
+                                <option value="5">5th Overall</option>
+                                <option value="6">6th Overall</option>
+                                <option value="random" selected>Random</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Scoring</label>
+                            <select class="form-select" id="mockScoring">
+                                <option value="standard">Standard</option>
+                                <option value="ppr">PPR</option>
+                                <option value="half-ppr">Half PPR</option>
+                                <option value="points">Points League</option>
+                                <option value="categories">Categories</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Rounds</label>
+                            <select class="form-select" id="mockRounds">
+                                <option value="13">13 (Standard)</option>
+                                <option value="15" selected>15</option>
+                                <option value="18">18 (Deep)</option>
+                                <option value="20">20 (Dynasty)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-lg" style="margin-top:12px;" onclick="startMockDraft()">🎲 Start Mock Draft</button>
+                </div>
+
+                <div id="mockDraftResults"></div>
+            </div>
+
+            <!-- ============ ROSTER OPTIMIZER VIEW ============ -->
+            <div class="view" id="view-roster">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Roster Optimizer</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Optimize your weekly lineup for maximum projected points</p>
+                <div id="rosterContainer"></div>
+            </div>
+
+            <!-- ============ WAIVER WIRE VIEW ============ -->
+            <div class="view" id="view-waiver">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Waiver Wire</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Top free agent pickups and trending adds</p>
+                <div id="waiverContainer"></div>
+            </div>
+
+            <!-- ============ TRADE ANALYZER VIEW ============ -->
+            <div class="view" id="view-trade-analyzer">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Trade Analyzer</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Evaluate trades and find fair value</p>
+                <div id="tradeContainer"></div>
+            </div>
+
+            <!-- ============ PROJECTIONS VIEW ============ -->
+            <div class="view" id="view-projections">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Player Projections</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Season and weekly statistical projections</p>
+                <div id="projectionsContainer"></div>
+            </div>
+
+            <!-- ============ BETTING MODELS VIEW ============ -->
+            <div class="view" id="view-betting">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Betting Models</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Statistical edge-finding for spreads, totals, and props</p>
+                <div id="bettingContainer"></div>
+            </div>
+
+            <!-- ============ SETTINGS VIEW ============ -->
+            <div class="view" id="view-settings">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Settings</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Configure your StatVault experience</p>
+                <div class="settings-panel" id="settingsPanel"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+/* ============================================================
+   APP STATE
+   ============================================================ */
+const State = {
+    currentSport: 'nba',
+    currentView: 'dashboard',
+    draftState: null,
+    mockDraftState: null,
+    fantasyPlatform: null,
+    settings: {
+        platform: 'yahoo',
+        darkMode: true,
+        notifications: true,
+        scoring: 'standard',
+    },
+};
+
+/* ============================================================
+   DATA — Player databases per sport
+   ============================================================ */
+const PLAYERS = {
+    nba: [
+        { id: 1, name: 'Nikola Jokić', team: 'DEN', pos: 'C', ppg: 26.4, rpg: 12.4, apg: 9.0, spg: 1.4, bpg: 0.9, fg: 56.3, per: 31.5, adp: 1, fantasyPts: 62.8, trend: 'up' },
+        { id: 2, name: 'Luka Dončić', team: 'LAL', pos: 'PG', ppg: 28.1, rpg: 8.3, apg: 8.8, spg: 1.3, bpg: 0.4, fg: 48.7, per: 28.2, adp: 2, fantasyPts: 55.4, trend: 'stable' },
+        { id: 3, name: 'Shai Gilgeous-Alexander', team: 'OKC', pos: 'SG', ppg: 31.4, rpg: 5.5, apg: 6.2, spg: 2.0, bpg: 0.9, fg: 53.5, per: 30.1, adp: 3, fantasyPts: 53.1, trend: 'up' },
+        { id: 4, name: 'Giannis Antetokounmpo', team: 'MIL', pos: 'PF', ppg: 31.1, rpg: 11.6, apg: 5.8, spg: 1.1, bpg: 1.5, fg: 61.1, per: 32.0, adp: 4, fantasyPts: 58.2, trend: 'up' },
+        { id: 5, name: 'Jayson Tatum', team: 'BOS', pos: 'SF', ppg: 26.9, rpg: 8.1, apg: 4.9, spg: 1.1, bpg: 0.6, fg: 47.1, per: 23.8, adp: 5, fantasyPts: 45.6, trend: 'down' },
+        { id: 6, name: 'Anthony Davis', team: 'LAL', pos: 'C', ppg: 24.7, rpg: 12.6, apg: 3.5, spg: 1.2, bpg: 2.3, fg: 55.6, per: 28.5, adp: 6, fantasyPts: 51.3, trend: 'up' },
+        { id: 7, name: 'Victor Wembanyama', team: 'SAS', pos: 'C', ppg: 24.4, rpg: 10.6, apg: 3.7, spg: 1.0, bpg: 3.6, fg: 47.2, per: 26.4, adp: 7, fantasyPts: 52.9, trend: 'up' },
+        { id: 8, name: 'Anthony Edwards', team: 'MIN', pos: 'SG', ppg: 25.9, rpg: 5.4, apg: 5.1, spg: 1.3, bpg: 0.5, fg: 46.1, per: 22.5, adp: 8, fantasyPts: 41.8, trend: 'stable' },
+        { id: 9, name: 'Kevin Durant', team: 'PHX', pos: 'SF', ppg: 27.1, rpg: 6.6, apg: 5.0, spg: 0.9, bpg: 1.2, fg: 52.3, per: 26.8, adp: 9, fantasyPts: 44.2, trend: 'down' },
+        { id: 10, name: 'Stephen Curry', team: 'GSW', pos: 'PG', ppg: 26.4, rpg: 5.1, apg: 6.1, spg: 1.0, bpg: 0.4, fg: 45.0, per: 24.1, adp: 10, fantasyPts: 42.7, trend: 'stable' },
+        { id: 11, name: 'Tyrese Haliburton', team: 'IND', pos: 'PG', ppg: 20.1, rpg: 3.9, apg: 10.9, spg: 1.2, bpg: 0.3, fg: 47.7, per: 22.8, adp: 11, fantasyPts: 44.1, trend: 'up' },
+        { id: 12, name: 'Donovan Mitchell', team: 'CLE', pos: 'SG', ppg: 23.2, rpg: 4.5, apg: 4.6, spg: 1.8, bpg: 0.4, fg: 46.2, per: 21.3, adp: 12, fantasyPts: 39.5, trend: 'stable' },
+        { id: 13, name: 'Joel Embiid', team: 'PHI', pos: 'C', ppg: 33.0, rpg: 11.2, apg: 5.7, spg: 1.1, bpg: 1.7, fg: 52.9, per: 33.6, adp: 13, fantasyPts: 56.7, trend: 'down' },
+        { id: 14, name: 'Jalen Brunson', team: 'NYK', pos: 'PG', ppg: 28.7, rpg: 3.5, apg: 6.7, spg: 0.9, bpg: 0.2, fg: 47.9, per: 23.9, adp: 14, fantasyPts: 41.0, trend: 'up' },
+        { id: 15, name: 'Trae Young', team: 'SAS', pos: 'PG', ppg: 25.7, rpg: 2.8, apg: 10.8, spg: 1.0, bpg: 0.2, fg: 43.0, per: 22.1, adp: 15, fantasyPts: 42.5, trend: 'stable' },
+        { id: 16, name: 'Jaylen Brown', team: 'BOS', pos: 'SG', ppg: 23.0, rpg: 5.5, apg: 3.6, spg: 1.2, bpg: 0.5, fg: 49.9, per: 20.1, adp: 16, fantasyPts: 35.8, trend: 'stable' },
+        { id: 17, name: 'Domantas Sabonis', team: 'SAC', pos: 'C', ppg: 19.4, rpg: 13.7, apg: 8.2, spg: 0.8, bpg: 0.5, fg: 59.4, per: 25.3, adp: 17, fantasyPts: 49.6, trend: 'up' },
+        { id: 18, name: 'De\'Aaron Fox', team: 'SAC', pos: 'PG', ppg: 26.6, rpg: 4.6, apg: 5.6, spg: 2.0, bpg: 0.4, fg: 46.5, per: 22.4, adp: 18, fantasyPts: 42.2, trend: 'stable' },
+        { id: 19, name: 'LaMelo Ball', team: 'CHA', pos: 'PG', ppg: 22.3, rpg: 5.5, apg: 8.0, spg: 1.5, bpg: 0.3, fg: 43.8, per: 21.7, adp: 19, fantasyPts: 41.6, trend: 'up' },
+        { id: 20, name: 'Chet Holmgren', team: 'OKC', pos: 'PF', ppg: 16.5, rpg: 7.9, apg: 2.4, spg: 0.8, bpg: 2.6, fg: 53.0, per: 20.2, adp: 20, fantasyPts: 36.2, trend: 'up' },
+    ],
+    nfl: [
+        { id: 101, name: 'Patrick Mahomes', team: 'KC', pos: 'QB', passYds: 4183, passTd: 26, rushYds: 389, ints: 11, adp: 3, fantasyPts: 22.1, trend: 'stable' },
+        { id: 102, name: 'Josh Allen', team: 'BUF', pos: 'QB', passYds: 3731, passTd: 28, rushYds: 531, ints: 6, adp: 1, fantasyPts: 24.8, trend: 'up' },
+        { id: 103, name: 'Ja\'Marr Chase', team: 'CIN', pos: 'WR', recYds: 1708, recTd: 17, rec: 127, targets: 158, adp: 2, fantasyPts: 23.5, trend: 'up' },
+        { id: 104, name: 'Saquon Barkley', team: 'PHI', pos: 'RB', rushYds: 2005, rushTd: 13, recYds: 278, rec: 33, adp: 4, fantasyPts: 21.4, trend: 'stable' },
+        { id: 105, name: 'CeeDee Lamb', team: 'DAL', pos: 'WR', recYds: 1194, recTd: 8, rec: 101, targets: 145, adp: 5, fantasyPts: 18.2, trend: 'down' },
+        { id: 106, name: 'Lamar Jackson', team: 'BAL', pos: 'QB', passYds: 4172, passTd: 41, rushYds: 915, ints: 4, adp: 6, fantasyPts: 26.3, trend: 'up' },
+        { id: 107, name: 'Derrick Henry', team: 'BAL', pos: 'RB', rushYds: 1921, rushTd: 16, recYds: 167, rec: 20, adp: 7, fantasyPts: 19.8, trend: 'stable' },
+        { id: 108, name: 'Tyreek Hill', team: 'MIA', pos: 'WR', recYds: 959, recTd: 6, rec: 81, targets: 127, adp: 8, fantasyPts: 14.2, trend: 'down' },
+        { id: 109, name: 'Bijan Robinson', team: 'ATL', pos: 'RB', rushYds: 1456, rushTd: 11, recYds: 456, rec: 58, adp: 9, fantasyPts: 20.1, trend: 'up' },
+        { id: 110, name: 'Amon-Ra St. Brown', team: 'DET', pos: 'WR', recYds: 1205, recTd: 10, rec: 119, targets: 146, adp: 10, fantasyPts: 19.6, trend: 'up' },
+        { id: 111, name: 'Breece Hall', team: 'NYJ', pos: 'RB', rushYds: 1012, rushTd: 5, recYds: 410, rec: 47, adp: 11, fantasyPts: 15.3, trend: 'down' },
+        { id: 112, name: 'Travis Kelce', team: 'KC', pos: 'TE', recYds: 823, recTd: 3, rec: 97, targets: 127, adp: 12, fantasyPts: 12.8, trend: 'down' },
+    ],
+    mlb: [
+        { id: 201, name: 'Shohei Ohtani', team: 'LAD', pos: 'DH', avg: .310, hr: 54, rbi: 130, sb: 59, ops: 1.036, war: 9.2, adp: 1, fantasyPts: 48.2, trend: 'up' },
+        { id: 202, name: 'Aaron Judge', team: 'NYY', pos: 'RF', avg: .322, hr: 58, rbi: 144, sb: 3, ops: 1.159, war: 10.8, adp: 2, fantasyPts: 42.7, trend: 'stable' },
+        { id: 203, name: 'Mookie Betts', team: 'LAD', pos: 'SS', avg: .289, hr: 24, rbi: 69, sb: 14, ops: .858, war: 5.1, adp: 3, fantasyPts: 35.4, trend: 'down' },
+        { id: 204, name: 'Ronald Acuña Jr.', team: 'ATL', pos: 'RF', avg: .279, hr: 15, rbi: 39, sb: 24, ops: .822, war: 3.8, adp: 4, fantasyPts: 31.2, trend: 'up' },
+        { id: 205, name: 'Trea Turner', team: 'PHI', pos: 'SS', avg: .295, hr: 21, rbi: 63, sb: 28, ops: .832, war: 5.5, adp: 5, fantasyPts: 33.8, trend: 'up' },
+        { id: 206, name: 'Freddie Freeman', team: 'LAD', pos: '1B', avg: .282, hr: 22, rbi: 89, sb: 3, ops: .854, war: 5.7, adp: 6, fantasyPts: 30.1, trend: 'stable' },
+        { id: 207, name: 'Bobby Witt Jr.', team: 'KC', pos: 'SS', avg: .332, hr: 32, rbi: 109, sb: 31, ops: .957, war: 8.1, adp: 7, fantasyPts: 40.5, trend: 'up' },
+        { id: 208, name: 'Corey Seager', team: 'TEX', pos: 'SS', avg: .278, hr: 33, rbi: 90, sb: 3, ops: .872, war: 5.4, adp: 8, fantasyPts: 32.6, trend: 'stable' },
+    ],
+    ncaa: [
+        { id: 301, name: 'Carson Beck', team: 'Miami', pos: 'QB', passYds: 3941, passTd: 24, rushYds: 78, ints: 12, adp: 15, fantasyPts: 18.2, trend: 'down' },
+        { id: 302, name: 'Travis Hunter', team: 'NFL', pos: 'WR/CB', recYds: 1152, recTd: 14, tackles: 32, ints: 4, adp: 1, fantasyPts: 22.1, trend: 'up' },
+        { id: 303, name: 'Cam Ward', team: 'NFL', pos: 'QB', passYds: 4313, passTd: 39, rushYds: 282, ints: 7, adp: 2, fantasyPts: 24.8, trend: 'up' },
+        { id: 304, name: 'Ashton Jeanty', team: 'NFL', pos: 'RB', rushYds: 2497, rushTd: 29, recYds: 119, rec: 14, adp: 3, fantasyPts: 28.4, trend: 'up' },
+        { id: 305, name: 'Tetairoa McMillan', team: 'NFL', pos: 'WR', recYds: 1319, recTd: 8, rec: 84, targets: 120, adp: 4, fantasyPts: 17.6, trend: 'stable' },
+    ],
+};
+
+/* ============================================================
+   SPORT CONFIG
+   ============================================================ */
+const SPORT_CONFIG = {
+    nba: {
+        label: 'NBA',
+        color: 'var(--nba-color)',
+        positions: ['PG', 'SG', 'SF', 'PF', 'C'],
+        statCols: ['PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG%', 'PER'],
+        statKeys: ['ppg', 'rpg', 'apg', 'spg', 'bpg', 'fg', 'per'],
+        fantasyPositions: ['PG', 'SG', 'SF', 'PF', 'C', 'G', 'F', 'UTIL'],
+    },
+    nfl: {
+        label: 'NFL',
+        color: 'var(--nfl-color)',
+        positions: ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'],
+        statCols: ['Pass YDS', 'Pass TD', 'Rush YDS', 'INT', 'FPTS'],
+        statKeys: ['passYds', 'passTd', 'rushYds', 'ints', 'fantasyPts'],
+        fantasyPositions: ['QB', 'RB', 'RB', 'WR', 'WR', 'TE', 'FLEX', 'K', 'DEF'],
+    },
+    mlb: {
+        label: 'MLB',
+        color: 'var(--mlb-color)',
+        positions: ['C', '1B', '2B', '3B', 'SS', 'RF', 'CF', 'LF', 'DH', 'SP', 'RP'],
+        statCols: ['AVG', 'HR', 'RBI', 'SB', 'OPS', 'WAR'],
+        statKeys: ['avg', 'hr', 'rbi', 'sb', 'ops', 'war'],
+        fantasyPositions: ['C', '1B', '2B', '3B', 'SS', 'OF', 'OF', 'OF', 'UTIL', 'SP', 'SP', 'RP', 'RP'],
+    },
+    ncaa: {
+        label: 'NCAA',
+        color: 'var(--ncaa-color)',
+        positions: ['QB', 'RB', 'WR', 'TE', 'CB', 'LB', 'DE'],
+        statCols: ['Pass YDS', 'Pass TD', 'Rush YDS', 'INT', 'FPTS'],
+        statKeys: ['passYds', 'passTd', 'rushYds', 'ints', 'fantasyPts'],
+        fantasyPositions: ['QB', 'RB', 'WR', 'FLEX'],
+    },
+};
+
+/* ============================================================
+   MODELS DATABASE
+   ============================================================ */
+const MODELS = [
+    { name: 'Elo Rating System', sport: 'all', desc: 'Dynamic team rating based on game-by-game results. Predicts win probability for any matchup.', tags: ['Win Probability', 'Rankings', 'Historical'], category: 'ratings' },
+    { name: 'Bayesian Player Projections', sport: 'all', desc: 'Hierarchical Bayesian model for season-long player stat projections with uncertainty intervals.', tags: ['Projections', 'Bayesian', 'Season-Long'], category: 'projections' },
+    { name: 'EPA/Play Model', sport: 'nfl', desc: 'Expected Points Added per play — measures efficiency of every play relative to league average.', tags: ['NFL', 'Efficiency', 'Play-by-Play'], category: 'efficiency' },
+    { name: 'RAPTOR Rating', sport: 'nba', desc: 'Modern plus/minus model incorporating player tracking data and box score stats.', tags: ['NBA', 'Plus/Minus', 'Impact'], category: 'ratings' },
+    { name: 'WAR Calculator', sport: 'mlb', desc: 'Wins Above Replacement combining offensive, defensive, and baserunning value.', tags: ['MLB', 'Value', 'Comprehensive'], category: 'value' },
+    { name: 'Win Probability Model', sport: 'all', desc: 'Real-time win probability based on game state, score, time, and historical data.', tags: ['Live', 'Probability', 'In-Game'], category: 'probability' },
+    { name: 'Fantasy Points Optimizer', sport: 'all', desc: 'Linear programming optimizer for DFS lineup construction with correlation constraints.', tags: ['Fantasy', 'DFS', 'Optimization'], category: 'fantasy' },
+    { name: 'Injury Impact Model', sport: 'all', desc: 'Measures team-level impact of player absences using historical replacement-level analysis.', tags: ['Injuries', 'Replacement', 'Team Impact'], category: 'projections' },
+    { name: 'Spread Predictor', sport: 'all', desc: 'Point spread prediction using power ratings, pace, and venue adjustments.', tags: ['Betting', 'Spreads', 'Prediction'], category: 'betting' },
+    { name: 'Draft Value Analyzer', sport: 'all', desc: 'ADP vs projected value model identifying draft steals and reaches in fantasy drafts.', tags: ['Fantasy', 'Draft', 'Value'], category: 'fantasy' },
+    { name: 'Hierarchical Sports Model', sport: 'all', desc: 'Multi-level model accounting for player, team, and league effects simultaneously.', tags: ['Advanced', 'Hierarchical', 'Multi-Level'], category: 'advanced' },
+    { name: 'Player Tracking Metrics', sport: 'nba', desc: 'Advanced metrics from player tracking data — speed, distance, touch time, contested shots.', tags: ['NBA', 'Tracking', 'Advanced'], category: 'advanced' },
+];
+
+const RESEARCH_PAPERS = [
+    { title: 'Hierarchical Models in Sports Analytics', field: 'Econometrics', sport: 'Multi', desc: 'Multi-level modeling approaches for nested sports data structures.', tags: ['Bayesian', 'Hierarchical', 'R'] },
+    { title: 'Expected Points & Win Probability', field: 'Statistics', sport: 'NFL', desc: 'Framework for measuring play-level contribution to winning.', tags: ['EPA', 'WPA', 'Play-by-Play'] },
+    { title: 'Salary Cap Optimization', field: 'Operations Research', sport: 'NFL/NBA', desc: 'Integer programming approach to roster construction under cap constraints.', tags: ['Optimization', 'Cap Space', 'Linear Programming'] },
+    { title: 'Bayesian Aging Curves', field: 'Statistics', sport: 'MLB', desc: 'Non-parametric Bayesian estimation of player performance aging patterns.', tags: ['Aging', 'Bayesian', 'Longitudinal'] },
+    { title: 'Network Analysis of Team Play', field: 'Network Science', sport: 'NBA', desc: 'Graph-based analysis of passing networks and their effect on offensive efficiency.', tags: ['Networks', 'Passing', 'Graph Theory'] },
+    { title: 'Monte Carlo Draft Simulation', field: 'Simulation', sport: 'Fantasy', desc: 'Simulating thousands of drafts to estimate player value distributions.', tags: ['Monte Carlo', 'Fantasy', 'Simulation'] },
+    { title: 'Sports Betting Market Efficiency', field: 'Finance', sport: 'Multi', desc: 'Testing the efficient market hypothesis on sports betting lines.', tags: ['Betting', 'Markets', 'Efficiency'] },
+    { title: 'Player Tracking & Movement Patterns', field: 'Data Science', sport: 'Multi', desc: 'Analyzing high-frequency spatial data from optical tracking systems.', tags: ['Tracking', 'Spatial', 'Machine Learning'] },
+];
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function showView(viewId) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+
+    const view = document.getElementById(`view-${viewId}`);
+    if (view) view.classList.add('active');
+
+    const sideItem = document.querySelector(`.sidebar-item[data-view="${viewId}"]`);
+    if (sideItem) sideItem.classList.add('active');
+
+    State.currentView = viewId;
+    initView(viewId);
+
+    if (window.innerWidth <= 900) {
+        document.getElementById('sidebar').classList.remove('mobile-open');
+    }
+}
+
+function toggleMobileNav() {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+
+function setSport(sport) {
+    State.currentSport = sport;
+    document.querySelectorAll('.sport-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.sport === sport);
+    });
+    initView(State.currentView);
+}
+
+/* ============================================================
+   VIEW INITIALIZERS
+   ============================================================ */
+function initView(viewId) {
+    const sport = State.currentSport;
+    switch (viewId) {
+        case 'dashboard': renderDashboard(); break;
+        case 'players': renderPlayerStats(); break;
+        case 'teams': renderTeamStats(); break;
+        case 'compare': renderCompare(); break;
+        case 'leaders': renderLeaderboards(); break;
+        case 'advanced': renderAdvancedMetrics(); break;
+        case 'models': renderModels(); break;
+        case 'research': renderResearch(); break;
+        case 'trends': renderTrends(); break;
+        case 'fantasy-hub': renderFantasyHub(); break;
+        case 'draft': initDraft(); break;
+        case 'live': renderLiveScores(); break;
+        case 'roster': renderRosterOptimizer(); break;
+        case 'waiver': renderWaiverWire(); break;
+        case 'trade-analyzer': renderTradeAnalyzer(); break;
+        case 'projections': renderProjections(); break;
+        case 'betting': renderBettingModels(); break;
+        case 'settings': renderSettings(); break;
+    }
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function renderDashboard() {
+    const sport = State.currentSport;
+    const players = PLAYERS[sport] || [];
+    const config = SPORT_CONFIG[sport];
+
+    document.getElementById('dashSportLabel').textContent = config.label;
+
+    // Stat tiles
+    const statsHtml = [
+        { label: 'Players Tracked', value: players.length, cssClass: sport },
+        { label: 'Avg Fantasy Pts', value: players.length ? (players.reduce((s, p) => s + (p.fantasyPts || 0), 0) / players.length).toFixed(1) : '0', cssClass: sport },
+        { label: 'Top Performer', value: players[0]?.name?.split(' ').pop() || '—', cssClass: sport },
+        { label: 'Models Available', value: MODELS.filter(m => m.sport === 'all' || m.sport === sport).length, cssClass: sport },
+    ].map(s => `
+        <div class="stat-tile ${s.cssClass}">
+            <div class="label">${s.label}</div>
+            <div class="value">${s.value}</div>
+        </div>
+    `).join('');
+    document.getElementById('dashboardStats').innerHTML = statsHtml;
+
+    // Trending players
+    const trending = [...players].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 5);
+    document.getElementById('trendingPlayers').innerHTML = trending.map((p, i) => `
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < 4 ? 'border-bottom:1px solid rgba(255,255,255,0.03);' : ''}">
+            <span style="font-family:var(--font-mono);font-weight:700;color:var(--text-muted);width:24px;">${i + 1}</span>
+            <div style="flex:1;">
+                <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
+            </div>
+            <div style="font-family:var(--font-mono);font-weight:700;${p.trend === 'up' ? 'color:var(--success)' : p.trend === 'down' ? 'color:var(--danger)' : 'color:var(--text-secondary)'}">
+                ${p.trend === 'up' ? '▲' : p.trend === 'down' ? '▼' : '—'} ${p.fantasyPts?.toFixed(1) || '—'}
+            </div>
+        </div>
+    `).join('');
+
+    // Fantasy risers
+    const risers = players.filter(p => p.trend === 'up').slice(0, 5);
+    document.getElementById('fantasyRisers').innerHTML = risers.length ? risers.map((p, i) => `
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < risers.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.03);' : ''}">
+            <span style="color:var(--success);font-size:1.1rem;">▲</span>
+            <div style="flex:1;">
+                <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ADP ${p.adp}</div>
+            </div>
+            <span class="badge badge-${sport}">${config.label}</span>
+        </div>
+    `).join('') : '<div class="empty-state"><div class="subtitle">No trending risers right now</div></div>';
+
+    // Leader table
+    const topPlayers = [...players].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 8);
+    const cols = config.statCols;
+    const keys = config.statKeys;
+    document.getElementById('dashLeaderTable').innerHTML = `
+        <table class="data-table">
+            <thead><tr>
+                <th>#</th><th>Player</th><th>Team</th><th>Pos</th>
+                ${cols.map(c => `<th>${c}</th>`).join('')}
+                <th>FPTS</th>
+            </tr></thead>
+            <tbody>${topPlayers.map((p, i) => `
+                <tr>
+                    <td class="rank">${i + 1}</td>
+                    <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})">${p.name}</td>
+                    <td>${p.team}</td>
+                    <td><span class="position-tag">${p.pos}</span></td>
+                    ${keys.map(k => `<td>${p[k] !== undefined ? (typeof p[k] === 'number' && k !== 'per' && k !== 'war' && k !== 'hr' && k !== 'rbi' && k !== 'sb' && k !== 'ints' && k !== 'rec' && k !== 'targets' && p[k] < 1 ? p[k].toFixed(3) : p[k]) : '—'}</td>`).join('')}
+                    <td style="font-weight:700;color:var(--success);">${p.fantasyPts?.toFixed(1) || '—'}</td>
+                </tr>
+            `).join('')}</tbody>
+        </table>
+    `;
+}
+
+/* ============================================================
+   PLAYER STATS
+   ============================================================ */
+function renderPlayerStats() {
+    const sport = State.currentSport;
+    const config = SPORT_CONFIG[sport];
+
+    // Update position filter
+    const posFilter = document.getElementById('playerPosFilter');
+    posFilter.innerHTML = '<option value="all">All Positions</option>' +
+        config.positions.map(p => `<option value="${p}">${p}</option>`).join('');
+
+    filterPlayers();
+}
+
+function filterPlayers() {
+    const sport = document.getElementById('playerSportFilter').value;
+    const pos = document.getElementById('playerPosFilter').value;
+    const search = document.getElementById('playerSearch').value.toLowerCase();
+
+    let sportList = sport === 'all' ? Object.keys(PLAYERS) : [sport === 'all' ? State.currentSport : sport];
+    let allPlayers = [];
+    sportList.forEach(s => {
+        if (PLAYERS[s]) {
+            PLAYERS[s].forEach(p => allPlayers.push({ ...p, sport: s }));
+        }
+    });
+
+    if (pos !== 'all') allPlayers = allPlayers.filter(p => p.pos === pos);
+    if (search) allPlayers = allPlayers.filter(p => p.name.toLowerCase().includes(search) || p.team.toLowerCase().includes(search));
+
+    const activeSport = sport === 'all' ? State.currentSport : sport;
+    const config = SPORT_CONFIG[activeSport];
+
+    document.getElementById('playerTableHead').innerHTML = `
+        <th>#</th><th>Player</th><th>Sport</th><th>Team</th><th>Pos</th>
+        ${config.statCols.map(c => `<th>${c}</th>`).join('')}
+        <th>FPTS</th><th>ADP</th>
+    `;
+
+    document.getElementById('playerTableBody').innerHTML = allPlayers.map((p, i) => `
+        <tr>
+            <td class="rank">${i + 1}</td>
+            <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})">${p.name}</td>
+            <td><span class="badge badge-${p.sport}">${SPORT_CONFIG[p.sport]?.label || p.sport}</span></td>
+            <td>${p.team}</td>
+            <td><span class="position-tag">${p.pos}</span></td>
+            ${config.statKeys.map(k => `<td>${p[k] !== undefined ? p[k] : '—'}</td>`).join('')}
+            <td style="font-weight:700;color:var(--success);">${p.fantasyPts?.toFixed(1) || '—'}</td>
+            <td>${p.adp || '—'}</td>
+        </tr>
+    `).join('');
+}
+
+/* ============================================================
+   TEAM STATS
+   ============================================================ */
+function renderTeamStats() {
+    const sport = State.currentSport;
+    const players = PLAYERS[sport] || [];
+    const teams = {};
+
+    players.forEach(p => {
+        if (!teams[p.team]) teams[p.team] = { name: p.team, players: [], totalFpts: 0 };
+        teams[p.team].players.push(p);
+        teams[p.team].totalFpts += (p.fantasyPts || 0);
+    });
+
+    const teamList = Object.values(teams).sort((a, b) => b.totalFpts - a.totalFpts);
+
+    document.getElementById('teamTableHead').innerHTML = '<th>#</th><th>Team</th><th>Players</th><th>Avg FPTS</th><th>Total FPTS</th><th>Top Player</th>';
+    document.getElementById('teamTableBody').innerHTML = teamList.map((t, i) => {
+        const top = t.players.sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0))[0];
+        return `
+            <tr>
+                <td class="rank">${i + 1}</td>
+                <td style="font-family:var(--font-sans);font-weight:700;">${t.name}</td>
+                <td>${t.players.length}</td>
+                <td>${(t.totalFpts / t.players.length).toFixed(1)}</td>
+                <td style="font-weight:700;">${t.totalFpts.toFixed(1)}</td>
+                <td>${top?.name || '—'}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+/* ============================================================
+   COMPARE
+   ============================================================ */
+function renderCompare() {
+    const sport = State.currentSport;
+    const players = PLAYERS[sport] || [];
+
+    const options = players.map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
+    document.getElementById('compare1').innerHTML = options;
+    document.getElementById('compare2').innerHTML = options;
+
+    if (players.length >= 2) {
+        document.getElementById('compare2').value = players[1].id;
+        runComparison();
+    }
+}
+
+function runComparison() {
+    const sport = State.currentSport;
+    const players = PLAYERS[sport] || [];
+    const config = SPORT_CONFIG[sport];
+    const id1 = parseInt(document.getElementById('compare1').value);
+    const id2 = parseInt(document.getElementById('compare2').value);
+    const p1 = players.find(p => p.id === id1);
+    const p2 = players.find(p => p.id === id2);
+    if (!p1 || !p2) return;
+
+    const bars = config.statKeys.map((key, i) => {
+        const v1 = p1[key] || 0;
+        const v2 = p2[key] || 0;
+        const max = Math.max(v1, v2) || 1;
+        return `
+            <div style="display:grid;grid-template-columns:100px 1fr 60px 1fr 100px;gap:8px;align-items:center;margin-bottom:8px;">
+                <div style="text-align:right;font-family:var(--font-mono);font-weight:600;font-size:0.85rem;${v1 >= v2 ? 'color:var(--success);' : ''}">${v1}</div>
+                <div style="height:8px;background:var(--bg-input);border-radius:4px;overflow:hidden;direction:rtl;">
+                    <div style="height:100%;width:${(v1 / max) * 100}%;background:${v1 >= v2 ? 'var(--success)' : 'var(--text-muted)'};border-radius:4px;"></div>
+                </div>
+                <div style="text-align:center;font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);">${config.statCols[i]}</div>
+                <div style="height:8px;background:var(--bg-input);border-radius:4px;overflow:hidden;">
+                    <div style="height:100%;width:${(v2 / max) * 100}%;background:${v2 >= v1 ? 'var(--success)' : 'var(--text-muted)'};border-radius:4px;"></div>
+                </div>
+                <div style="font-family:var(--font-mono);font-weight:600;font-size:0.85rem;${v2 >= v1 ? 'color:var(--success);' : ''}">${v2}</div>
+            </div>
+        `;
+    }).join('');
+
+    document.getElementById('comparisonResult').innerHTML = `
+        <div class="card">
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:24px;margin-bottom:24px;">
+                <div style="text-align:center;">
+                    <div class="player-avatar" style="width:72px;height:72px;font-size:1.5rem;margin:0 auto 8px;">${p1.name[0]}</div>
+                    <div style="font-weight:800;font-size:1.1rem;">${p1.name}</div>
+                    <div style="color:var(--text-muted);font-size:0.85rem;">${p1.team} · ${p1.pos}</div>
+                    <div style="font-family:var(--font-mono);font-weight:700;color:var(--success);margin-top:4px;">${p1.fantasyPts?.toFixed(1)} FPTS</div>
+                </div>
+                <div style="font-size:2rem;font-weight:900;color:var(--text-muted);align-self:center;">VS</div>
+                <div style="text-align:center;">
+                    <div class="player-avatar" style="width:72px;height:72px;font-size:1.5rem;margin:0 auto 8px;background:linear-gradient(135deg,var(--nba-color),#f59e0b);">${p2.name[0]}</div>
+                    <div style="font-weight:800;font-size:1.1rem;">${p2.name}</div>
+                    <div style="color:var(--text-muted);font-size:0.85rem;">${p2.team} · ${p2.pos}</div>
+                    <div style="font-family:var(--font-mono);font-weight:700;color:var(--success);margin-top:4px;">${p2.fantasyPts?.toFixed(1)} FPTS</div>
+                </div>
+            </div>
+            ${bars}
+        </div>
+    `;
+}
+
+/* ============================================================
+   LEADERBOARDS
+   ============================================================ */
+function renderLeaderboards() {
+    const sport = State.currentSport;
+    const players = PLAYERS[sport] || [];
+    const config = SPORT_CONFIG[sport];
+
+    const cards = config.statKeys.map((key, i) => {
+        const sorted = [...players].filter(p => p[key] !== undefined).sort((a, b) => (b[key] || 0) - (a[key] || 0)).slice(0, 5);
+        return `
+            <div class="card">
+                <div class="card-title" style="margin-bottom:12px;">${config.statCols[i]} Leaders</div>
+                ${sorted.map((p, j) => `
+                    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;${j < sorted.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.03);' : ''}">
+                        <span style="font-family:var(--font-mono);font-weight:700;color:${j === 0 ? 'var(--warning)' : 'var(--text-muted)'};width:20px;">${j + 1}</span>
+                        <div style="flex:1;font-weight:600;font-size:0.85rem;">${p.name}</div>
+                        <div style="font-family:var(--font-mono);font-weight:700;">${p[key]}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }).join('');
+
+    document.getElementById('leaderCards').innerHTML = cards;
+}
+
+/* ============================================================
+   ADVANCED METRICS
+   ============================================================ */
+function renderAdvancedMetrics() {
+    const sport = State.currentSport;
+
+    const metrics = {
+        nba: [
+            { name: 'PER (Player Efficiency Rating)', desc: 'All-in-one rating of per-minute production. League average is 15.0.', formula: 'PER = (1/min) × (3PM + AST×⅔ + FGM×(2-⅓×teamAST/teamFGM) + FTM×0.5 - TO - ...) × pace_adj' },
+            { name: 'True Shooting %', desc: 'Shooting efficiency accounting for free throws and three-pointers.', formula: 'TS% = PTS / (2 × (FGA + 0.44 × FTA))' },
+            { name: 'Box Plus/Minus (BPM)', desc: 'Box score estimate of points per 100 possessions above average.', formula: 'BPM = f(PTS, REB, AST, STL, BLK, TO, usage, position)' },
+            { name: 'Win Shares', desc: 'Estimate of wins contributed by a player through offense and defense.', formula: 'WS = OWS + DWS' },
+            { name: 'Usage Rate', desc: 'Percentage of team plays used while on court.', formula: 'USG% = 100 × ((FGA + 0.44×FTA + TO) × (Tm MP/5)) / (MP × (Tm FGA + 0.44×Tm FTA + Tm TO))' },
+            { name: 'VORP', desc: 'Value Over Replacement Player — total value above replacement level.', formula: 'VORP = [BPM − (−2.0)] × (% of minutes played) × (team games / 82)' },
+        ],
+        nfl: [
+            { name: 'EPA/Play', desc: 'Expected Points Added per play — the gold standard for play-level efficiency.', formula: 'EPA = EP_after - EP_before' },
+            { name: 'DVOA', desc: 'Defense-adjusted Value Over Average — compares performance to league average on every play.', formula: 'DVOA = Σ(success_value × opponent_adj) / plays' },
+            { name: 'QBR', desc: 'Total Quarterback Rating — measures QB contribution on every play.', formula: 'QBR = f(EPA, division by play type, clutch weighting)' },
+            { name: 'CPOE', desc: 'Completion Percentage Over Expected — actual vs. expected based on throw difficulty.', formula: 'CPOE = Actual_completion% − xCompletion%' },
+            { name: 'Yards After Catch (YAC)', desc: 'Yards gained after the reception — separates receiver skill from QB targeting.', formula: 'YAC = Receiving_yards − Air_yards' },
+            { name: 'Pressure Rate', desc: 'Percentage of dropbacks resulting in a pressure.', formula: 'Pressure% = Pressures / Dropbacks' },
+        ],
+        mlb: [
+            { name: 'WAR (Wins Above Replacement)', desc: 'Comprehensive value metric combining hitting, fielding, and baserunning.', formula: 'WAR = (Batting + Baserunning + Fielding + Positional + League) / RPW + Replacement' },
+            { name: 'OPS+ (Adjusted OPS)', desc: 'On-base plus slugging, normalized to league and park. 100 = average.', formula: 'OPS+ = 100 × (OBP/lgOBP + SLG/lgSLG − 1)' },
+            { name: 'wRC+ (Weighted Runs Created Plus)', desc: 'Park-adjusted offensive value. 100 = league average.', formula: 'wRC+ = ((wRC/PA − lgR/PA) + lgR/PA) × lgwRC/lgPA+R × 100' },
+            { name: 'FIP (Fielding Independent Pitching)', desc: 'ERA estimator based only on outcomes the pitcher controls.', formula: 'FIP = (13×HR + 3×(BB+HBP) − 2×K) / IP + cFIP' },
+            { name: 'xBA / xSLG / xwOBA', desc: 'Expected stats based on exit velocity and launch angle — removes fielding luck.', formula: 'xStat = f(exit_velocity, launch_angle, sprint_speed)' },
+            { name: 'Barrel Rate', desc: 'Percentage of batted balls with optimal exit velo (98+) and launch angle.', formula: 'Barrel% = Barrels / Batted Ball Events' },
+        ],
+        ncaa: [
+            { name: 'SP+ Rating', desc: 'Tempo-and opponent-adjusted measure of team efficiency.', formula: 'SP+ = Offensive_SP + Defensive_SP + Special_Teams' },
+            { name: 'Success Rate', desc: 'Percentage of plays that gain enough yards relative to down and distance.', formula: '1st: 50%+ of needed / 2nd: 70%+ / 3rd-4th: 100%+' },
+            { name: 'Havoc Rate', desc: 'Percentage of plays where the defense creates a TFL, forced fumble, or pass breakup.', formula: 'Havoc% = (TFL + FF + PBU + INT) / Defensive_Plays' },
+            { name: 'Explosiveness', desc: 'Average EPA on successful plays — measures big-play ability.', formula: 'IsoPPP = EPA on successful plays only' },
+        ],
+    };
+
+    const sportMetrics = metrics[sport] || metrics.nba;
+    document.getElementById('advancedMetrics').innerHTML = sportMetrics.map(m => `
+        <div class="card">
+            <div class="card-title" style="margin-bottom:8px;">${m.name}</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.5;margin-bottom:12px;">${m.desc}</p>
+            <div style="background:var(--bg-input);padding:10px 14px;border-radius:var(--radius);font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);overflow-x:auto;white-space:nowrap;">
+                ${m.formula}
+            </div>
+        </div>
+    `).join('');
+}
+
+/* ============================================================
+   MODELS
+   ============================================================ */
+function renderModels() {
+    const sport = State.currentSport;
+    const filtered = MODELS.filter(m => m.sport === 'all' || m.sport === sport);
+
+    document.getElementById('modelCards').innerHTML = filtered.map(m => `
+        <div class="model-card">
+            <div class="model-name">${m.name}</div>
+            <div class="model-desc">${m.desc}</div>
+            <div class="model-tags">
+                ${m.tags.map(t => `<span class="model-tag">${t}</span>`).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+/* ============================================================
+   RESEARCH
+   ============================================================ */
+function renderResearch() {
+    document.getElementById('researchCards').innerHTML = RESEARCH_PAPERS.map(r => `
+        <div class="card" style="cursor:pointer;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--accent);">${r.field}</span>
+                <span class="badge" style="background:rgba(255,255,255,0.05);color:var(--text-muted);">${r.sport}</span>
+            </div>
+            <div class="card-title" style="margin-bottom:6px;font-size:1rem;">${r.title}</div>
+            <p style="font-size:0.82rem;color:var(--text-secondary);line-height:1.5;margin-bottom:10px;">${r.desc}</p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                ${r.tags.map(t => `<span class="model-tag">${t}</span>`).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+/* ============================================================
+   TRENDS
+   ============================================================ */
+function renderTrends() {
+    const sport = State.currentSport;
+    const players = PLAYERS[sport] || [];
+
+    const risers = players.filter(p => p.trend === 'up');
+    const fallers = players.filter(p => p.trend === 'down');
+
+    document.getElementById('trendsContainer').innerHTML = `
+        <div class="card-grid card-grid-2">
+            <div class="card">
+                <div class="card-title" style="margin-bottom:12px;">📈 Rising Players</div>
+                ${risers.map(p => `
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                        <span style="color:var(--success);font-size:1.1rem;">▲</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;">${p.name}</div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
+                        </div>
+                        <div style="font-family:var(--font-mono);font-weight:700;">${p.fantasyPts?.toFixed(1)}</div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="card">
+                <div class="card-title" style="margin-bottom:12px;">📉 Falling Players</div>
+                ${fallers.length ? fallers.map(p => `
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                        <span style="color:var(--danger);font-size:1.1rem;">▼</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;">${p.name}</div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
+                        </div>
+                        <div style="font-family:var(--font-mono);font-weight:700;">${p.fantasyPts?.toFixed(1)}</div>
+                    </div>
+                `).join('') : '<div class="empty-state"><div class="subtitle">No falling players right now</div></div>'}
+            </div>
+        </div>
+    `;
+}
+
+/* ============================================================
+   FANTASY HUB
+   ============================================================ */
+function renderFantasyHub() {
+    const sport = State.currentSport;
+    const players = PLAYERS[sport] || [];
+    const topFantasy = [...players].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0));
+
+    document.getElementById('fantasyStats').innerHTML = [
+        { label: 'Fantasy MVP', value: topFantasy[0]?.name?.split(' ').pop() || '—', cssClass: sport },
+        { label: 'Top FPTS', value: topFantasy[0]?.fantasyPts?.toFixed(1) || '—', cssClass: sport },
+        { label: 'Best Value (ADP)', value: topFantasy.sort((a, b) => (b.fantasyPts / (b.adp || 1)) - (a.fantasyPts / (a.adp || 1)))[0]?.name?.split(' ').pop() || '—', cssClass: sport },
+        { label: 'Deepest Sleeper', value: topFantasy.filter(p => (p.adp || 0) > 10).sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0))[0]?.name?.split(' ').pop() || '—', cssClass: sport },
+    ].map(s => `
+        <div class="stat-tile ${s.cssClass}">
+            <div class="label">${s.label}</div>
+            <div class="value" style="font-size:1.3rem;">${s.value}</div>
+        </div>
+    `).join('');
+
+    document.getElementById('seasonCalendar').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+            ${[
+                { month: 'Aug', event: 'Draft Season', status: 'active' },
+                { month: 'Sep', event: sport === 'nfl' || sport === 'ncaa' ? 'Season Start' : 'Preseason', status: 'upcoming' },
+                { month: 'Oct', event: sport === 'nba' ? 'Season Start' : sport === 'mlb' ? 'Playoffs' : 'Midseason', status: 'upcoming' },
+                { month: 'Nov', event: 'Trade Deadline Watch', status: 'future' },
+                { month: 'Dec', event: 'Playoff Push', status: 'future' },
+                { month: 'Jan', event: sport === 'nfl' ? 'Playoffs' : 'All-Star Watch', status: 'future' },
+            ].map(m => `
+                <div style="padding:12px;background:${m.status === 'active' ? 'var(--accent-glow)' : 'var(--bg-input)'};border-radius:var(--radius);border:1px solid ${m.status === 'active' ? 'var(--accent)' : 'var(--border)'};">
+                    <div style="font-weight:800;font-size:0.95rem;${m.status === 'active' ? 'color:var(--accent);' : ''}">${m.month}</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);">${m.event}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    document.getElementById('platformStatus').innerHTML = State.fantasyPlatform
+        ? `<div style="padding:10px;background:rgba(16,185,129,0.1);border:1px solid var(--success);border-radius:var(--radius);color:var(--success);font-size:0.85rem;">✓ Connected to ${State.fantasyPlatform === 'yahoo' ? 'Yahoo' : 'ESPN'} Fantasy</div>`
+        : `<div style="font-size:0.82rem;color:var(--text-muted);">Not connected — link a platform above to sync your leagues.</div>`;
+}
+
+function connectPlatform(platform) {
+    State.fantasyPlatform = platform;
+    showToast(`Connected to ${platform === 'yahoo' ? 'Yahoo' : 'ESPN'} Fantasy!`, 'success');
+    renderFantasyHub();
+}
+
+/* ============================================================
+   DRAFT ASSISTANT
+   ============================================================ */
+function initDraft() {
+    const sport = document.getElementById('draftSport')?.value || State.currentSport;
+    const players = PLAYERS[sport] || [];
+
+    const sorted = [...players].sort((a, b) => (a.adp || 999) - (b.adp || 999));
+    document.getElementById('draftPlayerList').innerHTML = sorted.map(p => `
+        <div class="draft-player-card" id="draft-player-${p.id}" onclick="selectDraftPlayer(${p.id})">
+            <div class="draft-player-rank">${p.adp || '—'}</div>
+            <div class="draft-player-info">
+                <div class="draft-player-name">${p.name}</div>
+                <div class="draft-player-meta">${p.team} · ${p.pos}</div>
+            </div>
+            <div class="draft-player-score">${p.fantasyPts?.toFixed(1) || '—'}</div>
+        </div>
+    `).join('');
+}
+
+let selectedDraftPlayer = null;
+
+function selectDraftPlayer(id) {
+    selectedDraftPlayer = id;
+    document.querySelectorAll('.draft-player-card').forEach(c => c.classList.remove('selected'));
+    const el = document.getElementById(`draft-player-${id}`);
+    if (el) el.classList.add('selected');
+
+    updateDraftRecommendations();
+}
+
+function filterDraftPlayers() {
+    const filter = document.getElementById('draftFilter').value.toLowerCase();
+    document.querySelectorAll('.draft-player-card').forEach(card => {
+        const name = card.querySelector('.draft-player-name').textContent.toLowerCase();
+        card.style.display = name.includes(filter) ? '' : 'none';
+    });
+}
+
+function startDraft() {
+    const sport = document.getElementById('draftSport')?.value || 'nba';
+    const format = document.getElementById('draftFormat')?.value || 'snake';
+    const players = [...(PLAYERS[sport] || [])].sort((a, b) => (a.adp || 999) - (b.adp || 999));
+
+    State.draftState = {
+        sport,
+        format,
+        round: 1,
+        pick: 1,
+        totalTeams: 10,
+        myTeam: 3,
+        picks: [],
+        available: players.map(p => p.id),
+        myRoster: [],
+    };
+
+    renderDraftBoard();
+    showToast('Draft started! You pick at position #3.', 'info');
+}
+
+function renderDraftBoard() {
+    const ds = State.draftState;
+    if (!ds) return;
+
+    document.getElementById('currentRound').textContent = ds.round;
+    document.getElementById('currentPick').textContent = `Pick ${ds.pick} of ${ds.totalTeams}`;
+
+    // Simulate AI picks before user's turn
+    while (ds.pick !== ds.myTeam && ds.available.length > 0 && ds.picks.length < ds.totalTeams * 15) {
+        aiPick();
+    }
+
+    updateDraftRecommendations();
+    renderPicksGrid();
+    updatePlayerAvailability();
+}
+
+function aiPick() {
+    const ds = State.draftState;
+    const sport = ds.sport;
+    const players = PLAYERS[sport] || [];
+
+    // AI picks best available with slight randomness
+    const availablePlayers = players.filter(p => ds.available.includes(p.id));
+    if (availablePlayers.length === 0) return;
+
+    const pick = availablePlayers[Math.floor(Math.random() * Math.min(3, availablePlayers.length))];
+    ds.available = ds.available.filter(id => id !== pick.id);
+    ds.picks.push({ round: ds.round, pick: ds.pick, team: ds.pick, player: pick });
+
+    advancePick();
+}
+
+function advancePick() {
+    const ds = State.draftState;
+    if (ds.format === 'snake') {
+        if (ds.round % 2 === 1) {
+            ds.pick++;
+            if (ds.pick > ds.totalTeams) { ds.round++; ds.pick = ds.totalTeams; }
+        } else {
+            ds.pick--;
+            if (ds.pick < 1) { ds.round++; ds.pick = 1; }
+        }
+    } else {
+        ds.pick++;
+        if (ds.pick > ds.totalTeams) { ds.round++; ds.pick = 1; }
+    }
+}
+
+function draftPlayer(id) {
+    const ds = State.draftState;
+    if (!ds) return;
+
+    const sport = ds.sport;
+    const player = (PLAYERS[sport] || []).find(p => p.id === id);
+    if (!player || !ds.available.includes(id)) return;
+
+    ds.available = ds.available.filter(i => i !== id);
+    ds.picks.push({ round: ds.round, pick: ds.pick, team: ds.myTeam, player });
+    ds.myRoster.push(player);
+
+    advancePick();
+    renderDraftBoard();
+    showToast(`Drafted ${player.name}!`, 'success');
+}
+
+function autoPick() {
+    const ds = State.draftState;
+    if (!ds) return;
+
+    const sport = ds.sport;
+    const bestAvailable = (PLAYERS[sport] || [])
+        .filter(p => ds.available.includes(p.id))
+        .sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0));
+
+    if (bestAvailable.length > 0) {
+        draftPlayer(bestAvailable[0].id);
+    }
+}
+
+function undoPick() {
+    const ds = State.draftState;
+    if (!ds || ds.picks.length === 0) return;
+
+    const lastPick = ds.picks.pop();
+    ds.available.push(lastPick.player.id);
+    if (lastPick.team === ds.myTeam) {
+        ds.myRoster = ds.myRoster.filter(p => p.id !== lastPick.player.id);
+    }
+
+    // Rewind pick position
+    ds.round = lastPick.round;
+    ds.pick = lastPick.pick;
+
+    renderDraftBoard();
+    showToast('Last pick undone.', 'info');
+}
+
+function updateDraftRecommendations() {
+    const ds = State.draftState;
+    const sport = ds?.sport || document.getElementById('draftSport')?.value || 'nba';
+    const players = PLAYERS[sport] || [];
+    const available = ds ? players.filter(p => ds.available.includes(p.id)) : players;
+
+    const bestOverall = [...available].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 3);
+    const bestValue = [...available].sort((a, b) => {
+        const valA = (a.fantasyPts || 0) / (a.adp || 1);
+        const valB = (b.fantasyPts || 0) / (b.adp || 1);
+        return valB - valA;
+    }).slice(0, 2);
+
+    // Positional need (if we have a roster)
+    let needRec = null;
+    if (ds?.myRoster) {
+        const config = SPORT_CONFIG[sport];
+        const rosterPos = ds.myRoster.map(p => p.pos);
+        const needed = config.positions.find(pos => !rosterPos.includes(pos));
+        if (needed) {
+            const bestAtNeed = available.filter(p => p.pos === needed).sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0))[0];
+            if (bestAtNeed) {
+                needRec = { player: bestAtNeed, position: needed };
+            }
+        }
+    }
+
+    document.getElementById('draftRecList').innerHTML = `
+        <div class="rec-card">
+            <div class="rec-label">🏆 Best Available</div>
+            ${bestOverall.map(p => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;">
+                    <div>
+                        <div class="rec-player" style="font-size:0.88rem;">${p.name}</div>
+                        <div style="font-size:0.72rem;color:var(--text-muted);">${p.team} · ${p.pos} · ADP ${p.adp}</div>
+                    </div>
+                    ${ds ? `<button class="btn btn-sm btn-primary" onclick="draftPlayer(${p.id})">Draft</button>` : ''}
+                </div>
+            `).join('')}
+        </div>
+        <div class="rec-card">
+            <div class="rec-label" style="color:var(--accent);">💎 Best Value</div>
+            ${bestValue.map(p => `
+                <div style="padding:4px 0;">
+                    <div class="rec-player" style="font-size:0.88rem;">${p.name}</div>
+                    <div class="rec-reason">ADP ${p.adp} but producing ${p.fantasyPts?.toFixed(1)} FPTS — potential steal</div>
+                </div>
+            `).join('')}
+        </div>
+        ${needRec ? `
+            <div class="rec-card">
+                <div class="rec-label" style="color:var(--warning);">📌 Positional Need: ${needRec.position}</div>
+                <div class="rec-player" style="font-size:0.88rem;">${needRec.player.name}</div>
+                <div class="rec-reason">You need a ${needRec.position}. ${needRec.player.name} is the best available at that position.</div>
+                ${ds ? `<button class="btn btn-sm btn-primary" style="margin-top:6px;" onclick="draftPlayer(${needRec.player.id})">Draft</button>` : ''}
+            </div>
+        ` : ''}
+        ${ds?.myRoster?.length ? `
+            <div class="rec-card">
+                <div class="rec-label" style="color:var(--text-secondary);">📦 Your Roster (${ds.myRoster.length})</div>
+                ${ds.myRoster.map(p => `
+                    <div style="font-size:0.82rem;padding:2px 0;display:flex;justify-content:space-between;">
+                        <span>${p.name}</span>
+                        <span class="position-tag">${p.pos}</span>
+                    </div>
+                `).join('')}
+            </div>
+        ` : ''}
+    `;
+}
+
+function renderPicksGrid() {
+    const ds = State.draftState;
+    if (!ds) return;
+
+    document.getElementById('draftPicksGrid').innerHTML = ds.picks.map((pick, i) => `
+        <div class="pick-row ${pick.team === ds.myTeam ? 'my-pick' : ''}">
+            <div class="pick-number">${i + 1}</div>
+            <div style="font-weight:600;font-size:0.85rem;">${pick.player.name}
+                <span style="color:var(--text-muted);font-weight:400;"> — ${pick.player.team}</span>
+            </div>
+            <div><span class="position-tag">${pick.player.pos}</span></div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Tm ${pick.team}</div>
+        </div>
+    `).join('');
+}
+
+function updatePlayerAvailability() {
+    const ds = State.draftState;
+    if (!ds) return;
+
+    document.querySelectorAll('.draft-player-card').forEach(card => {
+        const id = parseInt(card.id.replace('draft-player-', ''));
+        if (!ds.available.includes(id)) {
+            card.classList.add('drafted');
+        }
+    });
+}
+
+/* ============================================================
+   MOCK DRAFT
+   ============================================================ */
+function startMockDraft() {
+    const sport = State.currentSport;
+    const leagueSize = parseInt(document.getElementById('mockLeagueSize').value);
+    const draftPos = document.getElementById('mockDraftPosition').value;
+    const rounds = parseInt(document.getElementById('mockRounds').value);
+    const scoring = document.getElementById('mockScoring').value;
+
+    const myPick = draftPos === 'random' ? Math.ceil(Math.random() * leagueSize) : parseInt(draftPos);
+    const players = [...(PLAYERS[sport] || [])].sort((a, b) => (a.adp || 999) - (b.adp || 999));
+    const available = [...players];
+    const rosters = {};
+    for (let i = 1; i <= leagueSize; i++) rosters[i] = [];
+
+    const allPicks = [];
+
+    for (let round = 1; round <= Math.min(rounds, Math.ceil(available.length / leagueSize)); round++) {
+        const order = round % 2 === 1
+            ? Array.from({ length: leagueSize }, (_, i) => i + 1)
+            : Array.from({ length: leagueSize }, (_, i) => leagueSize - i);
+
+        for (const team of order) {
+            if (available.length === 0) break;
+            // Simple AI: pick from top 3 available with randomness
+            const pickIdx = Math.floor(Math.random() * Math.min(3, available.length));
+            const picked = available.splice(pickIdx, 1)[0];
+            rosters[team].push(picked);
+            allPicks.push({ round, team, player: picked, isUser: team === myPick });
+        }
+    }
+
+    const myRoster = rosters[myPick] || [];
+
+    document.getElementById('mockDraftResults').innerHTML = `
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-header">
+                <div class="card-title">📦 Your Team (Pick #${myPick})</div>
+                <span class="badge" style="background:var(--accent-glow);color:var(--accent);">${scoring.toUpperCase()}</span>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>Rd</th><th>Player</th><th>Team</th><th>Pos</th><th>FPTS</th><th>ADP</th></tr></thead>
+                <tbody>${myRoster.map((p, i) => `
+                    <tr>
+                        <td class="rank">${i + 1}</td>
+                        <td style="font-family:var(--font-sans);font-weight:600;">${p.name}</td>
+                        <td>${p.team}</td>
+                        <td><span class="position-tag">${p.pos}</span></td>
+                        <td style="font-weight:700;color:var(--success);">${p.fantasyPts?.toFixed(1) || '—'}</td>
+                        <td>${p.adp || '—'}</td>
+                    </tr>
+                `).join('')}</tbody>
+            </table>
+            <div style="margin-top:16px;padding:12px;background:var(--bg-input);border-radius:var(--radius);">
+                <strong>Total Projected Points:</strong>
+                <span style="font-family:var(--font-mono);font-weight:700;color:var(--success);margin-left:8px;">
+                    ${myRoster.reduce((s, p) => s + (p.fantasyPts || 0), 0).toFixed(1)}
+                </span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📋 Full Draft Board</div>
+                <span style="font-size:0.82rem;color:var(--text-muted);">${allPicks.length} picks · ${leagueSize} teams · ${rounds} rounds</span>
+            </div>
+            <div style="max-height:400px;overflow-y:auto;">
+                ${allPicks.map((pick, i) => `
+                    <div class="pick-row ${pick.isUser ? 'my-pick' : ''}">
+                        <div class="pick-number">${i + 1}</div>
+                        <div style="font-weight:${pick.isUser ? '700' : '500'};font-size:0.85rem;">
+                            ${pick.player.name}
+                            <span style="color:var(--text-muted);font-weight:400;"> — ${pick.player.team}</span>
+                        </div>
+                        <div><span class="position-tag">${pick.player.pos}</span></div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">
+                            R${pick.round} · ${pick.isUser ? '⭐ You' : `Tm ${pick.team}`}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    showToast(`Mock draft complete! Your team scored ${myRoster.reduce((s, p) => s + (p.fantasyPts || 0), 0).toFixed(1)} projected points.`, 'success');
+}
+
+/* ============================================================
+   LIVE SCORES (simulated)
+   ============================================================ */
+function renderLiveScores() {
+    const sport = State.currentSport;
+    const games = {
+        nba: [
+            { home: 'BOS', away: 'MIL', homeScore: 108, awayScore: 103, quarter: 'Q4', time: '2:34', status: 'live' },
+            { home: 'LAL', away: 'GSW', homeScore: 95, awayScore: 91, quarter: 'Q3', time: '8:12', status: 'live' },
+            { home: 'DEN', away: 'OKC', homeScore: 0, awayScore: 0, quarter: '', time: '7:00 PM', status: 'scheduled' },
+            { home: 'PHX', away: 'DAL', homeScore: 115, awayScore: 110, quarter: 'Final', time: '', status: 'final' },
+        ],
+        nfl: [
+            { home: 'KC', away: 'BAL', homeScore: 21, awayScore: 17, quarter: 'Q3', time: '5:42', status: 'live' },
+            { home: 'PHI', away: 'DAL', homeScore: 0, awayScore: 0, quarter: '', time: '4:25 PM', status: 'scheduled' },
+        ],
+        mlb: [
+            { home: 'LAD', away: 'NYY', homeScore: 5, awayScore: 3, quarter: 'T7', time: '', status: 'live' },
+            { home: 'ATL', away: 'PHI', homeScore: 0, awayScore: 0, quarter: '', time: '7:20 PM', status: 'scheduled' },
+        ],
+        ncaa: [
+            { home: 'Alabama', away: 'Georgia', homeScore: 24, awayScore: 21, quarter: 'Q4', time: '3:15', status: 'live' },
+            { home: 'Ohio St', away: 'Michigan', homeScore: 0, awayScore: 0, quarter: '', time: '12:00 PM', status: 'scheduled' },
+        ],
+    };
+
+    const sportGames = games[sport] || [];
+
+    document.getElementById('liveScoresContainer').innerHTML = sportGames.length ? sportGames.map(g => `
+        <div class="card" style="position:relative;overflow:hidden;">
+            ${g.status === 'live' ? '<div style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--danger);animation:pulse 1.5s infinite;"></div><span style="font-size:0.72rem;font-weight:700;color:var(--danger);text-transform:uppercase;">Live</span></div>' : ''}
+            <div style="text-align:center;padding:8px 0;">
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;">
+                    ${g.status === 'live' ? g.quarter + ' · ' + g.time : g.status === 'final' ? 'Final' : g.time}
+                </div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:24px;">
+                    <div style="text-align:center;">
+                        <div style="font-weight:800;font-size:1.1rem;margin-bottom:2px;">${g.away}</div>
+                        <div style="font-family:var(--font-mono);font-weight:900;font-size:2rem;">${g.awayScore}</div>
+                    </div>
+                    <div style="color:var(--text-muted);font-weight:700;">@</div>
+                    <div style="text-align:center;">
+                        <div style="font-weight:800;font-size:1.1rem;margin-bottom:2px;">${g.home}</div>
+                        <div style="font-family:var(--font-mono);font-weight:900;font-size:2rem;">${g.homeScore}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('') : '<div class="empty-state"><div class="icon">📺</div><div class="title">No Games Today</div><div class="subtitle">Check back on game day for live scores.</div></div>';
+}
+
+/* ============================================================
+   ROSTER OPTIMIZER
+   ============================================================ */
+function renderRosterOptimizer() {
+    const sport = State.currentSport;
+    const config = SPORT_CONFIG[sport];
+    const players = [...(PLAYERS[sport] || [])].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0));
+
+    const optimalLineup = config.fantasyPositions.map(pos => {
+        const eligible = players.filter(p => p.pos === pos || pos === 'UTIL' || pos === 'FLEX' || pos === 'G' && ['PG','SG'].includes(p.pos) || pos === 'F' && ['SF','PF'].includes(p.pos));
+        const best = eligible.find(p => !config.fantasyPositions.slice(0, config.fantasyPositions.indexOf(pos)).some((_, i) => {
+            // simplified — just use top available
+            return false;
+        }));
+        return { slot: pos, player: best || eligible[0] };
+    });
+
+    document.getElementById('rosterContainer').innerHTML = `
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">⚡ Optimal Lineup</div>
+                <span class="badge badge-${sport}">${config.label}</span>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>Slot</th><th>Player</th><th>Team</th><th>Pos</th><th>Proj FPTS</th></tr></thead>
+                <tbody>${optimalLineup.map(l => `
+                    <tr>
+                        <td><span class="position-tag">${l.slot}</span></td>
+                        <td style="font-family:var(--font-sans);font-weight:600;">${l.player?.name || '—'}</td>
+                        <td>${l.player?.team || '—'}</td>
+                        <td>${l.player?.pos || '—'}</td>
+                        <td style="font-weight:700;color:var(--success);">${l.player?.fantasyPts?.toFixed(1) || '—'}</td>
+                    </tr>
+                `).join('')}</tbody>
+            </table>
+            <div style="margin-top:16px;padding:12px;background:var(--bg-input);border-radius:var(--radius);display:flex;justify-content:space-between;">
+                <strong>Total Projected:</strong>
+                <span style="font-family:var(--font-mono);font-weight:700;color:var(--success);">
+                    ${optimalLineup.reduce((s, l) => s + (l.player?.fantasyPts || 0), 0).toFixed(1)} FPTS
+                </span>
+            </div>
+        </div>
+    `;
+}
+
+/* ============================================================
+   WAIVER WIRE
+   ============================================================ */
+function renderWaiverWire() {
+    const sport = State.currentSport;
+    const players = [...(PLAYERS[sport] || [])].sort((a, b) => (a.adp || 999) - (b.adp || 999));
+    const waiverTargets = players.filter(p => (p.adp || 0) > 12).sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 10);
+
+    document.getElementById('waiverContainer').innerHTML = `
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🔄 Top Waiver Wire Targets</div>
+                <span style="font-size:0.82rem;color:var(--text-muted);">Rostered in &lt;50% of leagues</span>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>Priority</th><th>Player</th><th>Team</th><th>Pos</th><th>FPTS</th><th>ADP</th><th>Trend</th><th></th></tr></thead>
+                <tbody>${waiverTargets.map((p, i) => `
+                    <tr>
+                        <td class="rank">${i + 1}</td>
+                        <td style="font-family:var(--font-sans);font-weight:600;">${p.name}</td>
+                        <td>${p.team}</td>
+                        <td><span class="position-tag">${p.pos}</span></td>
+                        <td style="font-weight:700;">${p.fantasyPts?.toFixed(1) || '—'}</td>
+                        <td>${p.adp}</td>
+                        <td style="color:${p.trend === 'up' ? 'var(--success)' : p.trend === 'down' ? 'var(--danger)' : 'var(--text-muted)'}">
+                            ${p.trend === 'up' ? '▲ Rising' : p.trend === 'down' ? '▼ Falling' : '— Stable'}
+                        </td>
+                        <td><button class="btn btn-sm btn-primary">+ Add</button></td>
+                    </tr>
+                `).join('')}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+/* ============================================================
+   TRADE ANALYZER
+   ============================================================ */
+function renderTradeAnalyzer() {
+    const sport = State.currentSport;
+    const players = PLAYERS[sport] || [];
+    const options = players.map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
+
+    document.getElementById('tradeContainer').innerHTML = `
+        <div class="card-grid card-grid-2" style="margin-bottom:20px;">
+            <div class="card">
+                <div class="card-title" style="margin-bottom:12px;">📤 You Send</div>
+                <select class="form-select" id="tradeSend" multiple style="height:120px;">${options}</select>
+            </div>
+            <div class="card">
+                <div class="card-title" style="margin-bottom:12px;">📥 You Receive</div>
+                <select class="form-select" id="tradeReceive" multiple style="height:120px;">${options}</select>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="analyzeTrade()">🔍 Analyze Trade</button>
+        <div id="tradeResult" style="margin-top:20px;"></div>
+    `;
+}
+
+function analyzeTrade() {
+    const sport = State.currentSport;
+    const players = PLAYERS[sport] || [];
+    const sendIds = Array.from(document.getElementById('tradeSend').selectedOptions).map(o => parseInt(o.value));
+    const recvIds = Array.from(document.getElementById('tradeReceive').selectedOptions).map(o => parseInt(o.value));
+
+    const sendPlayers = sendIds.map(id => players.find(p => p.id === id)).filter(Boolean);
+    const recvPlayers = recvIds.map(id => players.find(p => p.id === id)).filter(Boolean);
+
+    if (sendPlayers.length === 0 || recvPlayers.length === 0) {
+        showToast('Select players on both sides.', 'error');
+        return;
+    }
+
+    const sendValue = sendPlayers.reduce((s, p) => s + (p.fantasyPts || 0), 0);
+    const recvValue = recvPlayers.reduce((s, p) => s + (p.fantasyPts || 0), 0);
+    const diff = recvValue - sendValue;
+    const verdict = Math.abs(diff) < 3 ? 'Fair Trade' : diff > 0 ? 'You Win' : 'You Lose';
+    const verdictColor = Math.abs(diff) < 3 ? 'var(--warning)' : diff > 0 ? 'var(--success)' : 'var(--danger)';
+
+    document.getElementById('tradeResult').innerHTML = `
+        <div class="card">
+            <div style="text-align:center;padding:20px 0;">
+                <div style="font-size:2rem;font-weight:900;color:${verdictColor};margin-bottom:4px;">${verdict}</div>
+                <div style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.9rem;">
+                    Net: ${diff > 0 ? '+' : ''}${diff.toFixed(1)} FPTS/game
+                </div>
+            </div>
+            <div class="card-grid card-grid-2">
+                <div>
+                    <div style="font-weight:700;margin-bottom:8px;color:var(--danger);">You Send (${sendValue.toFixed(1)} FPTS)</div>
+                    ${sendPlayers.map(p => `<div style="padding:4px 0;">${p.name} — ${p.fantasyPts?.toFixed(1)} FPTS</div>`).join('')}
+                </div>
+                <div>
+                    <div style="font-weight:700;margin-bottom:8px;color:var(--success);">You Receive (${recvValue.toFixed(1)} FPTS)</div>
+                    ${recvPlayers.map(p => `<div style="padding:4px 0;">${p.name} — ${p.fantasyPts?.toFixed(1)} FPTS</div>`).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/* ============================================================
+   PROJECTIONS
+   ============================================================ */
+function renderProjections() {
+    const sport = State.currentSport;
+    const config = SPORT_CONFIG[sport];
+    const players = [...(PLAYERS[sport] || [])].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0));
+
+    document.getElementById('projectionsContainer').innerHTML = `
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🔮 Season Projections</div>
+                <span class="badge badge-${sport}">${config.label}</span>
+            </div>
+            <table class="data-table">
+                <thead><tr>
+                    <th>#</th><th>Player</th><th>Team</th><th>Pos</th>
+                    <th>Proj FPTS</th><th>Floor</th><th>Ceiling</th><th>Confidence</th>
+                </tr></thead>
+                <tbody>${players.map((p, i) => {
+                    const floor = (p.fantasyPts * 0.75).toFixed(1);
+                    const ceiling = (p.fantasyPts * 1.25).toFixed(1);
+                    const conf = Math.max(60, 95 - i * 2);
+                    return `
+                        <tr>
+                            <td class="rank">${i + 1}</td>
+                            <td style="font-family:var(--font-sans);font-weight:600;">${p.name}</td>
+                            <td>${p.team}</td>
+                            <td><span class="position-tag">${p.pos}</span></td>
+                            <td style="font-weight:700;color:var(--success);">${p.fantasyPts?.toFixed(1)}</td>
+                            <td style="color:var(--danger);">${floor}</td>
+                            <td style="color:var(--success);">${ceiling}</td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <div style="flex:1;height:6px;background:var(--bg-input);border-radius:3px;overflow:hidden;">
+                                        <div style="height:100%;width:${conf}%;background:${conf > 80 ? 'var(--success)' : conf > 60 ? 'var(--warning)' : 'var(--danger)'};border-radius:3px;"></div>
+                                    </div>
+                                    <span style="font-size:0.75rem;font-family:var(--font-mono);width:30px;">${conf}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('')}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+/* ============================================================
+   BETTING MODELS
+   ============================================================ */
+function renderBettingModels() {
+    const sport = State.currentSport;
+    const games = {
+        nba: [
+            { away: 'BOS', home: 'MIL', spread: -3.5, total: 224.5, ml: -165, modelSpread: -4.2, modelTotal: 221.8, edge: 'Spread' },
+            { away: 'LAL', home: 'GSW', spread: +2.0, total: 232.0, ml: +120, modelSpread: +0.5, modelTotal: 228.4, edge: 'Under' },
+            { away: 'DEN', home: 'OKC', spread: +1.5, total: 220.0, ml: +105, modelSpread: -1.0, modelTotal: 222.6, edge: 'DEN ML' },
+        ],
+        nfl: [
+            { away: 'KC', home: 'BAL', spread: -1.5, total: 48.5, ml: -125, modelSpread: -2.8, modelTotal: 46.2, edge: 'Under' },
+            { away: 'PHI', home: 'DAL', spread: -4.5, total: 44.0, ml: -200, modelSpread: -6.1, modelTotal: 42.8, edge: 'PHI Spread' },
+        ],
+        mlb: [
+            { away: 'LAD', home: 'NYY', spread: -1.5, total: 8.5, ml: -145, modelSpread: -1.2, modelTotal: 9.1, edge: 'Over' },
+        ],
+        ncaa: [
+            { away: 'Georgia', home: 'Alabama', spread: -3.0, total: 51.5, ml: -150, modelSpread: -1.5, modelTotal: 49.8, edge: 'Alabama +3' },
+        ],
+    };
+
+    const sportGames = games[sport] || [];
+
+    document.getElementById('bettingContainer').innerHTML = `
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-header">
+                <div class="card-title">💰 Model vs. Market Lines</div>
+                <span class="badge badge-${sport}">${SPORT_CONFIG[sport].label}</span>
+            </div>
+            <table class="data-table">
+                <thead><tr>
+                    <th>Matchup</th><th>Market Spread</th><th>Model Spread</th><th>Market O/U</th><th>Model O/U</th><th>Edge</th>
+                </tr></thead>
+                <tbody>${sportGames.map(g => `
+                    <tr>
+                        <td style="font-family:var(--font-sans);font-weight:600;">${g.away} @ ${g.home}</td>
+                        <td>${g.spread > 0 ? '+' : ''}${g.spread}</td>
+                        <td style="color:var(--accent);">${g.modelSpread > 0 ? '+' : ''}${g.modelSpread}</td>
+                        <td>${g.total}</td>
+                        <td style="color:var(--accent);">${g.modelTotal}</td>
+                        <td><span class="badge" style="background:rgba(16,185,129,0.15);color:var(--success);">${g.edge}</span></td>
+                    </tr>
+                `).join('')}</tbody>
+            </table>
+        </div>
+        <div class="card-grid card-grid-3">
+            ${MODELS.filter(m => m.category === 'betting' || m.category === 'probability').map(m => `
+                <div class="model-card">
+                    <div class="model-name">${m.name}</div>
+                    <div class="model-desc">${m.desc}</div>
+                    <div class="model-tags">${m.tags.map(t => `<span class="model-tag">${t}</span>`).join('')}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+function renderSettings() {
+    document.getElementById('settingsPanel').innerHTML = `
+        <div class="settings-card">
+            <h3>🎯 Fantasy Platform</h3>
+            <div class="form-group">
+                <label class="form-label">Default Platform</label>
+                <select class="form-select" onchange="State.settings.platform=this.value">
+                    <option value="yahoo" ${State.settings.platform === 'yahoo' ? 'selected' : ''}>Yahoo Fantasy</option>
+                    <option value="espn" ${State.settings.platform === 'espn' ? 'selected' : ''}>ESPN Fantasy</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Scoring Format</label>
+                <select class="form-select" onchange="State.settings.scoring=this.value">
+                    <option value="standard">Standard</option>
+                    <option value="ppr">PPR (Points Per Reception)</option>
+                    <option value="half-ppr">Half PPR</option>
+                    <option value="points">Points League</option>
+                    <option value="categories">Categories</option>
+                </select>
+            </div>
+        </div>
+        <div class="settings-card">
+            <h3>⚙️ Preferences</h3>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">Dark Mode</div>
+                    <div class="toggle-desc">Use dark theme (recommended)</div>
+                </div>
+                <div class="toggle-switch ${State.settings.darkMode ? 'active' : ''}" onclick="this.classList.toggle('active');State.settings.darkMode=this.classList.contains('active');"></div>
+            </div>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">Draft Notifications</div>
+                    <div class="toggle-desc">Get alerts when it's your pick</div>
+                </div>
+                <div class="toggle-switch ${State.settings.notifications ? 'active' : ''}" onclick="this.classList.toggle('active');State.settings.notifications=this.classList.contains('active');"></div>
+            </div>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">Auto-Refresh Scores</div>
+                    <div class="toggle-desc">Update live scores automatically</div>
+                </div>
+                <div class="toggle-switch active" onclick="this.classList.toggle('active');"></div>
+            </div>
+        </div>
+        <div class="settings-card">
+            <h3>📊 Data Sources</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6;">
+                StatVault aggregates data from multiple public APIs and statistical databases:
+            </p>
+            <ul style="font-size:0.82rem;color:var(--text-muted);margin-top:8px;padding-left:20px;line-height:1.8;">
+                <li>NBA — nba.com/stats, Basketball Reference</li>
+                <li>NFL — ESPN API, Pro Football Reference, nflfastR</li>
+                <li>MLB — MLB Stats API (statsapi.mlb.com), FanGraphs</li>
+                <li>NCAA — ESPN API, Sports Reference</li>
+                <li>Fantasy — Yahoo Fantasy API, ESPN Fantasy API</li>
+            </ul>
+        </div>
+        <div class="settings-card">
+            <h3>📚 Analytics Engine</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6;">
+                Built with models inspired by sports econometrics research, hierarchical Bayesian analysis, and modern player tracking analytics.
+            </p>
+            <div style="margin-top:12px;">
+                <span class="model-tag">Bayesian Models</span>
+                <span class="model-tag">Elo Ratings</span>
+                <span class="model-tag">EPA/WPA</span>
+                <span class="model-tag">WAR</span>
+                <span class="model-tag">Monte Carlo</span>
+                <span class="model-tag">Linear Programming</span>
+            </div>
+        </div>
+    `;
+}
+
+/* ============================================================
+   GLOBAL SEARCH
+   ============================================================ */
+function handleGlobalSearch(query) {
+    if (!query || query.length < 2) return;
+    const q = query.toLowerCase();
+
+    // Search all players across all sports
+    const results = [];
+    Object.entries(PLAYERS).forEach(([sport, players]) => {
+        players.forEach(p => {
+            if (p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q)) {
+                results.push({ ...p, sport });
+            }
+        });
+    });
+
+    if (results.length > 0) {
+        // Navigate to player view with the first match's sport
+        State.currentSport = results[0].sport;
+        document.querySelectorAll('.sport-pill').forEach(p => {
+            p.classList.toggle('active', p.dataset.sport === results[0].sport);
+        });
+        document.getElementById('playerSearch').value = query;
+        showView('players');
+    }
+}
+
+/* ============================================================
+   PLAYER PROFILE (stub)
+   ============================================================ */
+function showPlayerProfile(id) {
+    // Find player across all sports
+    let player = null;
+    let sport = null;
+    Object.entries(PLAYERS).forEach(([s, players]) => {
+        const found = players.find(p => p.id === id);
+        if (found) { player = found; sport = s; }
+    });
+    if (!player) return;
+
+    showToast(`${player.name} — ${player.team} · ${player.pos} · ${player.fantasyPts?.toFixed(1)} FPTS`, 'info');
+}
+
+/* ============================================================
+   TOAST SYSTEM
+   ============================================================ */
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+        <span>${message}</span>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+/* ============================================================
+   PULSE ANIMATION
+   ============================================================ */
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+`;
+document.head.appendChild(style);
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    renderDashboard();
+});
+
+/* ============================================================
+   SERVICE WORKER REGISTRATION
+   ============================================================ */
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+    </script>
+</body>
+</html>

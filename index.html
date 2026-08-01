@@ -4280,6 +4280,22 @@ style.textContent = `
 document.head.appendChild(style);
 
 /* ============================================================
+   INSTANT HEADSHOTS FROM HARDCODED ESPN IDs
+   ============================================================ */
+function populateHeadshots() {
+    const sportPaths = { nba: 'nba', nfl: 'nfl', mlb: 'mlb' };
+    for (const [sport, players] of Object.entries(PLAYERS)) {
+        const path = sportPaths[sport];
+        if (!path) continue;
+        players.forEach(p => {
+            if (!p.headshot && p.espnId) {
+                p.headshot = `https://a.espncdn.com/combiner/i?img=/i/headshots/${path}/players/full/${p.espnId}.png&w=350&h=254`;
+            }
+        });
+    }
+}
+
+/* ============================================================
    ESPN DYNAMIC PLAYER FETCHING
    ============================================================ */
 const ESPN_CACHE = {};
@@ -5588,9 +5604,10 @@ async function renderNewsFeed() {
    INIT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+    populateHeadshots();
     renderDashboard();
     refreshScoreTicker();
-    // Auto-import full ESPN rosters for all sports
+    // Auto-import full ESPN rosters for all sports (enriches stats beyond headshots)
     autoImportAllRosters();
 });
 

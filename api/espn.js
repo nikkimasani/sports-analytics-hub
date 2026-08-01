@@ -14,7 +14,7 @@ const https = require('https');
 
 const VALID_SPORTS = ['basketball', 'football', 'baseball'];
 const VALID_LEAGUES = ['nba', 'nfl', 'mlb', 'college-football', 'mens-college-basketball'];
-const VALID_ENDPOINTS = ['athletes', 'scoreboard', 'teams', 'standings', 'allteams', 'athlete-stats'];
+const VALID_ENDPOINTS = ['athletes', 'scoreboard', 'teams', 'standings', 'allteams', 'athlete-stats', 'news'];
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -57,6 +57,11 @@ function buildEspnUrl(sport, league, endpoint, query) {
   // Individual athlete stats: /sports/{sport}/{league}/athletes/{athleteId}
   if (endpoint === 'athlete-stats' && query.athleteId) {
     return `${base}/${sport}/${league}/athletes/${query.athleteId}`;
+  }
+
+  // News: /sports/{sport}/{league}/news
+  if (endpoint === 'news') {
+    return `${base}/${sport}/${league}/news?limit=20`;
   }
 
   // All-teams helper: fetch the teams list, return just IDs + names

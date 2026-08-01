@@ -1820,6 +1820,7 @@ function renderDashboard() {
     document.getElementById('trendingPlayers').innerHTML = trending.map((p, i) => `
         <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < 4 ? 'border-bottom:1px solid rgba(0,0,0,0.06);' : ''}">
             <span style="font-family:var(--font-mono);font-weight:700;color:var(--text-muted);width:24px;">${i + 1}</span>
+            ${playerAvatarHtml(p, 32)}
             <div style="flex:1;">
                 <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
                 <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
@@ -1836,6 +1837,7 @@ function renderDashboard() {
     document.getElementById('fantasyRisers').innerHTML = risers.length ? risers.map((p, i) => `
         <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < risers.length - 1 ? 'border-bottom:1px solid rgba(0,0,0,0.06);' : ''}">
             <span style="color:var(--success);font-size:1.1rem;">▲</span>
+            ${playerAvatarHtml(p, 28)}
             <div style="flex:1;">
                 <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
                 <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ADP ${p.adp}</div>
@@ -1858,7 +1860,7 @@ function renderDashboard() {
             <tbody>${topPlayers.map((p, i) => `
                 <tr>
                     <td class="rank">${i + 1}</td>
-                    <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})">${p.name}</td>
+                    <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})"><div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(p, 28)}${p.name}</div></td>
                     <td>${p.team}</td>
                     <td><span class="position-tag">${p.pos}</span></td>
                     ${keys.map(k => `<td>${p[k] !== undefined ? (typeof p[k] === 'number' && k !== 'per' && k !== 'war' && k !== 'hr' && k !== 'rbi' && k !== 'sb' && k !== 'ints' && k !== 'rec' && k !== 'targets' && p[k] < 1 ? p[k].toFixed(3) : p[k]) : '—'}</td>`).join('')}
@@ -1906,18 +1908,19 @@ function filterPlayers() {
     document.getElementById('playerTableHead').innerHTML = `
         <th>#</th><th>Player</th><th>Sport</th><th>Team</th><th>Pos</th>
         ${config.statCols.map(c => `<th>${c}</th>`).join('')}
-        <th>FPTS</th><th>ADP</th>
+        <th>FPTS</th><th>Trend</th><th>ADP</th>
     `;
 
     document.getElementById('playerTableBody').innerHTML = allPlayers.map((p, i) => `
         <tr>
             <td class="rank">${i + 1}</td>
-            <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})">${p.name}</td>
+            <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})"><div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(p, 28)}${p.name}</div></td>
             <td><span class="badge badge-${p.sport}">${SPORT_CONFIG[p.sport]?.label || p.sport}</span></td>
             <td>${p.team}</td>
             <td><span class="position-tag">${p.pos}</span></td>
             ${config.statKeys.map(k => `<td>${p[k] !== undefined ? p[k] : '—'}</td>`).join('')}
             <td style="font-weight:700;color:var(--success);">${p.fantasyPts?.toFixed(1) || '—'}</td>
+            <td>${sparklineHtml(p, 60, 22)}</td>
             <td>${p.adp || '—'}</td>
         </tr>
     `).join('');
@@ -2141,6 +2144,12 @@ function openModelTool(modelName) {
         toolHtml = renderWARCalculator();
     } else if (modelName === 'EPA/Play Model') {
         toolHtml = renderEPACalculator();
+    } else if (modelName === 'Bayesian Player Projections') {
+        toolHtml = renderBayesianCalculator();
+    } else if (modelName === 'Injury Impact Model') {
+        toolHtml = renderInjuryImpactCalculator();
+    } else if (modelName === 'Draft Value Analyzer') {
+        toolHtml = renderDraftValueCalculator();
     } else {
         toolHtml = `<div class="card" style="margin-top:20px;text-align:center;padding:40px;" id="modelToolPanel">
             <div style="font-size:2rem;margin-bottom:12px;">🔧</div>
@@ -2164,6 +2173,9 @@ function openModelTool(modelName) {
     if (modelName === 'RAPTOR Rating') calculateRaptor();
     if (modelName === 'WAR Calculator') calculateWAR();
     if (modelName === 'EPA/Play Model') calculateEPA();
+    if (modelName === 'Bayesian Player Projections') calculateBayesian();
+    if (modelName === 'Injury Impact Model') calculateInjuryImpact();
+    if (modelName === 'Draft Value Analyzer') calculateDraftValue();
 }
 
 function renderEloCalculator() {
@@ -2651,9 +2663,12 @@ function updateDraftRecommendations() {
             <div class="rec-label">🏆 Best Available</div>
             ${bestOverall.map(p => `
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;">
-                    <div>
-                        <div class="rec-player" style="font-size:0.88rem;">${p.name}</div>
-                        <div style="font-size:0.72rem;color:var(--text-muted);">${p.team} · ${p.pos} · ADP ${p.adp}</div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        ${playerAvatarHtml(p, 30)}
+                        <div>
+                            <div class="rec-player" style="font-size:0.88rem;">${p.name}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">${p.team} · ${p.pos} · ADP ${p.adp}</div>
+                        </div>
                     </div>
                     ${ds ? `<button class="btn btn-sm btn-primary" onclick="draftPlayer(${p.id})">Draft</button>` : ''}
                 </div>
@@ -2662,9 +2677,12 @@ function updateDraftRecommendations() {
         <div class="rec-card">
             <div class="rec-label" style="color:var(--accent);">💎 Best Value</div>
             ${bestValue.map(p => `
-                <div style="padding:4px 0;">
-                    <div class="rec-player" style="font-size:0.88rem;">${p.name}</div>
-                    <div class="rec-reason">ADP ${p.adp} but producing ${p.fantasyPts?.toFixed(1)} FPTS — potential steal</div>
+                <div style="display:flex;align-items:center;gap:8px;padding:4px 0;">
+                    ${playerAvatarHtml(p, 30)}
+                    <div>
+                        <div class="rec-player" style="font-size:0.88rem;">${p.name}</div>
+                        <div class="rec-reason">ADP ${p.adp} but producing ${p.fantasyPts?.toFixed(1)} FPTS — potential steal</div>
+                    </div>
                 </div>
             `).join('')}
         </div>
@@ -2697,6 +2715,7 @@ function renderPicksGrid() {
     document.getElementById('draftPicksGrid').innerHTML = ds.picks.map((pick, i) => `
         <div class="pick-row ${pick.team === ds.myTeam ? 'my-pick' : ''}">
             <div class="pick-number">${i + 1}</div>
+            ${playerAvatarHtml(pick.player, 26)}
             <div style="font-weight:600;font-size:0.85rem;">${pick.player.name}
                 <span style="color:var(--text-muted);font-weight:400;"> — ${pick.player.team}</span>
             </div>
@@ -3008,7 +3027,7 @@ function renderWaiverWire() {
                 <tbody>${waiverTargets.map((p, i) => `
                     <tr>
                         <td class="rank">${i + 1}</td>
-                        <td style="font-family:var(--font-sans);font-weight:600;">${p.name}</td>
+                        <td style="font-family:var(--font-sans);font-weight:600;"><div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(p, 28)}${p.name}</div></td>
                         <td>${p.team}</td>
                         <td><span class="position-tag">${p.pos}</span></td>
                         <td style="font-weight:700;">${p.fantasyPts?.toFixed(1) || '—'}</td>
@@ -4003,6 +4022,248 @@ function calculateEPA() {
                 <div style="font-weight:800;font-size:1.1rem;color:${srColor};">${successRate}</div>
                 <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Play Grade</div>
             </div>
+        </div>`;
+}
+
+/* ============================================================
+   BAYESIAN PLAYER PROJECTIONS CALCULATOR
+   ============================================================ */
+function renderBayesianCalculator() {
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Bayesian Player Projections</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Combine prior expectations with observed performance to generate posterior projections with credible intervals.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group"><label class="form-label">Prior Mean (Preseason Proj)</label><input type="number" class="form-input" id="bayesPriorMean" value="18.5" step="0.1" oninput="calculateBayesian()"></div>
+                <div class="form-group"><label class="form-label">Prior Std Dev</label><input type="number" class="form-input" id="bayesPriorSD" value="4.0" step="0.1" oninput="calculateBayesian()"></div>
+                <div class="form-group"><label class="form-label">Observed Mean (Season Avg)</label><input type="number" class="form-input" id="bayesObsMean" value="22.3" step="0.1" oninput="calculateBayesian()"></div>
+                <div class="form-group"><label class="form-label">Observed Std Dev</label><input type="number" class="form-input" id="bayesObsSD" value="5.5" step="0.1" oninput="calculateBayesian()"></div>
+                <div class="form-group"><label class="form-label">Games Played</label><input type="number" class="form-input" id="bayesGames" value="20" min="1" max="82" oninput="calculateBayesian()"></div>
+                <div class="form-group"><label class="form-label">Confidence Level</label>
+                    <select class="form-select" id="bayesConf" onchange="calculateBayesian()">
+                        <option value="0.90">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option>
+                    </select>
+                </div>
+            </div>
+            <div id="bayesResult" style="margin-top:20px;"></div>
+        </div>`;
+}
+
+function calculateBayesian() {
+    const priorMu = parseFloat(document.getElementById('bayesPriorMean').value) || 0;
+    const priorSig = parseFloat(document.getElementById('bayesPriorSD').value) || 1;
+    const obsMu = parseFloat(document.getElementById('bayesObsMean').value) || 0;
+    const obsSig = parseFloat(document.getElementById('bayesObsSD').value) || 1;
+    const n = parseInt(document.getElementById('bayesGames').value) || 1;
+    const confLevel = parseFloat(document.getElementById('bayesConf').value);
+
+    const priorPrec = 1 / (priorSig * priorSig);
+    const obsPrec = n / (obsSig * obsSig);
+    const postPrec = priorPrec + obsPrec;
+    const postMu = (priorPrec * priorMu + obsPrec * obsMu) / postPrec;
+    const postSig = Math.sqrt(1 / postPrec);
+
+    const zScores = { 0.90: 1.645, 0.95: 1.96, 0.99: 2.576 };
+    const z = zScores[confLevel] || 1.96;
+    const ciLow = postMu - z * postSig;
+    const ciHigh = postMu + z * postSig;
+    const priorWeight = ((priorPrec / postPrec) * 100).toFixed(0);
+    const obsWeight = ((obsPrec / postPrec) * 100).toFixed(0);
+    const shift = postMu - priorMu;
+    const shiftDir = shift >= 0 ? '▲' : '▼';
+    const shiftColor = shift >= 0 ? 'var(--success)' : 'var(--danger)';
+
+    document.getElementById('bayesResult').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">${postMu.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Posterior Mean</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">±${postSig.toFixed(2)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Posterior SD</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.1rem;font-weight:900;">${ciLow.toFixed(1)} – ${ciHigh.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">${(confLevel*100).toFixed(0)}% Credible</div>
+            </div>
+            <div style="padding:16px;background:${shift >= 0 ? 'rgba(46,125,50,0.1)' : 'rgba(198,40,40,0.1)'};border:1px solid ${shiftColor};border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;color:${shiftColor};">${shiftDir} ${Math.abs(shift).toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Shift from Prior</div>
+            </div>
+        </div>
+        <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;color:var(--text-secondary);">
+            <strong>Weight split:</strong> Prior ${priorWeight}% / Observed ${obsWeight}% · After ${n} games, the model ${n < 10 ? 'still leans heavily on preseason projections' : n < 40 ? 'balances prior and observed data' : 'trusts the observed sample strongly'}. ROS projection: <strong>${postMu.toFixed(1)} FPTS/game</strong>.
+        </div>`;
+}
+
+/* ============================================================
+   INJURY IMPACT MODEL CALCULATOR
+   ============================================================ */
+function renderInjuryImpactCalculator() {
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Injury Impact Model</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Estimate team-level performance impact when a key player is absent, using replacement-level analysis and usage redistribution.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group"><label class="form-label">Player FPTS/Game</label><input type="number" class="form-input" id="injPlayerFpts" value="28.5" step="0.1" oninput="calculateInjuryImpact()"></div>
+                <div class="form-group"><label class="form-label">Team Total FPTS/Game</label><input type="number" class="form-input" id="injTeamFpts" value="110" step="0.1" oninput="calculateInjuryImpact()"></div>
+                <div class="form-group"><label class="form-label">Replacement Player FPTS/Game</label><input type="number" class="form-input" id="injReplaceFpts" value="12.0" step="0.1" oninput="calculateInjuryImpact()"></div>
+                <div class="form-group"><label class="form-label">Usage Rate %</label><input type="number" class="form-input" id="injUsage" value="30" min="0" max="100" step="0.1" oninput="calculateInjuryImpact()"></div>
+                <div class="form-group"><label class="form-label">Games Missed</label><input type="number" class="form-input" id="injGames" value="10" min="1" max="82" oninput="calculateInjuryImpact()"></div>
+                <div class="form-group"><label class="form-label">Teammates Boost %</label><input type="number" class="form-input" id="injBoost" value="5" min="0" max="30" step="0.5" oninput="calculateInjuryImpact()">
+                    <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">Usage redistributed to other players</div>
+                </div>
+            </div>
+            <div id="injResult" style="margin-top:20px;"></div>
+        </div>`;
+}
+
+function calculateInjuryImpact() {
+    const playerFpts = parseFloat(document.getElementById('injPlayerFpts').value) || 0;
+    const teamFpts = parseFloat(document.getElementById('injTeamFpts').value) || 1;
+    const replaceFpts = parseFloat(document.getElementById('injReplaceFpts').value) || 0;
+    const usage = parseFloat(document.getElementById('injUsage').value) || 0;
+    const gamesMissed = parseInt(document.getElementById('injGames').value) || 0;
+    const boostPct = parseFloat(document.getElementById('injBoost').value) || 0;
+
+    const directLoss = playerFpts - replaceFpts;
+    const boostGain = (teamFpts - playerFpts) * (boostPct / 100);
+    const netImpact = directLoss - boostGain;
+    const totalSeasonLoss = netImpact * gamesMissed;
+    const teamPctDrop = (netImpact / teamFpts * 100);
+    const winsImpact = (totalSeasonLoss / teamFpts * 0.5).toFixed(1);
+    const usageRedist = (usage / (100 - usage) * 100).toFixed(1);
+
+    const severity = netImpact > 20 ? 'Devastating' : netImpact > 12 ? 'Major' : netImpact > 5 ? 'Moderate' : 'Minor';
+    const sevColor = netImpact > 20 ? 'var(--danger)' : netImpact > 12 ? '#e65100' : netImpact > 5 ? 'var(--warning)' : 'var(--success)';
+
+    document.getElementById('injResult').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+            <div style="padding:16px;background:rgba(198,40,40,0.08);border:1px solid var(--danger);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;color:var(--danger);">-${directLoss.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Direct FPTS Loss</div>
+            </div>
+            <div style="padding:16px;background:rgba(46,125,50,0.08);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;color:var(--success);">+${boostGain.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Teammate Boost</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border:1px solid ${sevColor};border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;color:${sevColor};">-${netImpact.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Net Impact/Game</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-weight:800;font-size:1.1rem;color:${sevColor};">${severity}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Severity</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:800;">${totalSeasonLoss.toFixed(0)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">Total FPTS Lost (${gamesMissed}g)</div>
+            </div>
+            <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:800;">-${teamPctDrop.toFixed(1)}%</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">Team Output Drop</div>
+            </div>
+            <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:800;">~${winsImpact}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">Est. Wins Lost</div>
+            </div>
+        </div>
+        <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;color:var(--text-secondary);">
+            <strong>Redistribution:</strong> ${usage}% usage spreads ${usageRedist}% boost across remaining rotation. Replacement-level gap of ${directLoss.toFixed(1)} FPTS partially offset by ${boostGain.toFixed(1)} teammate uplift.
+        </div>`;
+}
+
+/* ============================================================
+   DRAFT VALUE ANALYZER CALCULATOR
+   ============================================================ */
+function renderDraftValueCalculator() {
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Draft Value Analyzer</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Compare a player's ADP against projected value to identify steals and reaches in fantasy drafts.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group"><label class="form-label">Player ADP</label><input type="number" class="form-input" id="dvADP" value="25" step="1" oninput="calculateDraftValue()"></div>
+                <div class="form-group"><label class="form-label">Projected FPTS/Game</label><input type="number" class="form-input" id="dvProjFpts" value="22.0" step="0.1" oninput="calculateDraftValue()"></div>
+                <div class="form-group"><label class="form-label">League Size</label>
+                    <select class="form-select" id="dvLeagueSize" onchange="calculateDraftValue()">
+                        <option value="8">8 Teams</option><option value="10" selected>10 Teams</option><option value="12">12 Teams</option><option value="14">14 Teams</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Roster Spots</label><input type="number" class="form-input" id="dvRoster" value="15" min="10" max="25" oninput="calculateDraftValue()"></div>
+                <div class="form-group"><label class="form-label">Positional Scarcity</label>
+                    <select class="form-select" id="dvScarcity" onchange="calculateDraftValue()">
+                        <option value="1.0">Low (deep position)</option><option value="1.15" selected>Medium</option><option value="1.35">High (thin position)</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Injury Risk</label>
+                    <select class="form-select" id="dvInjury" onchange="calculateDraftValue()">
+                        <option value="1.0">Low</option><option value="0.92" selected>Medium</option><option value="0.82">High</option>
+                    </select>
+                </div>
+            </div>
+            <div id="dvResult" style="margin-top:20px;"></div>
+        </div>`;
+}
+
+function calculateDraftValue() {
+    const adp = parseInt(document.getElementById('dvADP').value) || 1;
+    const projFpts = parseFloat(document.getElementById('dvProjFpts').value) || 0;
+    const leagueSize = parseInt(document.getElementById('dvLeagueSize').value);
+    const roster = parseInt(document.getElementById('dvRoster').value) || 15;
+    const scarcity = parseFloat(document.getElementById('dvScarcity').value);
+    const injuryMult = parseFloat(document.getElementById('dvInjury').value);
+
+    const totalPicks = leagueSize * roster;
+    const replacementPick = Math.min(totalPicks, leagueSize * 10);
+    const replacementFpts = Math.max(5, 30 - (replacementPick / totalPicks) * 25);
+    const vorp = (projFpts - replacementFpts) * injuryMult * scarcity;
+    const expectedVorp = Math.max(0, 35 - adp * 0.3);
+    const surplus = vorp - expectedVorp;
+    const valueRatio = expectedVorp > 0 ? (vorp / expectedVorp * 100).toFixed(0) : '∞';
+    const fairADP = Math.max(1, Math.round((35 - vorp) / 0.3));
+
+    const verdict = surplus > 5 ? 'STEAL' : surplus > 1 ? 'Good Value' : surplus > -2 ? 'Fair Price' : surplus > -6 ? 'Slight Reach' : 'REACH';
+    const verdictColor = surplus > 5 ? 'var(--success)' : surplus > 1 ? '#2e7d32' : surplus > -2 ? 'var(--warning)' : surplus > -6 ? '#e65100' : 'var(--danger)';
+    const verdictBg = surplus > 5 ? 'rgba(46,125,50,0.1)' : surplus > 1 ? 'rgba(46,125,50,0.06)' : surplus > -2 ? 'rgba(255,152,0,0.08)' : 'rgba(198,40,40,0.08)';
+
+    document.getElementById('dvResult').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">${vorp.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Adj. VORP</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">${expectedVorp.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Expected at ADP ${adp}</div>
+            </div>
+            <div style="padding:16px;background:${verdictBg};border:1px solid ${verdictColor};border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;color:${verdictColor};">${surplus >= 0 ? '+' : ''}${surplus.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Value Surplus</div>
+            </div>
+            <div style="padding:16px;background:${verdictBg};border-radius:var(--radius);text-align:center;">
+                <div style="font-weight:900;font-size:1.2rem;color:${verdictColor};">${verdict}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Draft Grade</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:800;">${valueRatio}%</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">Value vs Expected</div>
+            </div>
+            <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:800;">${fairADP}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">Fair ADP</div>
+            </div>
+            <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-weight:800;">${replacementFpts.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">Replacement FPTS</div>
+            </div>
+        </div>
+        <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;color:var(--text-secondary);">
+            <strong>Analysis:</strong> At ADP ${adp} in a ${leagueSize}-team league, this player projects ${projFpts.toFixed(1)} FPTS/g (adj. ${(projFpts * injuryMult).toFixed(1)} for injury risk). ${surplus > 3 ? 'Strong buy — significantly outperforming draft cost.' : surplus > 0 ? 'Solid pick — fair-to-good value at this slot.' : 'Consider alternatives — being overdrafted relative to projected output.'}
         </div>`;
 }
 

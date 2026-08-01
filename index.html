@@ -1357,12 +1357,18 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 <div class="sidebar-item" onclick="showView('trade-analyzer')" data-view="trade-analyzer">
                     <span class="icon">🤝</span> Trade Analyzer
                 </div>
+                <div class="sidebar-item" onclick="showView('league-import')" data-view="league-import">
+                    <span class="icon">🔗</span> League Import
+                </div>
             </div>
 
             <div class="sidebar-divider"></div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Tools</div>
+                <div class="sidebar-item" onclick="showView('data-lab')" data-view="data-lab">
+                    <span class="icon">📊</span> Data Lab
+                </div>
                 <div class="sidebar-item" onclick="showView('projections')" data-view="projections">
                     <span class="icon">🔮</span> Projections
                 </div>
@@ -1758,6 +1764,103 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 <div id="tradeContainer"></div>
             </div>
 
+            <!-- ============ LEAGUE IMPORT VIEW ============ -->
+            <div class="view" id="view-league-import">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">League Import</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Import your fantasy league data from ESPN or Yahoo</p>
+                <div class="card-grid card-grid-2" style="margin-bottom:20px;">
+                    <div class="card">
+                        <div style="text-align:center;margin-bottom:16px;font-size:2rem;">🔴</div>
+                        <div class="card-title" style="text-align:center;margin-bottom:12px;">ESPN Fantasy</div>
+                        <p style="font-size:0.82rem;color:var(--text-secondary);text-align:center;margin-bottom:16px;">Enter your ESPN league ID to import rosters, standings, and matchup data.</p>
+                        <div class="form-group">
+                            <label class="form-label">League ID</label>
+                            <input type="text" class="form-input" id="espnLeagueId" placeholder="e.g. 12345678">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Season</label>
+                            <select class="form-select" id="espnLeagueSeason">
+                                <option value="2026">2025-26</option>
+                                <option value="2025">2024-25</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sport</label>
+                            <select class="form-select" id="espnLeagueSport">
+                                <option value="nba">NBA</option>
+                                <option value="nfl">NFL</option>
+                                <option value="mlb">MLB</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-lg" style="width:100%;" onclick="importESPNLeague()">Import ESPN League</button>
+                    </div>
+                    <div class="card">
+                        <div style="text-align:center;margin-bottom:16px;font-size:2rem;">🟣</div>
+                        <div class="card-title" style="text-align:center;margin-bottom:12px;">Yahoo Fantasy</div>
+                        <p style="font-size:0.82rem;color:var(--text-secondary);text-align:center;margin-bottom:16px;">Paste your Yahoo league URL or enter your league key to import data.</p>
+                        <div class="form-group">
+                            <label class="form-label">League URL or Key</label>
+                            <input type="text" class="form-input" id="yahooLeagueUrl" placeholder="e.g. https://football.fantasysports.yahoo.com/f1/123456">
+                        </div>
+                        <button class="btn btn-primary btn-lg" style="width:100%;margin-top:12px;" onclick="importYahooLeague()">Import Yahoo League</button>
+                        <p style="font-size:0.72rem;color:var(--text-muted);margin-top:8px;text-align:center;">Yahoo requires OAuth — opens sign-in flow in new tab</p>
+                    </div>
+                </div>
+                <div id="leagueImportResults"></div>
+                <div class="card" style="margin-top:20px;" id="importedLeagueData"></div>
+            </div>
+
+            <!-- ============ DATA LAB VIEW ============ -->
+            <div class="view" id="view-data-lab">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Data Lab</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Build interactive charts, graphs, and visualizations from live data</p>
+                <div class="card" style="margin-bottom:20px;">
+                    <div class="card-title" style="margin-bottom:16px;">Chart Builder</div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px;">
+                        <div class="form-group">
+                            <label class="form-label">Chart Type</label>
+                            <select class="form-select" id="labChartType">
+                                <option value="bar">Bar Chart</option>
+                                <option value="scatter">Scatter Plot</option>
+                                <option value="radar">Radar Chart</option>
+                                <option value="line">Trend Line</option>
+                                <option value="histogram">Distribution</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sport</label>
+                            <select class="form-select" id="labSport" onchange="updateLabMetrics()">
+                                <option value="nba">NBA</option>
+                                <option value="nfl">NFL</option>
+                                <option value="mlb">MLB</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">X-Axis / Metric 1</label>
+                            <select class="form-select" id="labMetricX"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Y-Axis / Metric 2</label>
+                            <select class="form-select" id="labMetricY"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Top N Players</label>
+                            <select class="form-select" id="labTopN">
+                                <option value="10">Top 10</option>
+                                <option value="20" selected>Top 20</option>
+                                <option value="30">Top 30</option>
+                                <option value="50">Top 50</option>
+                                <option value="0">All Players</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-lg" onclick="buildLabChart()">Build Chart</button>
+                </div>
+                <div class="card" id="labChartContainer" style="min-height:400px;display:flex;align-items:center;justify-content:center;">
+                    <div class="empty-state"><div class="icon">📊</div><div class="title">Select options and click Build Chart</div><div class="subtitle">Create bar charts, scatter plots, radar charts, and more</div></div>
+                </div>
+            </div>
+
             <!-- ============ PROJECTIONS VIEW ============ -->
             <div class="view" id="view-projections">
                 <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Player Projections</h2>
@@ -1944,6 +2047,8 @@ function initView(viewId) {
         case 'draft': initDraft(); break;
         case 'live': renderLiveScores(); break;
         case 'news': renderNewsFeed(); break;
+        case 'league-import': break;
+        case 'data-lab': updateLabMetrics(); break;
         case 'roster': renderRosterOptimizer(); break;
         case 'waiver': renderWaiverWire(); break;
         case 'trade-analyzer': renderTradeAnalyzer(); break;
@@ -4215,12 +4320,13 @@ async function fetchESPNRoster(sport, teamId) {
 }
 
 async function importESPNPlayers(sport) {
-    showToast('Fetching live rosters from ESPN...', 'info');
+    showToast(`Fetching ${sport.toUpperCase()} rosters from ESPN...`, 'info');
     const teams = await fetchESPNTeams(sport);
     if (!teams.length) { showToast('Could not reach ESPN API', 'error'); return; }
 
     let imported = 0;
-    const existing = new Set((PLAYERS[sport] || []).map(p => p.name.toLowerCase()));
+    const existingPlayers = PLAYERS[sport] || [];
+    const existingNames = new Set(existingPlayers.map(p => p.name.toLowerCase()));
     const newPlayers = [];
 
     // Fetch rosters for all teams (batched)
@@ -4231,8 +4337,20 @@ async function importESPNPlayers(sport) {
             const athletes = await fetchESPNRoster(sport, t.id);
             athletes.forEach(a => {
                 const name = a.displayName || a.fullName;
-                if (!name || existing.has(name.toLowerCase())) return;
-                existing.add(name.toLowerCase());
+                if (!name) return;
+                const hsUrl = a.headshot?.href || a.headshot || (a.id ? `https://a.espncdn.com/combiner/i?img=/i/headshots/${sport === 'nba' ? 'nba' : sport === 'nfl' ? 'nfl' : 'mlb'}/players/full/${a.id}.png&w=350&h=254` : null);
+
+                // If player already exists in hardcoded data, just add headshot
+                if (existingNames.has(name.toLowerCase())) {
+                    const existing = existingPlayers.find(p => p.name.toLowerCase() === name.toLowerCase());
+                    if (existing && !existing.headshot && hsUrl) {
+                        existing.headshot = hsUrl;
+                        existing.espnId = existing.espnId || a.id;
+                    }
+                    return;
+                }
+
+                existingNames.add(name.toLowerCase());
                 const pos = a.position?.abbreviation || '?';
                 const newPlayer = {
                     id: 10000 + Math.floor(Math.random() * 90000),
@@ -4243,7 +4361,7 @@ async function importESPNPlayers(sport) {
                     trend: 'stable',
                     adp: 999,
                     espnId: a.id,
-                    headshot: a.headshot?.href || null,
+                    headshot: hsUrl,
                 };
                 if (!PLAYERS[sport]) PLAYERS[sport] = [];
                 PLAYERS[sport].push(newPlayer);
@@ -4253,10 +4371,10 @@ async function importESPNPlayers(sport) {
         }));
     }
 
-    showToast(`Imported ${imported} players. Enriching stats...`, 'info');
+    showToast(`${sport.toUpperCase()}: Imported ${imported} new players + updated headshots. Enriching stats...`, 'info');
     initView(State.currentView);
 
-    // Enrich stats in background (batch athlete-stats calls)
+    // Enrich stats in background
     enrichESPNStats(sport, newPlayers);
 }
 
@@ -4267,7 +4385,7 @@ async function enrichESPNStats(sport, players) {
 
     let enriched = 0;
     const batchSize = 8;
-    const toEnrich = players.filter(p => p.espnId).slice(0, 60);
+    const toEnrich = players.filter(p => p.espnId);
 
     for (let i = 0; i < toEnrich.length; i += batchSize) {
         const batch = toEnrich.slice(i, i + batchSize);
@@ -5088,6 +5206,325 @@ async function fetchLiveOdds(sport) {
         const data = await res.json();
         return data.events || [];
     } catch(e) { return []; }
+}
+
+/* ============================================================
+   LEAGUE IMPORT
+   ============================================================ */
+async function importESPNLeague() {
+    const leagueId = document.getElementById('espnLeagueId').value.trim();
+    const season = document.getElementById('espnLeagueSeason').value;
+    const sport = document.getElementById('espnLeagueSport').value;
+    if (!leagueId) { showToast('Enter your ESPN League ID', 'error'); return; }
+
+    const sportMap = { nba: 'fba', nfl: 'ffl', mlb: 'flb' };
+    const container = document.getElementById('leagueImportResults');
+    container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Importing League...</div></div>';
+
+    try {
+        const res = await fetch(`https://lm-api-reads.fantasy.espn.com/apis/v3/games/${sportMap[sport]}/seasons/${season}/segments/0/leagues/${leagueId}?view=mTeam&view=mRoster&view=mStandings`);
+        if (!res.ok) throw new Error(`ESPN returned ${res.status}`);
+        const data = await res.json();
+
+        const teams = (data.teams || []).map(t => ({
+            name: t.name || `Team ${t.id}`,
+            abbrev: t.abbrev,
+            wins: t.record?.overall?.wins || 0,
+            losses: t.record?.overall?.losses || 0,
+            points: t.points || 0,
+            roster: (t.roster?.entries || []).map(e => ({
+                name: e.playerPoolEntry?.player?.fullName || 'Unknown',
+                pos: e.lineupSlotId,
+                id: e.playerId,
+            }))
+        }));
+
+        container.innerHTML = `
+            <div class="card" style="margin-bottom:16px;">
+                <div class="card-header">
+                    <div class="card-title">League: ${data.settings?.name || 'ESPN League'}</div>
+                    <span class="badge badge-${sport}">${sport.toUpperCase()} · ${season}</span>
+                </div>
+                <div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">${teams.length} teams · League ID: ${leagueId}</div>
+            </div>
+            <div class="card">
+                <div class="card-title" style="margin-bottom:12px;">Standings</div>
+                <table class="data-table">
+                    <thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>PF</th><th>Roster Size</th></tr></thead>
+                    <tbody>${teams.sort((a,b) => b.wins - a.wins).map((t, i) => `
+                        <tr>
+                            <td class="rank">${i+1}</td>
+                            <td style="font-weight:600;">${t.name}</td>
+                            <td style="color:var(--success);font-weight:700;">${t.wins}</td>
+                            <td style="color:var(--danger);">${t.losses}</td>
+                            <td>${t.points.toFixed(1)}</td>
+                            <td>${t.roster.length}</td>
+                        </tr>
+                    `).join('')}</tbody>
+                </table>
+            </div>
+        `;
+        showToast(`Imported ${teams.length} teams from ESPN league!`, 'success');
+    } catch(e) {
+        container.innerHTML = `
+            <div class="card" style="text-align:center;padding:30px;">
+                <div style="font-size:1.5rem;margin-bottom:8px;">⚠️</div>
+                <div style="font-weight:700;margin-bottom:8px;">Could not fetch league data</div>
+                <p style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;">
+                    ${e.message}<br><br>
+                    Make sure your league is set to <strong>Public</strong> in ESPN settings.<br>
+                    Find your League ID in the ESPN Fantasy URL: <code>fantasy.espn.com/.../league?leagueId=<strong>XXXXXXXX</strong></code>
+                </p>
+            </div>
+        `;
+    }
+}
+
+function importYahooLeague() {
+    const url = document.getElementById('yahooLeagueUrl').value.trim();
+    if (!url) { showToast('Enter your Yahoo league URL or key', 'error'); return; }
+    // Yahoo requires OAuth — open their auth flow
+    window.open(url.startsWith('http') ? url : `https://football.fantasysports.yahoo.com/f1/${url}`, '_blank');
+    document.getElementById('leagueImportResults').innerHTML = `
+        <div class="card" style="text-align:center;padding:30px;">
+            <div style="font-size:1.5rem;margin-bottom:8px;">🟣</div>
+            <div style="font-weight:700;margin-bottom:8px;">Yahoo Fantasy Opened</div>
+            <p style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;">
+                Yahoo requires OAuth authentication which needs server-side credentials.<br>
+                Your league page has been opened in a new tab — you can manually reference your roster data while using StatVault's tools.
+            </p>
+        </div>
+    `;
+}
+
+/* ============================================================
+   DATA LAB — CHART BUILDER
+   ============================================================ */
+function updateLabMetrics() {
+    const sport = document.getElementById('labSport')?.value || 'nba';
+    const config = SPORT_CONFIG[sport];
+    if (!config) return;
+    const allMetrics = [...config.statKeys.map((k, i) => ({ key: k, label: config.statCols[i] })), { key: 'fantasyPts', label: 'Fantasy PTS' }, { key: 'adp', label: 'ADP' }];
+    const opts = allMetrics.map(m => `<option value="${m.key}">${m.label}</option>`).join('');
+    const xSel = document.getElementById('labMetricX');
+    const ySel = document.getElementById('labMetricY');
+    if (xSel) xSel.innerHTML = opts;
+    if (ySel) ySel.innerHTML = opts;
+    if (ySel && allMetrics.length > 1) ySel.selectedIndex = 1;
+}
+
+function buildLabChart() {
+    const sport = document.getElementById('labSport').value;
+    const chartType = document.getElementById('labChartType').value;
+    const metricX = document.getElementById('labMetricX').value;
+    const metricY = document.getElementById('labMetricY').value;
+    const topN = parseInt(document.getElementById('labTopN').value);
+    const config = SPORT_CONFIG[sport];
+    const labelX = document.getElementById('labMetricX').selectedOptions[0]?.text || metricX;
+    const labelY = document.getElementById('labMetricY').selectedOptions[0]?.text || metricY;
+
+    let players = [...(PLAYERS[sport] || [])].filter(p => p[metricX] !== undefined && p[metricX] !== 0);
+    players.sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0));
+    if (topN > 0) players = players.slice(0, topN);
+
+    const container = document.getElementById('labChartContainer');
+    const canvasId = 'labCanvas_' + Date.now();
+
+    if (chartType === 'bar') {
+        players.sort((a, b) => (b[metricX] || 0) - (a[metricX] || 0));
+        const maxVal = Math.max(...players.map(p => p[metricX] || 0)) || 1;
+        container.innerHTML = `
+            <div style="width:100%;">
+                <div style="font-weight:700;margin-bottom:16px;font-size:1rem;">${labelX} — Top ${players.length} Players</div>
+                ${players.map(p => {
+                    const val = p[metricX] || 0;
+                    const pct = (val / maxVal) * 100;
+                    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                        <div style="width:120px;font-size:0.78rem;font-weight:600;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</div>
+                        <div style="flex:1;height:22px;background:var(--bg-input);border-radius:4px;overflow:hidden;position:relative;">
+                            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--turf-light));border-radius:4px;transition:width .5s;"></div>
+                        </div>
+                        <div style="width:50px;font-family:var(--font-mono);font-size:0.78rem;font-weight:700;">${val}</div>
+                    </div>`;
+                }).join('')}
+            </div>
+        `;
+    } else if (chartType === 'scatter') {
+        container.innerHTML = `<canvas id="${canvasId}" style="width:100%;height:400px;"></canvas>`;
+        setTimeout(() => drawScatterPlot(canvasId, players, metricX, metricY, labelX, labelY), 50);
+    } else if (chartType === 'radar') {
+        const keys = config.statKeys.slice(0, 6);
+        const cols = config.statCols.slice(0, 6);
+        const top5 = players.slice(0, 5);
+        container.innerHTML = `<canvas id="${canvasId}" style="width:100%;height:420px;"></canvas>`;
+        setTimeout(() => drawRadarChart(canvasId, top5, keys, cols), 50);
+    } else if (chartType === 'line') {
+        container.innerHTML = `<canvas id="${canvasId}" style="width:100%;height:400px;"></canvas>`;
+        setTimeout(() => drawTrendChart(canvasId, players, metricX, labelX), 50);
+    } else if (chartType === 'histogram') {
+        const vals = players.map(p => p[metricX] || 0).filter(v => v > 0);
+        const min = Math.min(...vals), max = Math.max(...vals);
+        const buckets = 10;
+        const step = (max - min) / buckets || 1;
+        const bins = Array(buckets).fill(0);
+        vals.forEach(v => { const idx = Math.min(Math.floor((v - min) / step), buckets - 1); bins[idx]++; });
+        const maxBin = Math.max(...bins) || 1;
+        container.innerHTML = `
+            <div style="width:100%;">
+                <div style="font-weight:700;margin-bottom:16px;">${labelX} Distribution</div>
+                <div style="display:flex;align-items:flex-end;gap:4px;height:250px;">
+                    ${bins.map((count, i) => {
+                        const pct = (count / maxBin) * 100;
+                        const rangeStart = (min + i * step).toFixed(1);
+                        const rangeEnd = (min + (i+1) * step).toFixed(1);
+                        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">
+                            <div style="font-size:0.65rem;font-family:var(--font-mono);margin-bottom:4px;">${count}</div>
+                            <div style="width:100%;height:${pct}%;background:var(--accent);border-radius:3px 3px 0 0;min-height:2px;transition:height .5s;"></div>
+                            <div style="font-size:0.58rem;color:var(--text-muted);margin-top:4px;writing-mode:vertical-rl;transform:rotate(180deg);height:40px;overflow:hidden;">${rangeStart}</div>
+                        </div>`;
+                    }).join('')}
+                </div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-align:center;margin-top:8px;">${labelX} →</div>
+            </div>
+        `;
+    }
+}
+
+function drawScatterPlot(canvasId, players, kx, ky, lx, ly) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.offsetWidth * 2;
+    const h = canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const dw = canvas.offsetWidth, dh = canvas.offsetHeight;
+    const pad = { top: 20, right: 20, bottom: 40, left: 50 };
+
+    const xs = players.map(p => p[kx] || 0), ys = players.map(p => p[ky] || 0);
+    const xMin = Math.min(...xs) * 0.9, xMax = Math.max(...xs) * 1.1 || 1;
+    const yMin = Math.min(...ys) * 0.9, yMax = Math.max(...ys) * 1.1 || 1;
+
+    const toX = v => pad.left + ((v - xMin) / (xMax - xMin)) * (dw - pad.left - pad.right);
+    const toY = v => pad.top + (1 - (v - yMin) / (yMax - yMin)) * (dh - pad.top - pad.bottom);
+
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, dh - pad.bottom); ctx.lineTo(dw - pad.right, dh - pad.bottom); ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '10px monospace';
+    ctx.fillText(lx, dw / 2, dh - 5);
+    ctx.save(); ctx.translate(10, dh / 2); ctx.rotate(-Math.PI / 2); ctx.fillText(ly, 0, 0); ctx.restore();
+
+    // Points
+    const colors = ['#52b788', '#ffc300', '#6366f1', '#f472b6', '#22d3ee'];
+    players.forEach((p, i) => {
+        const x = toX(p[kx] || 0), y = toY(p[ky] || 0);
+        ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = colors[i % colors.length]; ctx.fill();
+        if (players.length <= 25) {
+            ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '8px sans-serif';
+            ctx.fillText(p.name.split(' ').pop(), x + 7, y + 3);
+        }
+    });
+}
+
+function drawRadarChart(canvasId, players, keys, labels) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.offsetWidth * 2;
+    const h = canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const dw = canvas.offsetWidth, dh = canvas.offsetHeight;
+    const cx = dw / 2, cy = dh / 2, r = Math.min(cx, cy) - 50;
+    const n = keys.length;
+    const angleStep = (Math.PI * 2) / n;
+
+    // Find max per key for normalization
+    const allPlayers = PLAYERS[document.getElementById('labSport').value] || [];
+    const maxes = keys.map(k => Math.max(...allPlayers.map(p => p[k] || 0)) || 1);
+
+    // Grid
+    for (let ring = 1; ring <= 4; ring++) {
+        ctx.beginPath();
+        const rr = r * ring / 4;
+        for (let i = 0; i <= n; i++) {
+            const a = i * angleStep - Math.PI / 2;
+            const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr;
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.stroke();
+    }
+
+    // Labels
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+    keys.forEach((k, i) => {
+        const a = i * angleStep - Math.PI / 2;
+        ctx.fillText(labels[i], cx + Math.cos(a) * (r + 25), cy + Math.sin(a) * (r + 25) + 4);
+    });
+
+    // Player polygons
+    const colors = ['rgba(82,183,136,0.6)', 'rgba(255,195,0,0.5)', 'rgba(99,102,241,0.5)', 'rgba(244,114,182,0.4)', 'rgba(34,211,238,0.4)'];
+    players.forEach((p, pi) => {
+        ctx.beginPath();
+        keys.forEach((k, i) => {
+            const val = (p[k] || 0) / maxes[i];
+            const a = i * angleStep - Math.PI / 2;
+            const x = cx + Math.cos(a) * r * val, y = cy + Math.sin(a) * r * val;
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+        ctx.fillStyle = colors[pi % colors.length]; ctx.fill();
+        ctx.strokeStyle = colors[pi % colors.length].replace(/[\d.]+\)$/, '1)'); ctx.lineWidth = 1.5; ctx.stroke();
+    });
+
+    // Legend
+    ctx.textAlign = 'left'; ctx.font = '9px sans-serif';
+    players.forEach((p, i) => {
+        ctx.fillStyle = colors[i % colors.length].replace(/[\d.]+\)$/, '1)');
+        ctx.fillRect(10, 10 + i * 16, 10, 10);
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.fillText(p.name, 24, 19 + i * 16);
+    });
+}
+
+function drawTrendChart(canvasId, players, key, label) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.offsetWidth * 2;
+    const h = canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const dw = canvas.offsetWidth, dh = canvas.offsetHeight;
+    const pad = { top: 20, right: 20, bottom: 30, left: 50 };
+    const top5 = players.slice(0, 5);
+    const colors = ['#52b788', '#ffc300', '#6366f1', '#f472b6', '#22d3ee'];
+
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, dh - pad.bottom); ctx.lineTo(dw - pad.right, dh - pad.bottom); ctx.stroke();
+
+    top5.forEach((p, pi) => {
+        const data = generateTrendData(p, 12);
+        const min = Math.min(...data) * 0.9, max = Math.max(...data) * 1.1;
+        const range = max - min || 1;
+        ctx.beginPath(); ctx.strokeStyle = colors[pi]; ctx.lineWidth = 2;
+        data.forEach((v, i) => {
+            const x = pad.left + (i / (data.length - 1)) * (dw - pad.left - pad.right);
+            const y = pad.top + (1 - (v - min) / range) * (dh - pad.top - pad.bottom);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+    });
+
+    // Legend
+    ctx.textAlign = 'left'; ctx.font = '9px sans-serif';
+    top5.forEach((p, i) => {
+        ctx.fillStyle = colors[i]; ctx.fillRect(pad.left + 10, 8 + i * 14, 8, 8);
+        ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText(p.name, pad.left + 22, 16 + i * 14);
+    });
 }
 
 /* ============================================================

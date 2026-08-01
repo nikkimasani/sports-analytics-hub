@@ -4240,26 +4240,27 @@ async function renderStandings() {
 
         const hasConf = confSections.length > 0;
         const hasDiv = divSections.length > 0;
+        const hasBoth = hasConf && hasDiv;
 
-        let html = '';
-        if (hasDiv) {
-            html += `<div style="margin-bottom:28px;">
-                <h3 style="font-family:var(--font-mono);font-size:1.1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--accent);color:var(--text-primary);">
-                    <span style="color:var(--accent);margin-right:8px;">&#9642;</span>Division Standings
-                </h3>
-                ${buildStandingsHtml(divSections)}
-            </div>`;
-        }
-        if (hasConf) {
-            html += `<div style="margin-bottom:28px;">
-                <h3 style="font-family:var(--font-mono);font-size:1.1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--accent);color:var(--text-primary);">
-                    <span style="color:var(--accent);margin-right:8px;">&#9642;</span>Conference Standings
-                </h3>
-                ${buildStandingsHtml(confSections)}
-            </div>`;
-        }
-        if (!html) throw new Error('No standings entries found');
-        container.innerHTML = html;
+        if (!hasDiv && !hasConf) throw new Error('No standings entries found');
+
+        const tabBar = hasBoth ? `
+            <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid var(--border);">
+                <button id="stTab-div" onclick="document.getElementById('stPane-div').style.display='';document.getElementById('stPane-conf').style.display='none';this.style.borderBottom='3px solid var(--accent)';this.style.color='var(--accent)';this.style.fontWeight='800';document.getElementById('stTab-conf').style.borderBottom='3px solid transparent';document.getElementById('stTab-conf').style.color='var(--text-muted)';document.getElementById('stTab-conf').style.fontWeight='600';" style="padding:12px 24px;font-family:var(--font-mono);font-size:0.9rem;font-weight:800;background:none;border:none;border-bottom:3px solid var(--accent);color:var(--accent);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;">Division</button>
+                <button id="stTab-conf" onclick="document.getElementById('stPane-conf').style.display='';document.getElementById('stPane-div').style.display='none';this.style.borderBottom='3px solid var(--accent)';this.style.color='var(--accent)';this.style.fontWeight='800';document.getElementById('stTab-div').style.borderBottom='3px solid transparent';document.getElementById('stTab-div').style.color='var(--text-muted)';document.getElementById('stTab-div').style.fontWeight='600';" style="padding:12px 24px;font-family:var(--font-mono);font-size:0.9rem;font-weight:600;background:none;border:none;border-bottom:3px solid transparent;color:var(--text-muted);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;">Conference</button>
+            </div>` : '';
+
+        const divPane = hasDiv ? `<div id="stPane-div">
+            <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:16px;">Teams grouped by division within each conference</p>
+            ${buildStandingsHtml(divSections)}
+        </div>` : '';
+
+        const confPane = hasConf ? `<div id="stPane-conf" style="${hasBoth ? 'display:none;' : ''}">
+            <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:16px;">Full conference rankings — all teams ranked together</p>
+            ${buildStandingsHtml(confSections)}
+        </div>` : '';
+
+        container.innerHTML = tabBar + divPane + confPane;
     } catch(e) {
         container.innerHTML = `<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Could Not Load Standings</div><div class="subtitle">${e.message}</div></div>`;
     }
@@ -6635,9 +6636,10 @@ function buildLabChart() {
 function drawScatterPlot(canvasId, players, kx, ky, lx, ly) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
+    if (!canvas.offsetWidth) { setTimeout(() => drawScatterPlot(canvasId, players, kx, ky, lx, ly), 100); return; }
     const ctx = canvas.getContext('2d');
-    const w = canvas.width = canvas.offsetWidth * 2;
-    const h = canvas.height = canvas.offsetHeight * 2;
+    const w = canvas.width = (canvas.offsetWidth || 600) * 2;
+    const h = canvas.height = (canvas.offsetHeight || 400) * 2;
     ctx.scale(2, 2);
     const dw = canvas.offsetWidth, dh = canvas.offsetHeight;
     const pad = { top: 20, right: 20, bottom: 40, left: 50 };
@@ -6675,9 +6677,10 @@ function drawScatterPlot(canvasId, players, kx, ky, lx, ly) {
 function drawRadarChart(canvasId, players, keys, labels) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
+    if (!canvas.offsetWidth) { setTimeout(() => drawRadarChart(canvasId, players, keys, labels), 100); return; }
     const ctx = canvas.getContext('2d');
-    const w = canvas.width = canvas.offsetWidth * 2;
-    const h = canvas.height = canvas.offsetHeight * 2;
+    const w = canvas.width = (canvas.offsetWidth || 600) * 2;
+    const h = canvas.height = (canvas.offsetHeight || 420) * 2;
     ctx.scale(2, 2);
     const dw = canvas.offsetWidth, dh = canvas.offsetHeight;
     const cx = dw / 2, cy = dh / 2, r = Math.min(cx, cy) - 50;
@@ -6735,9 +6738,10 @@ function drawRadarChart(canvasId, players, keys, labels) {
 function drawTrendChart(canvasId, players, key, label) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
+    if (!canvas.offsetWidth) { setTimeout(() => drawTrendChart(canvasId, players, key, label), 100); return; }
     const ctx = canvas.getContext('2d');
-    const w = canvas.width = canvas.offsetWidth * 2;
-    const h = canvas.height = canvas.offsetHeight * 2;
+    const w = canvas.width = (canvas.offsetWidth || 600) * 2;
+    const h = canvas.height = (canvas.offsetHeight || 400) * 2;
     ctx.scale(2, 2);
     const dw = canvas.offsetWidth, dh = canvas.offsetHeight;
     const pad = { top: 20, right: 20, bottom: 30, left: 50 };

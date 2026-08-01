@@ -1294,6 +1294,7 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 <div class="sidebar-item" onclick="showView('live')" data-view="live">
                     <span class="icon">🔴</span> Live Scores
                 </div>
+                <div class="sidebar-item" data-view="standings" onclick="showView('standings')">📊 Standings</div>
             </div>
 
             <div class="sidebar-divider"></div>
@@ -1438,6 +1439,13 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 </div>
                 <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Real-time scores and game updates</p>
                 <div id="liveScoresContainer" class="card-grid card-grid-3"></div>
+            </div>
+
+            <!-- ============ STANDINGS VIEW ============ -->
+            <div class="view" id="view-standings">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">League Standings</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Current season standings from ESPN</p>
+                <div id="standingsContainer"></div>
             </div>
 
             <!-- ============ NEWS FEED VIEW ============ -->
@@ -1778,6 +1786,11 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                         <div class="form-group">
                             <label class="form-label">League ID</label>
                             <input type="text" class="form-input" id="espnLeagueId" placeholder="e.g. 12345678">
+                            <p style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">
+                                Find your League ID in your ESPN Fantasy URL:<br>
+                                <span style="font-family:var(--font-mono);font-size:0.7rem;">fantasy.espn.com/football/league?leagueId=<strong style="color:var(--accent);">12345678</strong></span><br>
+                                The number after "leagueId=" is your League ID. Works with public leagues only.
+                            </p>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Season</label>
@@ -2048,6 +2061,7 @@ function initView(viewId) {
         case 'fantasy-hub': renderFantasyHub(); break;
         case 'draft': initDraft(); break;
         case 'live': renderLiveScores(); break;
+        case 'standings': renderStandings(); break;
         case 'news': renderNewsFeed(); break;
         case 'league-import': break;
         case 'data-lab': updateLabMetrics(); break;
@@ -2514,6 +2528,20 @@ function computeAdvancedMetrics() {
                         <div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">${s.l}</div>
                     </div>`).join('')}
                 </div>
+            </div>
+            <div class="card" style="margin-top:16px;">
+                <div class="card-title" style="margin-bottom:16px;">Formula Reference</div>
+                ${[
+                    { name:'PER', formula:'PER = (1/min) × (3PM + AST×⅔ + FGM×(2−⅓×teamAST/teamFGM) + FTM×0.5 − TO − …) × pace_adj' },
+                    { name:'True Shooting %', formula:'TS% = PTS / (2 × (FGA + 0.44 × FTA))' },
+                    { name:'Box Plus/Minus', formula:'BPM = f(PTS, REB, AST, STL, BLK, TO, usage, position)' },
+                    { name:'Win Shares', formula:'WS = OWS + DWS' },
+                    { name:'Usage Rate', formula:'USG% = 100 × ((FGA + 0.44×FTA + TO) × (Tm MP/5)) / (MP × (Tm FGA + 0.44×Tm FTA + Tm TO))' },
+                    { name:'VORP', formula:'VORP = [BPM − (−2.0)] × (% of minutes played) × (team games / 82)' },
+                ].map(f => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-weight:700;font-size:0.82rem;min-width:120px;">${f.name}</span>
+                    <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);text-align:right;">${f.formula}</span>
+                </div>`).join('')}
             </div>`;
 
     } else if (sport === 'nfl') {
@@ -2588,6 +2616,18 @@ function computeAdvancedMetrics() {
                         <div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">${s.l}</div>
                     </div>`).join('')}
                 </div>
+            </div>
+            <div class="card" style="margin-top:16px;">
+                <div class="card-title" style="margin-bottom:16px;">Formula Reference</div>
+                ${[
+                    { name:'EPA/Play', formula:'EPA/Play = (Post-play exp. pts − Pre-play exp. pts) / plays' },
+                    { name:'DVOA', formula:'DVOA = (Player value / plays) / league avg, adjusted for opponent & situation' },
+                    { name:'QBR', formula:'QBR = f(EPA, pass TD, INT, rush, sacks, clutch weighting) on 0–100 scale' },
+                    { name:'CPOE', formula:'CPOE = Actual Completion% − Expected Completion% (per Air Yards model)' },
+                ].map(f => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-weight:700;font-size:0.82rem;min-width:120px;">${f.name}</span>
+                    <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);text-align:right;">${f.formula}</span>
+                </div>`).join('')}
             </div>`;
 
     } else if (sport === 'mlb') {
@@ -2640,6 +2680,18 @@ function computeAdvancedMetrics() {
                             <div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">${s.l}</div>
                         </div>`).join('')}
                     </div>
+                </div>
+                <div class="card" style="margin-top:16px;">
+                    <div class="card-title" style="margin-bottom:16px;">Formula Reference</div>
+                    ${[
+                        { name:'WAR (hitter)', formula:'WAR = (Batting runs + Baserunning + Fielding + Positional + League adj + Replacement) / Runs per Win' },
+                        { name:'OPS+', formula:'OPS+ = 100 × (OBP/lg OBP + SLG/lg SLG − 1) / park factor' },
+                        { name:'wRC+', formula:'wRC+ = 100 × (wRC/PA) / (lg wRC/lgPA) / park factor' },
+                        { name:'ISO', formula:'ISO = SLG − AVG (isolated power from extra bases only)' },
+                    ].map(f => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+                        <span style="font-weight:700;font-size:0.82rem;min-width:120px;">${f.name}</span>
+                        <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);text-align:right;">${f.formula}</span>
+                    </div>`).join('')}
                 </div>`;
         } else if (isPitcher) {
             const fip = p.fip || (p.era ? +(p.era * 0.92 + 0.3).toFixed(2) : 0);
@@ -2671,6 +2723,18 @@ function computeAdvancedMetrics() {
                             </div>
                         `).join('')}
                     </div>
+                </div>
+                <div class="card" style="margin-top:16px;">
+                    <div class="card-title" style="margin-bottom:16px;">Formula Reference</div>
+                    ${[
+                        { name:'WAR (pitcher)', formula:'WAR = (FIP-based runs above avg / Runs per Win) + Replacement level' },
+                        { name:'FIP', formula:'FIP = (13×HR + 3×(BB+HBP) − 2×K) / IP + FIP constant' },
+                        { name:'xFIP', formula:'xFIP = FIP but with HR replaced by (FB% × lg HR/FB rate)' },
+                        { name:'ERA−', formula:'ERA− = 100 × ERA / (lg ERA × park factor): lower is better' },
+                    ].map(f => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+                        <span style="font-weight:700;font-size:0.82rem;min-width:120px;">${f.name}</span>
+                        <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);text-align:right;">${f.formula}</span>
+                    </div>`).join('')}
                 </div>`;
         }
 
@@ -3644,6 +3708,66 @@ async function renderLiveScores() {
     startLiveAutoRefresh();
 }
 
+async function renderStandings() {
+    const sport = State.currentSport;
+    const container = document.getElementById('standingsContainer');
+    if (!container) return;
+    const sportMap = { nba: {sport:'basketball',league:'nba'}, nfl: {sport:'football',league:'nfl'}, mlb: {sport:'baseball',league:'mlb'}, ncaa: {sport:'football',league:'college-football'} };
+    const m = sportMap[sport];
+    if (!m) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📊</div><div class="title">Not Available</div><div class="subtitle">Standings not available for this sport.</div></div>';
+        return;
+    }
+    container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Loading Standings...</div><div class="subtitle">Fetching data from ESPN</div></div>';
+    try {
+        const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=standings`);
+        if (!res.ok) throw new Error(`ESPN returned ${res.status}`);
+        const data = await res.json();
+        const children = (data.children || data.leagues?.[0]?.children || []);
+        if (!children.length) throw new Error('No standings data');
+        container.innerHTML = children.map(division => {
+            const teams = (division.standings?.entries || []).map(entry => {
+                const name = entry.team?.displayName || entry.team?.name || '\u2014';
+                const stats = {};
+                (entry.stats || []).forEach(s => { stats[s.name] = s.displayValue ?? s.value; });
+                const w = stats['wins'] ?? stats['W'] ?? '\u2014';
+                const l = stats['losses'] ?? stats['L'] ?? '\u2014';
+                const pct = stats['winPercent'] ?? stats['PCT'] ?? '\u2014';
+                const gb = stats['gamesBehind'] ?? stats['GB'] ?? '\u2014';
+                const streak = stats['streak'] ?? stats['streakCode'] ?? '\u2014';
+                return `<tr>
+                    <td style="padding:8px 12px;font-weight:600;">${name}</td>
+                    <td style="padding:8px 12px;text-align:center;font-family:var(--font-mono);">${w}</td>
+                    <td style="padding:8px 12px;text-align:center;font-family:var(--font-mono);">${l}</td>
+                    <td style="padding:8px 12px;text-align:center;font-family:var(--font-mono);">${typeof pct === 'number' ? pct.toFixed(3) : pct}</td>
+                    <td style="padding:8px 12px;text-align:center;font-family:var(--font-mono);">${gb}</td>
+                    <td style="padding:8px 12px;text-align:center;font-family:var(--font-mono);">${streak}</td>
+                </tr>`;
+            }).join('');
+            return `<div class="card" style="margin-bottom:20px;">
+                <div class="card-title" style="margin-bottom:14px;">${division.name || division.abbreviation || 'Division'}</div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.87rem;">
+                        <thead>
+                            <tr style="border-bottom:1px solid var(--border);">
+                                <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">Team</th>
+                                <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">W</th>
+                                <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">L</th>
+                                <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">PCT</th>
+                                <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">GB</th>
+                                <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">Streak</th>
+                            </tr>
+                        </thead>
+                        <tbody>${teams || '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">No team data</td></tr>'}</tbody>
+                    </table>
+                </div>
+            </div>`;
+        }).join('') || '<div class="empty-state"><div class="icon">📊</div><div class="title">No Standings Available</div><div class="subtitle">Try a different sport or check back later.</div></div>';
+    } catch(e) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Could Not Load Standings</div><div class="subtitle">${e.message}</div></div>`;
+    }
+}
+
 function updateScoreTicker(games, sport = State.currentSport) {
     const ticker = document.getElementById('scoreTicker');
     if (!ticker) return;
@@ -3814,7 +3938,7 @@ function renderWaiverWire() {
    ============================================================ */
 function renderTradeAnalyzer() {
     const sport = State.currentSport;
-    const players = PLAYERS[sport] || [];
+    const players = [...(PLAYERS[sport] || [])].sort((a, b) => a.name.localeCompare(b.name));
     const options = players.map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
 
     document.getElementById('tradeContainer').innerHTML = `
@@ -4833,11 +4957,19 @@ function sparklineHtml(player, width, height) {
    INTERACTIVE MODEL TOOLS: RAPTOR, WAR, EPA
    ============================================================ */
 function renderRaptorCalculator() {
+    const playerOptions = (PLAYERS.nba||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
     return `
         <div class="card" style="margin-top:20px;">
             <div class="card-title" style="margin-bottom:16px;">RAPTOR Rating Calculator</div>
             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Estimate a player's RAPTOR rating from box score and on/off stats.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Auto-fill from player</label>
+                    <select class="form-select" id="raptorPlayerSelect" onchange="fillRaptorFromPlayer()">
+                        <option value="">— Manual entry —</option>
+                        ${playerOptions}
+                    </select>
+                </div>
                 <div class="form-group"><label class="form-label">Points/Game</label><input type="number" class="form-input" id="raptorPPG" value="25" step="0.1" oninput="calculateRaptor()"></div>
                 <div class="form-group"><label class="form-label">Rebounds/Game</label><input type="number" class="form-input" id="raptorRPG" value="7" step="0.1" oninput="calculateRaptor()"></div>
                 <div class="form-group"><label class="form-label">Assists/Game</label><input type="number" class="form-input" id="raptorAPG" value="5" step="0.1" oninput="calculateRaptor()"></div>
@@ -4849,6 +4981,21 @@ function renderRaptorCalculator() {
             </div>
             <div id="raptorResult" style="margin-top:16px;"></div>
         </div>`;
+}
+
+function fillRaptorFromPlayer() {
+    const id = parseInt(document.getElementById('raptorPlayerSelect').value);
+    const p = (PLAYERS.nba||[]).find(pl => pl.id === id);
+    if (!p) return;
+    document.getElementById('raptorPPG').value = p.ppg || 0;
+    document.getElementById('raptorRPG').value = p.rpg || 0;
+    document.getElementById('raptorAPG').value = p.apg || 0;
+    document.getElementById('raptorSPG').value = p.spg || 0;
+    document.getElementById('raptorBPG').value = p.bpg || 0;
+    document.getElementById('raptorTPG').value = p.tpg || 0;
+    document.getElementById('raptorMPG').value = p.mpg || 0;
+    document.getElementById('raptorTS').value = p.ts || 50;
+    calculateRaptor();
 }
 
 function calculateRaptor() {
@@ -4898,11 +5045,19 @@ function calculateRaptor() {
 }
 
 function renderWARCalculator() {
+    const playerOptions = (PLAYERS.mlb||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
     return `
         <div class="card" style="margin-top:20px;">
             <div class="card-title" style="margin-bottom:16px;">WAR Calculator (Position Player)</div>
             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Estimate Wins Above Replacement from batting, baserunning, and fielding components.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Auto-fill from MLB player</label>
+                    <select class="form-select" id="warPlayerSelect" onchange="fillWARFromPlayer()">
+                        <option value="">— Manual entry —</option>
+                        ${playerOptions}
+                    </select>
+                </div>
                 <div class="form-group"><label class="form-label">wOBA</label><input type="number" class="form-input" id="warWOBA" value=".350" step="0.001" oninput="calculateWAR()"></div>
                 <div class="form-group"><label class="form-label">PA (Plate App.)</label><input type="number" class="form-input" id="warPA" value="600" oninput="calculateWAR()"></div>
                 <div class="form-group"><label class="form-label">League wOBA</label><input type="number" class="form-input" id="warLgWOBA" value=".310" step="0.001" oninput="calculateWAR()"></div>
@@ -4912,6 +5067,18 @@ function renderWARCalculator() {
             </div>
             <div id="warResult" style="margin-top:16px;"></div>
         </div>`;
+}
+
+function fillWARFromPlayer() {
+    const id = parseInt(document.getElementById('warPlayerSelect').value);
+    const p = (PLAYERS.mlb||[]).find(pl => pl.id === id);
+    if (!p) return;
+    if (p.woba != null) document.getElementById('warWOBA').value = p.woba;
+    if (p.pa != null) document.getElementById('warPA').value = p.pa;
+    if (p.bsr != null) document.getElementById('warBSR').value = p.bsr;
+    if (p.fld != null) document.getElementById('warFLD').value = p.fld;
+    if (p.pos != null) document.getElementById('warPOS').value = p.pos;
+    calculateWAR();
 }
 
 function calculateWAR() {
@@ -5042,11 +5209,21 @@ function calculateEPA() {
    BAYESIAN PLAYER PROJECTIONS CALCULATOR
    ============================================================ */
 function renderBayesianCalculator() {
+    const sport = State.currentSport;
+    const playerList = (PLAYERS[sport]||PLAYERS.nba||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
+    const playerOptions = playerList.map(p=>`<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
     return `
         <div class="card" style="margin-top:20px;">
             <div class="card-title" style="margin-bottom:16px;">Bayesian Player Projections</div>
             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Combine prior expectations with observed performance to generate posterior projections with credible intervals.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Auto-fill from player</label>
+                    <select class="form-select" id="bayesPlayerSelect" onchange="fillBayesianFromPlayer()">
+                        <option value="">— Manual entry —</option>
+                        ${playerOptions}
+                    </select>
+                </div>
                 <div class="form-group"><label class="form-label">Prior Mean (Preseason Proj)</label><input type="number" class="form-input" id="bayesPriorMean" value="18.5" step="0.1" oninput="calculateBayesian()"></div>
                 <div class="form-group"><label class="form-label">Prior Std Dev</label><input type="number" class="form-input" id="bayesPriorSD" value="4.0" step="0.1" oninput="calculateBayesian()"></div>
                 <div class="form-group"><label class="form-label">Observed Mean (Season Avg)</label><input type="number" class="form-input" id="bayesObsMean" value="22.3" step="0.1" oninput="calculateBayesian()"></div>
@@ -5060,6 +5237,19 @@ function renderBayesianCalculator() {
             </div>
             <div id="bayesResult" style="margin-top:20px;"></div>
         </div>`;
+}
+
+function fillBayesianFromPlayer() {
+    const id = parseInt(document.getElementById('bayesPlayerSelect').value);
+    const sport = State.currentSport;
+    const p = (PLAYERS[sport]||PLAYERS.nba||[]).find(pl => pl.id === id);
+    if (!p) return;
+    const observed = p.ppg || p.avg || p.passTd || 0;
+    const sd = Math.max(1, observed * 0.2);
+    document.getElementById('bayesObsMean').value = observed.toFixed(1);
+    document.getElementById('bayesObsSD').value = sd.toFixed(1);
+    if (p.gamesPlayed) document.getElementById('bayesGames').value = p.gamesPlayed;
+    calculateBayesian();
 }
 
 function calculateBayesian() {

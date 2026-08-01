@@ -110,7 +110,7 @@ const PLAYERS = {
         { id:523, name:'Anthony Richardson', team:'IND', pos:'QB', passYds:2285, passTd:15, rushYds:612, rushTd:6, ints:8, comp:58.5, qbr:59.5, adp:16, espnId:4431299, fantasyPts:18.5, trend:'up', age:22, exp:1 },
         // === RUNNING BACKS ===
         { id:104, name:'Saquon Barkley', team:'PHI', pos:'RB', rushYds:2005, rushTd:13, recYds:278, rec:33, targets:44, ints:0, adp:1, espnId:3929630, fantasyPts:21.4, trend:'stable', age:27, exp:6 },
-        { id:304, name:'Christian McCaffrey', team:'SF', pos:'RB', rushYds:1459, rushTd:14, recYds:564, rec:67, targets:85, ints:0, adp:2, espnId:3054220, fantasyPts:22.8, trend:'stable', age:28, exp:7 },
+        { id:524, name:'Christian McCaffrey', team:'SF', pos:'RB', rushYds:1459, rushTd:14, recYds:564, rec:67, targets:85, ints:0, adp:2, espnId:3054191, fantasyPts:22.8, trend:'stable', age:28, exp:7 },
         { id:107, name:'Derrick Henry', team:'BAL', pos:'RB', rushYds:1921, rushTd:16, recYds:167, rec:20, targets:28, ints:0, adp:4, espnId:3043078, fantasyPts:19.8, trend:'stable', age:30, exp:8 },
         { id:109, name:'Bijan Robinson', team:'ATL', pos:'RB', rushYds:1456, rushTd:11, recYds:456, rec:58, targets:72, ints:0, adp:2, espnId:4430807, fantasyPts:20.1, trend:'up', age:22, exp:1 },
         { id:111, name:'Breece Hall', team:'NYJ', pos:'RB', rushYds:1012, rushTd:5, recYds:410, rec:47, targets:62, ints:0, adp:5, espnId:4362887, fantasyPts:15.3, trend:'down', age:23, exp:2 },

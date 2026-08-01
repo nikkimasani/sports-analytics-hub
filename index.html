@@ -1458,7 +1458,7 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Deep-dive into player performance across all leagues</p>
 
                 <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-                    <select class="form-select" style="width:160px;" id="playerSportFilter" onchange="filterPlayers()">
+                    <select class="form-select" style="width:160px;" id="playerSportFilter" onchange="updatePlayerPositions(); filterPlayers()">
                         <option value="all">All Sports</option>
                         <option value="nba">NBA</option>
                         <option value="nfl">NFL</option>
@@ -1535,7 +1535,7 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Advanced Metrics</h2>
                 <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">PER, WAR, EPA, WPA, OPS+, and more</p>
 
-                <div class="card-grid card-grid-2" id="advancedMetrics"></div>
+                <div id="advancedMetrics"></div>
             </div>
 
             <!-- ============ PREDICTION MODELS VIEW ============ -->
@@ -1573,15 +1573,16 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                             <div class="card-title">🎯 Platform Connection</div>
                         </div>
                         <div style="display:flex;gap:12px;margin-bottom:16px;">
-                            <button class="btn btn-lg" style="flex:1;background:#7c3aed;color:var(--chalk);" onclick="connectPlatform('yahoo')">
-                                🏈 Connect Yahoo Fantasy
+                            <button class="btn btn-lg" style="flex:1;background:#dc2626;color:var(--chalk);" onclick="showView('league-import')">
+                                ⭐ Import ESPN League
                             </button>
-                            <button class="btn btn-lg" style="flex:1;background:#dc2626;color:var(--chalk);" onclick="connectPlatform('espn')">
-                                ⭐ Connect ESPN Fantasy
+                            <button class="btn btn-lg" style="flex:1;background:#7c3aed;color:var(--chalk);" onclick="connectPlatform('yahoo')">
+                                🏈 Open Yahoo Fantasy
                             </button>
                         </div>
                         <p style="font-size:0.82rem;color:var(--text-muted);">
-                            Link your Yahoo or ESPN fantasy account to sync leagues, rosters, and get personalized recommendations.
+                            <strong>ESPN:</strong> Enter your league ID to import rosters, standings, and matchups directly into StatVault.<br>
+                            <strong>Yahoo:</strong> Requires OAuth sign-in — opens in new tab (use alongside StatVault tools).
                         </p>
                         <div id="platformStatus" style="margin-top:12px;"></div>
                     </div>
@@ -2155,6 +2156,22 @@ function renderPlayerStats() {
     filterPlayers();
 }
 
+function updatePlayerPositions() {
+    const sport = document.getElementById('playerSportFilter').value;
+    const posFilter = document.getElementById('playerPosFilter');
+    if (sport === 'all') {
+        // Show all unique positions across all sports
+        const allPos = new Set();
+        Object.values(SPORT_CONFIG).forEach(c => c.positions.forEach(p => allPos.add(p)));
+        posFilter.innerHTML = '<option value="all">All Positions</option>' +
+            [...allPos].sort().map(p => `<option value="${p}">${p}</option>`).join('');
+    } else {
+        const config = SPORT_CONFIG[sport];
+        posFilter.innerHTML = '<option value="all">All Positions</option>' +
+            config.positions.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+}
+
 let playerSortCol = 'fantasyPts';
 let playerSortDir = 'desc';
 
@@ -2204,7 +2221,16 @@ function filterPlayers() {
         return playerSortDir === 'desc' ? (vb > va ? 1 : vb < va ? -1 : 0) : (va > vb ? 1 : va < vb ? -1 : 0);
     });
 
-    const activeSport = sport === 'all' ? State.currentSport : sport;
+    // Use selected sport for columns; if "all", detect majority sport in results
+    let activeSport;
+    if (sport !== 'all') {
+        activeSport = sport;
+    } else {
+        // Pick the sport with most players in current results for column display
+        const sportCounts = {};
+        allPlayers.forEach(p => { sportCounts[p.sport] = (sportCounts[p.sport] || 0) + 1; });
+        activeSport = Object.keys(sportCounts).sort((a, b) => sportCounts[b] - sportCounts[a])[0] || State.currentSport;
+    }
     const config = SPORT_CONFIG[activeSport];
 
     const arrow = (col) => playerSortCol === col ? (playerSortDir === 'desc' ? ' ▼' : ' ▲') : '';

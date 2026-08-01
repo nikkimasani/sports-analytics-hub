@@ -69,6 +69,35 @@
     --header-height: 60px;
 }
 
+/* Light theme overrides */
+[data-theme="light"] {
+    --night: #f5f7fa;
+    --night-2: #ebeef3;
+    --card: #ffffff;
+    --chalk: #1a1a2e;
+    --chalk-dim: #4a5568;
+    --turf: #1B4332;
+    --turf-light: #2d8659;
+    --hash: #c4cdd9;
+
+    --bg-primary: var(--night);
+    --bg-secondary: var(--night-2);
+    --bg-card: var(--card);
+    --bg-card-hover: #f0f2f5;
+    --bg-input: #f0f2f5;
+    --border: rgba(0,0,0,0.12);
+    --border-hover: rgba(0,0,0,0.25);
+    --text-primary: var(--chalk);
+    --text-secondary: var(--chalk-dim);
+    --text-muted: rgba(74,85,104,0.6);
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow: 0 4px 12px rgba(0,0,0,0.1);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+}
+[data-theme="light"] ::-webkit-scrollbar-track { background: #ebeef3; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: #b0bec5; }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { font-size: 15px; scroll-behavior: smooth; overflow-x: hidden; }
@@ -1303,8 +1332,10 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 </div>
                 <div class="header-search">
                     <span class="search-icon">🔍</span>
-                    <input type="text" placeholder="Search players, teams, stats..." id="globalSearch" oninput="handleGlobalSearch(this.value)">
+                    <input type="text" placeholder="Search players, teams, stats..." id="globalSearch" oninput="handleGlobalSearch(this.value)" autocomplete="off">
+                    <div id="searchDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);max-height:320px;overflow-y:auto;z-index:300;box-shadow:var(--shadow-lg);"></div>
                 </div>
+                <button onclick="toggleTheme()" title="Toggle light/dark theme" style="font-size:1.2rem;padding:6px 10px;border-radius:var(--radius);background:var(--bg-card);border:1px solid var(--border);cursor:pointer;color:var(--text-primary);" id="themeToggleBtn">🌙</button>
             </div>
         </header>
 
@@ -1407,6 +1438,9 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 </div>
                 <div class="sidebar-item" onclick="showView('settings')" data-view="settings">
                     <span class="icon">⚙️</span> Settings
+                </div>
+                <div class="sidebar-item" onclick="showView('watchlist')" data-view="watchlist">
+                    <span class="icon">⭐</span> Watchlist
                 </div>
             </div>
 
@@ -1969,6 +2003,13 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 <div class="settings-panel" id="settingsPanel"></div>
             </div>
 
+            <!-- ============ WATCHLIST VIEW ============ -->
+            <div class="view" id="view-watchlist">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">My Watchlist</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Your favorited players — click ☆ next to any player to add them</p>
+                <div id="watchlistContainer"></div>
+            </div>
+
             <!-- ============ PLAYER DEEP DIVE / PROFILE VIEW ============ -->
             <div class="view" id="view-player-profile">
                 <div id="playerProfileContent">
@@ -2339,6 +2380,7 @@ function initView(viewId) {
         case 'projections': renderProjections(); break;
         case 'betting': renderBettingModels(); break;
         case 'settings': renderSettings(); break;
+        case 'watchlist': renderWatchlist(); break;
         case 'player-profile': initPlayerProfileView(); break;
         case 'head-to-head': updateH2HPlayers(); break;
         case 'season-sim': renderSeasonSim(); break;
@@ -2422,7 +2464,7 @@ function renderDashboard() {
             <tbody>${topPlayers.map((p, i) => `
                 <tr>
                     <td class="rank">${i + 1}</td>
-                    <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})"><div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(p, 28)}${p.name}</div></td>
+                    <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})"><div style="display:flex;align-items:center;gap:8px;">${favStarHtml(p.id)}${playerAvatarHtml(p, 28)}${p.name}</div></td>
                     <td>${p.team}</td>
                     <td><span class="position-tag">${p.pos}</span></td>
                     ${keys.map(k => `<td>${p[k] !== undefined ? (typeof p[k] === 'number' && k !== 'per' && k !== 'war' && k !== 'hr' && k !== 'rbi' && k !== 'sb' && k !== 'ints' && k !== 'rec' && k !== 'targets' && p[k] < 1 ? p[k].toFixed(3) : p[k]) : '—'}</td>`).join('')}
@@ -2546,7 +2588,7 @@ function filterPlayers() {
     document.getElementById('playerTableBody').innerHTML = allPlayers.map((p, i) => `
         <tr>
             <td class="rank">${i + 1}</td>
-            <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})"><div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(p, 28)}${p.name}</div></td>
+            <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})"><div style="display:flex;align-items:center;gap:8px;">${favStarHtml(p.id)}${playerAvatarHtml(p, 28)}${p.name}</div></td>
             <td><span class="badge badge-${p.sport}">${SPORT_CONFIG[p.sport]?.label || p.sport}</span></td>
             <td>${p.team}</td>
             <td><span class="position-tag">${p.pos}</span></td>
@@ -4664,7 +4706,7 @@ function renderSettings() {
                     <div class="toggle-label">Dark Mode</div>
                     <div class="toggle-desc">Switch to dark theme</div>
                 </div>
-                <div class="toggle-switch ${State.settings.darkMode ? 'active' : ''}" onclick="this.classList.toggle('active');State.settings.darkMode=this.classList.contains('active');"></div>
+                <div class="toggle-switch ${document.documentElement.getAttribute('data-theme') !== 'light' ? 'active' : ''}" onclick="toggleTheme();this.classList.toggle('active');"></div>
             </div>
             <div class="toggle-row">
                 <div>
@@ -4712,32 +4754,168 @@ function renderSettings() {
 }
 
 /* ============================================================
-   GLOBAL SEARCH
+   THEME TOGGLE
+   ============================================================ */
+function toggleTheme() {
+    const html = document.documentElement;
+    const isLight = html.getAttribute('data-theme') === 'light';
+    const newTheme = isLight ? 'dark' : 'light';
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('sv_theme', newTheme);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.textContent = newTheme === 'light' ? '☀️' : '🌙';
+    State.settings.darkMode = newTheme === 'dark';
+}
+
+function restoreTheme() {
+    const saved = localStorage.getItem('sv_theme');
+    if (saved === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        const btn = document.getElementById('themeToggleBtn');
+        if (btn) btn.textContent = '☀️';
+        State.settings.darkMode = false;
+    }
+}
+
+/* ============================================================
+   FAVORITES / WATCHLIST
+   ============================================================ */
+function getFavorites() {
+    try { return JSON.parse(localStorage.getItem('sv_favorites') || '[]'); }
+    catch { return []; }
+}
+
+function saveFavorites(favs) {
+    localStorage.setItem('sv_favorites', JSON.stringify(favs));
+}
+
+function toggleFavorite(playerId) {
+    const favs = getFavorites();
+    const idx = favs.indexOf(playerId);
+    if (idx >= 0) {
+        favs.splice(idx, 1);
+        showToast('Removed from watchlist', 'info');
+    } else {
+        favs.push(playerId);
+        showToast('Added to watchlist', 'success');
+    }
+    saveFavorites(favs);
+    // Re-render if on watchlist view
+    if (State.currentView === 'watchlist') renderWatchlist();
+    // Update star icons in current view
+    document.querySelectorAll(`[data-fav-id="${playerId}"]`).forEach(el => {
+        el.textContent = idx >= 0 ? '☆' : '★';
+        el.style.color = idx >= 0 ? 'var(--text-muted)' : 'var(--amber)';
+    });
+}
+
+function isFavorite(playerId) {
+    return getFavorites().includes(playerId);
+}
+
+function favStarHtml(playerId) {
+    const fav = isFavorite(playerId);
+    return `<span data-fav-id="${playerId}" onclick="event.stopPropagation();toggleFavorite(${playerId})" style="cursor:pointer;font-size:1rem;color:${fav ? 'var(--amber)' : 'var(--text-muted)'};margin-right:4px;" title="${fav ? 'Remove from watchlist' : 'Add to watchlist'}">${fav ? '★' : '☆'}</span>`;
+}
+
+function renderWatchlist() {
+    const favs = getFavorites();
+    const container = document.getElementById('watchlistContainer');
+    if (!container) return;
+
+    if (favs.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">⭐</div><div class="title">No favorites yet</div><div class="subtitle">Click the ☆ star next to any player name to add them to your watchlist</div></div>`;
+        return;
+    }
+
+    const rows = [];
+    for (const id of favs) {
+        const { player, sport } = findPlayerById(id);
+        if (!player) continue;
+        const sportLabel = sport.toUpperCase();
+        const sportColor = `var(--${sport}-color)`;
+        let statLine = '';
+        if (sport === 'nba') statLine = `${player.ppg || 0} PPG / ${player.rpg || 0} RPG / ${player.apg || 0} APG`;
+        else if (sport === 'nfl') statLine = `${player.passYds || player.rushYds || player.rec || 0} yds`;
+        else if (sport === 'mlb') statLine = `${player.avg || '.000'} AVG / ${player.hr || 0} HR / ${player.rbi || 0} RBI`;
+        else statLine = `${player.ppg || 0} PPG`;
+
+        rows.push(`
+            <div class="card" style="padding:16px;cursor:pointer;display:flex;align-items:center;gap:16px;" onclick="showPlayerProfile(${player.id})">
+                ${playerAvatarHtml(player, 48)}
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        ${favStarHtml(player.id)}
+                        <span style="font-weight:700;font-size:1rem;">${player.name}</span>
+                        <span style="font-size:0.7rem;padding:2px 8px;border-radius:10px;background:${sportColor};color:#fff;font-weight:600;">${sportLabel}</span>
+                    </div>
+                    <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;">${player.team} — ${player.position}</div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">${statLine}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:1.1rem;font-weight:800;color:var(--accent);">${(player.fantasyPts || 0).toFixed(1)}</div>
+                    <div style="font-size:0.7rem;color:var(--text-muted);">FPTS</div>
+                </div>
+            </div>
+        `);
+    }
+
+    container.innerHTML = `<div class="card-grid card-grid-2">${rows.join('')}</div>`;
+}
+
+/* ============================================================
+   GLOBAL SEARCH (enhanced with dropdown)
    ============================================================ */
 function handleGlobalSearch(query) {
-    if (!query || query.length < 2) return;
-    const q = query.toLowerCase();
+    const dropdown = document.getElementById('searchDropdown');
+    if (!dropdown) return;
 
-    // Search all players across all sports
+    if (!query || query.length < 2) {
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    const q = query.toLowerCase();
     const results = [];
     Object.entries(PLAYERS).forEach(([sport, players]) => {
         players.forEach(p => {
-            if (p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q)) {
+            if (p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q) || (p.position && p.position.toLowerCase().includes(q))) {
                 results.push({ ...p, sport });
             }
         });
     });
 
-    if (results.length > 0) {
-        // Navigate to player view with the first match's sport
-        State.currentSport = results[0].sport;
-        document.querySelectorAll('.sport-pill').forEach(p => {
-            p.classList.toggle('active', p.dataset.sport === results[0].sport);
-        });
-        document.getElementById('playerSearch').value = query;
-        showView('players');
+    if (results.length === 0) {
+        dropdown.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:0.85rem;">No players found</div>`;
+        dropdown.style.display = 'block';
+        return;
     }
+
+    const items = results.slice(0, 12).map(p => {
+        const sportColor = `var(--${p.sport}-color)`;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;" onmouseenter="this.style.background='var(--bg-card-hover)'" onmouseleave="this.style.background=''" onclick="document.getElementById('searchDropdown').style.display='none';document.getElementById('globalSearch').value='';showPlayerProfile(${p.id})">
+            ${playerAvatarHtml(p, 30)}
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} — ${p.position}</div>
+            </div>
+            <span style="font-size:0.65rem;padding:2px 7px;border-radius:10px;background:${sportColor};color:#fff;font-weight:600;">${p.sport.toUpperCase()}</span>
+        </div>`;
+    }).join('');
+
+    const moreText = results.length > 12 ? `<div style="padding:8px;text-align:center;font-size:0.78rem;color:var(--text-muted);">+ ${results.length - 12} more results</div>` : '';
+    dropdown.innerHTML = items + moreText;
+    dropdown.style.display = 'block';
 }
+
+// Close search dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('searchDropdown');
+    const searchBox = document.getElementById('globalSearch');
+    if (dropdown && !dropdown.contains(e.target) && e.target !== searchBox) {
+        dropdown.style.display = 'none';
+    }
+});
 
 /* ============================================================
    PLAYER DEEP DIVE / PROFILE
@@ -5271,6 +5449,11 @@ async function loadFullRosters() {
     const total = Object.values(PLAYERS).reduce((s, arr) => s + arr.length, 0);
     showToast(`Loaded ${totalImported} new players (${total} total). Cached for 24 hours.`, 'success');
     if (statusEl) statusEl.textContent = `${total} players cached`;
+
+    // Auto-enrich stats from ESPN in background
+    for (const sport of sports) {
+        enrichESPNStats(sport, PLAYERS[sport] || []).catch(() => {});
+    }
 }
 
 async function enrichESPNStats(sport, players) {
@@ -6837,6 +7020,7 @@ async function renderNewsFeed() {
    INIT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+    restoreTheme();
     populateHeadshots();
     const restored = restoreCachedRosters();
     if (restored > 0) populateHeadshots();

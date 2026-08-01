@@ -1474,7 +1474,8 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                         <option value="2024-25">2024-25</option>
                         <option value="2023-24">2023-24</option>
                     </select>
-                    <button class="btn btn-primary btn-sm" onclick="importESPNPlayers(State.currentSport)" title="Fetch live rosters from ESPN">⚡ Import ESPN Rosters</button>
+                    <button class="btn btn-primary btn-sm" id="btnLoadRosters" onclick="loadFullRosters()" title="Fetch full rosters from ESPN (cached after first load)">⚡ Load Full Rosters</button>
+                    <span id="rosterStatus" style="font-size:0.72rem;color:var(--text-muted);align-self:center;"></span>
                     <span id="playerCount" style="font-size:0.78rem;color:var(--text-muted);align-self:center;margin-left:auto;"></span>
                 </div>
 
@@ -4490,28 +4491,77 @@ async function fetchESPNRoster(sport, teamId) {
     } catch(e) { return []; }
 }
 
-async function importESPNPlayers(sport) {
-    showToast(`Fetching ${sport.toUpperCase()} rosters from ESPN...`, 'info');
+const ROSTER_CACHE_KEY = 'statvault_rosters_v1';
+const ROSTER_CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+
+function restoreCachedRosters() {
+    try {
+        const raw = localStorage.getItem(ROSTER_CACHE_KEY);
+        if (!raw) return 0;
+        const cache = JSON.parse(raw);
+        if (Date.now() - cache.timestamp > ROSTER_CACHE_MAX_AGE) {
+            localStorage.removeItem(ROSTER_CACHE_KEY);
+            return 0;
+        }
+        let restored = 0;
+        for (const [sport, cachedPlayers] of Object.entries(cache.sports || {})) {
+            if (!PLAYERS[sport]) PLAYERS[sport] = [];
+            const existingNames = new Set(PLAYERS[sport].map(p => p.name.toLowerCase()));
+            for (const cp of cachedPlayers) {
+                if (existingNames.has(cp.name.toLowerCase())) {
+                    // Update headshot on existing player if missing
+                    const existing = PLAYERS[sport].find(p => p.name.toLowerCase() === cp.name.toLowerCase());
+                    if (existing && !existing.headshot && cp.headshot) existing.headshot = cp.headshot;
+                    continue;
+                }
+                existingNames.add(cp.name.toLowerCase());
+                PLAYERS[sport].push(cp);
+                restored++;
+            }
+        }
+        return restored;
+    } catch(e) { return 0; }
+}
+
+function saveRostersToCache() {
+    try {
+        const cache = { timestamp: Date.now(), sports: {} };
+        // Only cache ESPN-imported players (id >= 10000), not hardcoded ones
+        for (const [sport, players] of Object.entries(PLAYERS)) {
+            cache.sports[sport] = players.filter(p => p.id >= 10000);
+        }
+        localStorage.setItem(ROSTER_CACHE_KEY, JSON.stringify(cache));
+    } catch(e) { /* localStorage full or unavailable */ }
+}
+
+async function importESPNPlayers(sport, silent) {
+    if (!silent) showToast(`Fetching ${sport.toUpperCase()} rosters from ESPN...`, 'info');
+    const statusEl = document.getElementById('rosterStatus');
+    if (statusEl) statusEl.textContent = `Loading ${sport.toUpperCase()}...`;
+
     const teams = await fetchESPNTeams(sport);
-    if (!teams.length) { showToast('Could not reach ESPN API', 'error'); return; }
+    if (!teams.length) {
+        if (!silent) showToast('Could not reach ESPN API', 'error');
+        if (statusEl) statusEl.textContent = '';
+        return 0;
+    }
 
     let imported = 0;
     const existingPlayers = PLAYERS[sport] || [];
     const existingNames = new Set(existingPlayers.map(p => p.name.toLowerCase()));
     const newPlayers = [];
 
-    // Fetch rosters for all teams (batched)
     const batchSize = 5;
     for (let i = 0; i < teams.length; i += batchSize) {
         const batch = teams.slice(i, i + batchSize);
+        if (statusEl) statusEl.textContent = `${sport.toUpperCase()}: ${i}/${teams.length} teams...`;
         await Promise.all(batch.map(async t => {
             const athletes = await fetchESPNRoster(sport, t.id);
             athletes.forEach(a => {
                 const name = a.displayName || a.fullName;
                 if (!name) return;
-                const hsUrl = a.headshot?.href || a.headshot || (a.id ? `https://a.espncdn.com/combiner/i?img=/i/headshots/${sport === 'nba' ? 'nba' : sport === 'nfl' ? 'nfl' : 'mlb'}/players/full/${a.id}.png&w=350&h=254` : null);
+                const hsUrl = a.headshot?.href || a.headshot || (a.id ? `https://a.espncdn.com/combiner/i?img=/i/headshots/${sport}/players/full/${a.id}.png&w=350&h=254` : null);
 
-                // If player already exists in hardcoded data, just add headshot
                 if (existingNames.has(name.toLowerCase())) {
                     const existing = existingPlayers.find(p => p.name.toLowerCase() === name.toLowerCase());
                     if (existing && !existing.headshot && hsUrl) {
@@ -4542,11 +4592,35 @@ async function importESPNPlayers(sport) {
         }));
     }
 
-    showToast(`${sport.toUpperCase()}: Imported ${imported} new players + updated headshots. Enriching stats...`, 'info');
+    if (statusEl) statusEl.textContent = '';
+    return imported;
+}
+
+async function loadFullRosters() {
+    const btn = document.getElementById('btnLoadRosters');
+    const statusEl = document.getElementById('rosterStatus');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Loading...'; }
+
+    const sports = ['nba', 'nfl', 'mlb'];
+    let totalImported = 0;
+
+    for (const sport of sports) {
+        const count = await importESPNPlayers(sport, true);
+        totalImported += count;
+        if (statusEl) statusEl.textContent = `${sport.toUpperCase()} done (+${count})`;
+    }
+
+    // Cache everything for instant restore next time
+    saveRostersToCache();
+    populateHeadshots();
+
+    // Refresh current view
     initView(State.currentView);
 
-    // Enrich stats in background
-    enrichESPNStats(sport, newPlayers);
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ Load Full Rosters'; }
+    const total = Object.values(PLAYERS).reduce((s, arr) => s + arr.length, 0);
+    showToast(`Loaded ${totalImported} new players (${total} total). Cached for 24 hours.`, 'success');
+    if (statusEl) statusEl.textContent = `${total} players cached`;
 }
 
 async function enrichESPNStats(sport, players) {
@@ -5760,24 +5834,16 @@ async function renderNewsFeed() {
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
     populateHeadshots();
+    const restored = restoreCachedRosters();
+    if (restored > 0) populateHeadshots(); // headshots for restored players too
     renderDashboard();
     refreshScoreTicker();
+    const total = Object.values(PLAYERS).reduce((s, arr) => s + arr.length, 0);
+    if (restored > 0) {
+        showToast(`Restored ${restored} cached players (${total} total)`, 'info');
+    }
 });
 
-async function autoImportAllRosters() {
-    const sports = ['nba', 'nfl', 'mlb'];
-    // Import current sport first for fastest UX
-    const current = State.currentSport;
-    if (sports.includes(current)) {
-        await importESPNPlayers(current);
-    }
-    // Then import remaining sports in background
-    for (const sport of sports) {
-        if (sport !== current) {
-            importESPNPlayers(sport);
-        }
-    }
-}
 
 /* ============================================================
    SERVICE WORKER REGISTRATION

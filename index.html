@@ -8,49 +8,49 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0e1a">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
 /* ============================================================
    CSS VARIABLES & RESET
    ============================================================ */
 :root {
-    --bg-primary: #0a0e1a;
-    --bg-secondary: #111827;
-    --bg-card: #1a2235;
-    --bg-card-hover: #1e2a42;
-    --bg-input: #0f1729;
-    --border: #1e293b;
-    --border-hover: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+    --bg-primary: #f8f9fa;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f8f8f8;
+    --bg-input: #f5f5f5;
+    --border: #e5e7eb;
+    --border-hover: #d1d5db;
+    --text-primary: #1a1a2e;
+    --text-secondary: rgba(0,0,0,0.7);
+    --text-muted: rgba(0,0,0,0.45);
 
     /* Sport accent colors */
-    --nba-color: #ff6b2b;
-    --nba-glow: rgba(255, 107, 43, 0.15);
-    --nfl-color: #3b82f6;
-    --nfl-glow: rgba(59, 130, 246, 0.15);
-    --mlb-color: #ef4444;
-    --mlb-glow: rgba(239, 68, 68, 0.15);
-    --ncaa-color: #f59e0b;
-    --ncaa-glow: rgba(245, 158, 11, 0.15);
+    --nba-color: #ff7e00;
+    --nba-glow: rgba(255, 126, 0, 0.1);
+    --nfl-color: #1a73e8;
+    --nfl-glow: rgba(26, 115, 232, 0.1);
+    --mlb-color: #c62828;
+    --mlb-glow: rgba(198, 40, 40, 0.1);
+    --ncaa-color: #2e7d32;
+    --ncaa-glow: rgba(46, 125, 50, 0.1);
 
-    --accent: #6366f1;
-    --accent-glow: rgba(99, 102, 241, 0.2);
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
+    --accent: #ff7e00;
+    --accent-glow: rgba(255, 126, 0, 0.08);
+    --success: #2e7d32;
+    --warning: #e65100;
+    --danger: #c62828;
 
     --radius-sm: 6px;
     --radius: 10px;
     --radius-lg: 16px;
     --radius-xl: 24px;
 
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-    --shadow: 0 4px 12px rgba(0,0,0,0.4);
-    --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
 
-    --font-sans: 'Inter', -apple-system, sans-serif;
+    --font-sans: 'Open Sans', -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
     --sidebar-width: 260px;
@@ -77,8 +77,8 @@ input, select, textarea { font-family: inherit; color: inherit; }
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar-thumb { background: #c4c4c4; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #999; }
 
 /* ============================================================
    LAYOUT
@@ -119,7 +119,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     width: 36px;
     height: 36px;
     border-radius: var(--radius);
-    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    background: linear-gradient(135deg, #ff7e00, #ff9a33);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -220,7 +220,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
 }
 
 .sidebar-item:hover {
-    background: rgba(255,255,255,0.03);
+    background: rgba(0,0,0,0.06);
     color: var(--text-primary);
 }
 
@@ -366,11 +366,11 @@ input, select, textarea { font-family: inherit; color: inherit; }
 .data-table thead th:hover { color: var(--text-secondary); }
 
 .data-table tbody tr {
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
     transition: background 0.15s;
 }
 
-.data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.data-table tbody tr:hover { background: rgba(0,0,0,0.03); }
 
 .data-table td {
     padding: 10px 12px;
@@ -394,7 +394,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
    ============================================================ */
 .btn {
     padding: 8px 18px;
-    border-radius: var(--radius);
+    border-radius: 9999px;
     font-size: 0.85rem;
     font-weight: 600;
     transition: all 0.2s;
@@ -556,7 +556,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     border: 1px solid transparent;
 }
 
-.draft-player-card:hover { background: rgba(255,255,255,0.03); }
+.draft-player-card:hover { background: rgba(0,0,0,0.06); }
 .draft-player-card.selected { background: var(--accent-glow); border-color: var(--accent); }
 .draft-player-card.drafted { opacity: 0.35; pointer-events: none; }
 
@@ -832,7 +832,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     width: 100px;
     height: 100px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    background: linear-gradient(135deg, var(--accent), #ff9a33);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -907,7 +907,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     align-items: center;
     justify-content: space-between;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
 .toggle-row:last-child { border-bottom: none; }
@@ -1079,7 +1079,7 @@ input, select, textarea { font-family: inherit; color: inherit; }
     font-size: 0.68rem;
     padding: 2px 8px;
     border-radius: 4px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(0,0,0,0.04);
     color: var(--text-muted);
     font-weight: 600;
 }
@@ -1759,7 +1759,7 @@ function renderDashboard() {
     // Trending players
     const trending = [...players].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 5);
     document.getElementById('trendingPlayers').innerHTML = trending.map((p, i) => `
-        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < 4 ? 'border-bottom:1px solid rgba(255,255,255,0.03);' : ''}">
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < 4 ? 'border-bottom:1px solid rgba(0,0,0,0.06);' : ''}">
             <span style="font-family:var(--font-mono);font-weight:700;color:var(--text-muted);width:24px;">${i + 1}</span>
             <div style="flex:1;">
                 <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
@@ -1774,7 +1774,7 @@ function renderDashboard() {
     // Fantasy risers
     const risers = players.filter(p => p.trend === 'up').slice(0, 5);
     document.getElementById('fantasyRisers').innerHTML = risers.length ? risers.map((p, i) => `
-        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < risers.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.03);' : ''}">
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < risers.length - 1 ? 'border-bottom:1px solid rgba(0,0,0,0.06);' : ''}">
             <span style="color:var(--success);font-size:1.1rem;">▲</span>
             <div style="flex:1;">
                 <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
@@ -1977,7 +1977,7 @@ function renderLeaderboards() {
             <div class="card">
                 <div class="card-title" style="margin-bottom:12px;">${config.statCols[i]} Leaders</div>
                 ${sorted.map((p, j) => `
-                    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;${j < sorted.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.03);' : ''}">
+                    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;${j < sorted.length - 1 ? 'border-bottom:1px solid rgba(0,0,0,0.06);' : ''}">
                         <span style="font-family:var(--font-mono);font-weight:700;color:${j === 0 ? 'var(--warning)' : 'var(--text-muted)'};width:20px;">${j + 1}</span>
                         <div style="flex:1;font-weight:600;font-size:0.85rem;">${p.name}</div>
                         <div style="font-family:var(--font-mono);font-weight:700;">${p[key]}</div>
@@ -2049,7 +2049,7 @@ function renderModels() {
     const filtered = MODELS.filter(m => m.sport === 'all' || m.sport === sport);
 
     document.getElementById('modelCards').innerHTML = filtered.map(m => `
-        <div class="model-card">
+        <div class="model-card" style="cursor:pointer;" onclick="openModelTool('${m.name}')">
             <div class="model-name">${m.name}</div>
             <div class="model-desc">${m.desc}</div>
             <div class="model-tags">
@@ -2057,6 +2057,214 @@ function renderModels() {
             </div>
         </div>
     `).join('');
+
+    // Clear any previous tool panel
+    const existing = document.getElementById('modelToolPanel');
+    if (existing) existing.remove();
+}
+
+function openModelTool(modelName) {
+    // Remove previous panel if any
+    const existing = document.getElementById('modelToolPanel');
+    if (existing) existing.remove();
+
+    let toolHtml = '';
+    if (modelName === 'Elo Rating System') {
+        toolHtml = renderEloCalculator();
+    } else if (modelName === 'Fantasy Points Optimizer') {
+        toolHtml = renderFantasyOptimizer();
+    } else if (modelName === 'Spread Predictor' || modelName === 'Win Probability Model') {
+        toolHtml = renderPoissonPredictor();
+    } else {
+        toolHtml = `<div class="card" style="margin-top:20px;text-align:center;padding:40px;" id="modelToolPanel">
+            <div style="font-size:2rem;margin-bottom:12px;">🔧</div>
+            <div class="card-title" style="margin-bottom:8px;">${modelName}</div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">Interactive tool coming soon. Check back for updates.</p>
+        </div>`;
+        const container = document.getElementById('modelCards');
+        container.insertAdjacentHTML('afterend', toolHtml);
+        return;
+    }
+
+    const container = document.getElementById('modelCards');
+    const wrapper = document.createElement('div');
+    wrapper.id = 'modelToolPanel';
+    wrapper.innerHTML = toolHtml;
+    container.parentNode.insertBefore(wrapper, container.nextSibling);
+
+    // Trigger initial calculation
+    if (modelName === 'Elo Rating System') calculateElo();
+    if (modelName === 'Spread Predictor' || modelName === 'Win Probability Model') calculatePoisson();
+}
+
+function renderEloCalculator() {
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Elo Rating Calculator</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div class="form-group">
+                    <label class="form-label">Team A Rating</label>
+                    <input type="number" class="form-input" id="eloRatingA" value="1500" oninput="calculateElo()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Team B Rating</label>
+                    <input type="number" class="form-input" id="eloRatingB" value="1500" oninput="calculateElo()">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">K-Factor</label>
+                <select class="form-select" id="eloK" onchange="calculateElo()">
+                    <option value="20">20 (Standard)</option>
+                    <option value="32" selected>32 (Default)</option>
+                    <option value="40">40 (More volatile)</option>
+                </select>
+            </div>
+            <div id="eloResult" style="margin-top:16px;"></div>
+        </div>
+    `;
+}
+
+function calculateElo() {
+    const rA = parseFloat(document.getElementById('eloRatingA').value) || 1500;
+    const rB = parseFloat(document.getElementById('eloRatingB').value) || 1500;
+    const K = parseFloat(document.getElementById('eloK').value) || 32;
+
+    const eA = 1 / (1 + Math.pow(10, (rB - rA) / 400));
+    const eB = 1 - eA;
+
+    const newA_win = Math.round(rA + K * (1 - eA));
+    const newA_loss = Math.round(rA + K * (0 - eA));
+    const newB_win = Math.round(rB + K * (1 - eB));
+    const newB_loss = Math.round(rB + K * (0 - eB));
+
+    document.getElementById('eloResult').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div style="padding:20px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Team A Win Probability</div>
+                <div style="font-family:var(--font-mono);font-size:2rem;font-weight:900;color:var(--accent);">${(eA * 100).toFixed(1)}%</div>
+            </div>
+            <div style="padding:20px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Team B Win Probability</div>
+                <div style="font-family:var(--font-mono);font-size:2rem;font-weight:900;color:var(--nfl-color);">${(eB * 100).toFixed(1)}%</div>
+            </div>
+        </div>
+        <div style="margin-top:16px;">
+            <table class="data-table">
+                <thead><tr><th>Outcome</th><th>Team A New Rating</th><th>Team B New Rating</th><th>Change</th></tr></thead>
+                <tbody>
+                    <tr><td style="font-weight:600;">Team A Wins</td><td style="color:var(--success);font-weight:700;">${newA_win}</td><td style="color:var(--danger);">${newB_loss}</td><td>A: +${newA_win - rA}, B: ${newB_loss - rB}</td></tr>
+                    <tr><td style="font-weight:600;">Team B Wins</td><td style="color:var(--danger);">${newA_loss}</td><td style="color:var(--success);font-weight:700;">${newB_win}</td><td>A: ${newA_loss - rA}, B: +${newB_win - rB}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderPoissonPredictor() {
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Poisson Match Predictor</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Enter average points/goals scored and allowed to predict match outcome probabilities.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">Team A Avg Scored</label>
+                        <input type="number" class="form-input" id="poissonA_scored" value="105" step="0.1" oninput="calculatePoisson()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Team A Avg Allowed</label>
+                        <input type="number" class="form-input" id="poissonA_allowed" value="102" step="0.1" oninput="calculatePoisson()">
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">Team B Avg Scored</label>
+                        <input type="number" class="form-input" id="poissonB_scored" value="100" step="0.1" oninput="calculatePoisson()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Team B Avg Allowed</label>
+                        <input type="number" class="form-input" id="poissonB_allowed" value="98" step="0.1" oninput="calculatePoisson()">
+                    </div>
+                </div>
+            </div>
+            <div id="poissonResult" style="margin-top:16px;"></div>
+        </div>
+    `;
+}
+
+function calculatePoisson() {
+    const aScored = parseFloat(document.getElementById('poissonA_scored').value) || 100;
+    const aAllowed = parseFloat(document.getElementById('poissonA_allowed').value) || 100;
+    const bScored = parseFloat(document.getElementById('poissonB_scored').value) || 100;
+    const bAllowed = parseFloat(document.getElementById('poissonB_allowed').value) || 100;
+
+    const expA = (aScored + bAllowed) / 2;
+    const expB = (bScored + aAllowed) / 2;
+    const diff = expA - expB;
+    const spread = diff.toFixed(1);
+    const total = (expA + expB).toFixed(1);
+
+    const sigma = Math.sqrt(expA + expB) * 0.4;
+    const z = diff / sigma;
+    const winProbA = (0.5 * (1 + erf(z / Math.sqrt(2)))) * 100;
+    const winProbB = 100 - winProbA;
+
+    document.getElementById('poissonResult').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;color:var(--accent);">${expA.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Proj A Score</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;color:var(--nfl-color);">${expB.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Proj B Score</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;">${diff > 0 ? 'A' : 'B'} ${Math.abs(spread)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Spread</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;">${total}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Over/Under</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+            <div style="padding:20px;background:var(--accent-glow);border:1px solid var(--accent);border-radius:var(--radius);text-align:center;">
+                <div style="font-size:2rem;font-weight:900;color:var(--accent);">${winProbA.toFixed(1)}%</div>
+                <div style="font-size:0.85rem;font-weight:600;">Team A Win Probability</div>
+            </div>
+            <div style="padding:20px;background:var(--nfl-glow);border:1px solid var(--nfl-color);border-radius:var(--radius);text-align:center;">
+                <div style="font-size:2rem;font-weight:900;color:var(--nfl-color);">${winProbB.toFixed(1)}%</div>
+                <div style="font-size:0.85rem;font-weight:600;">Team B Win Probability</div>
+            </div>
+        </div>
+    `;
+}
+
+function erf(x) {
+    const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429, p=0.3275911;
+    const sign = x < 0 ? -1 : 1;
+    x = Math.abs(x);
+    const t = 1 / (1 + p * x);
+    const y = 1 - (((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+    return sign * y;
+}
+
+function renderFantasyOptimizer() {
+    const sport = State.currentSport;
+    const config = SPORT_CONFIG[sport];
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Fantasy Points Optimizer (Knapsack)</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Greedy knapsack lineup optimizer for ${config.label}. Picks the best available player for each position slot.</p>
+            <div class="form-group">
+                <label class="form-label">Salary Cap (optional)</label>
+                <input type="number" class="form-input" id="optimizerSalaryCap" value="50000" placeholder="e.g. 50000">
+            </div>
+            <button class="btn btn-primary" onclick="runFantasyOptimizer()">Optimize Lineup</button>
+            <div id="optimizerResult" style="margin-top:16px;"></div>
+        </div>
+    `;
 }
 
 /* ============================================================
@@ -2067,7 +2275,7 @@ function renderResearch() {
         <div class="card" style="cursor:pointer;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                 <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--accent);">${r.field}</span>
-                <span class="badge" style="background:rgba(255,255,255,0.05);color:var(--text-muted);">${r.sport}</span>
+                <span class="badge" style="background:rgba(0,0,0,0.04);color:var(--text-muted);">${r.sport}</span>
             </div>
             <div class="card-title" style="margin-bottom:6px;font-size:1rem;">${r.title}</div>
             <p style="font-size:0.82rem;color:var(--text-secondary);line-height:1.5;margin-bottom:10px;">${r.desc}</p>
@@ -2093,7 +2301,7 @@ function renderTrends() {
             <div class="card">
                 <div class="card-title" style="margin-bottom:12px;">📈 Rising Players</div>
                 ${risers.map(p => `
-                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
                         <span style="color:var(--success);font-size:1.1rem;">▲</span>
                         <div style="flex:1;">
                             <div style="font-weight:600;">${p.name}</div>
@@ -2106,7 +2314,7 @@ function renderTrends() {
             <div class="card">
                 <div class="card-title" style="margin-bottom:12px;">📉 Falling Players</div>
                 ${fallers.length ? fallers.map(p => `
-                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
                         <span style="color:var(--danger);font-size:1.1rem;">▼</span>
                         <div style="flex:1;">
                             <div style="font-weight:600;">${p.name}</div>
@@ -2164,9 +2372,24 @@ function renderFantasyHub() {
 }
 
 function connectPlatform(platform) {
-    State.fantasyPlatform = platform;
-    showToast(`Connected to ${platform === 'yahoo' ? 'Yahoo' : 'ESPN'} Fantasy!`, 'success');
-    renderFantasyHub();
+    const sport = State.currentSport;
+    const urls = {
+        yahoo: {
+            nba: 'https://basketball.fantasysports.yahoo.com/',
+            nfl: 'https://football.fantasysports.yahoo.com/',
+            mlb: 'https://baseball.fantasysports.yahoo.com/',
+            ncaa: 'https://football.fantasysports.yahoo.com/'
+        },
+        espn: {
+            nba: 'https://fantasy.espn.com/basketball/',
+            nfl: 'https://fantasy.espn.com/football/',
+            mlb: 'https://fantasy.espn.com/baseball/',
+            ncaa: 'https://fantasy.espn.com/football/'
+        }
+    };
+    const url = urls[platform]?.[sport] || urls[platform]?.nfl;
+    window.open(url, '_blank');
+    showToast(`Opening ${platform === 'yahoo' ? 'Yahoo' : 'ESPN'} Fantasy...`, 'info');
 }
 
 /* ============================================================
@@ -2517,9 +2740,42 @@ function startMockDraft() {
 /* ============================================================
    LIVE SCORES (simulated)
    ============================================================ */
-function renderLiveScores() {
+async function fetchESPNScoreboard(sport) {
+    const sportMap = { nba: {sport:'basketball',league:'nba'}, nfl: {sport:'football',league:'nfl'}, mlb: {sport:'baseball',league:'mlb'}, ncaa: {sport:'football',league:'college-football'} };
+    const m = sportMap[sport];
+    if (!m) return [];
+    try {
+        const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=scoreboard`);
+        const data = await res.json();
+        return (data.events || []).map(e => {
+            const comp = e.competitions?.[0];
+            const home = comp?.competitors?.find(c => c.homeAway === 'home');
+            const away = comp?.competitors?.find(c => c.homeAway === 'away');
+            const status = comp?.status;
+            return {
+                home: home?.team?.abbreviation || '???',
+                away: away?.team?.abbreviation || '???',
+                homeScore: parseInt(home?.score || 0),
+                awayScore: parseInt(away?.score || 0),
+                quarter: status?.type?.shortDetail || '',
+                time: '',
+                status: status?.type?.completed ? 'final' : status?.type?.state === 'in' ? 'live' : 'scheduled',
+                homeLogo: home?.team?.logo || '',
+                awayLogo: away?.team?.logo || '',
+            };
+        });
+    } catch(e) { return []; }
+}
+
+async function renderLiveScores() {
     const sport = State.currentSport;
-    const games = {
+    const container = document.getElementById('liveScoresContainer');
+
+    // Show loading state
+    container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Loading Scores...</div><div class="subtitle">Fetching live data from ESPN</div></div>';
+
+    // Fallback hardcoded data
+    const fallbackGames = {
         nba: [
             { home: 'BOS', away: 'MIL', homeScore: 108, awayScore: 103, quarter: 'Q4', time: '2:34', status: 'live' },
             { home: 'LAL', away: 'GSW', homeScore: 95, awayScore: 91, quarter: 'Q3', time: '8:12', status: 'live' },
@@ -2540,22 +2796,28 @@ function renderLiveScores() {
         ],
     };
 
-    const sportGames = games[sport] || [];
+    // Try ESPN API first, fall back to hardcoded
+    let sportGames = await fetchESPNScoreboard(sport);
+    if (!sportGames.length) {
+        sportGames = fallbackGames[sport] || [];
+    }
 
-    document.getElementById('liveScoresContainer').innerHTML = sportGames.length ? sportGames.map(g => `
+    container.innerHTML = sportGames.length ? sportGames.map(g => `
         <div class="card" style="position:relative;overflow:hidden;">
             ${g.status === 'live' ? '<div style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--danger);animation:pulse 1.5s infinite;"></div><span style="font-size:0.72rem;font-weight:700;color:var(--danger);text-transform:uppercase;">Live</span></div>' : ''}
             <div style="text-align:center;padding:8px 0;">
                 <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;">
-                    ${g.status === 'live' ? g.quarter + ' · ' + g.time : g.status === 'final' ? 'Final' : g.time}
+                    ${g.status === 'live' ? g.quarter + (g.time ? ' · ' + g.time : '') : g.status === 'final' ? (g.quarter || 'Final') : (g.quarter || g.time)}
                 </div>
                 <div style="display:flex;align-items:center;justify-content:center;gap:24px;">
                     <div style="text-align:center;">
+                        ${g.awayLogo ? `<img src="${g.awayLogo}" alt="${g.away}" style="width:32px;height:32px;margin-bottom:4px;">` : ''}
                         <div style="font-weight:800;font-size:1.1rem;margin-bottom:2px;">${g.away}</div>
                         <div style="font-family:var(--font-mono);font-weight:900;font-size:2rem;">${g.awayScore}</div>
                     </div>
                     <div style="color:var(--text-muted);font-weight:700;">@</div>
                     <div style="text-align:center;">
+                        ${g.homeLogo ? `<img src="${g.homeLogo}" alt="${g.home}" style="width:32px;height:32px;margin-bottom:4px;">` : ''}
                         <div style="font-weight:800;font-size:1.1rem;margin-bottom:2px;">${g.home}</div>
                         <div style="font-family:var(--font-mono);font-weight:900;font-size:2rem;">${g.homeScore}</div>
                     </div>
@@ -2568,24 +2830,42 @@ function renderLiveScores() {
 /* ============================================================
    ROSTER OPTIMIZER
    ============================================================ */
+function optimizeLineup(players, positions, salaryCap) {
+    const used = new Set();
+    const lineup = [];
+
+    for (const pos of positions) {
+        const eligible = players.filter(p => {
+            if (used.has(p.id)) return false;
+            if (pos === 'UTIL' || pos === 'FLEX') return true;
+            if (pos === 'G') return ['PG','SG'].includes(p.pos);
+            if (pos === 'F') return ['SF','PF'].includes(p.pos);
+            if (pos === 'OF') return ['RF','CF','LF'].includes(p.pos);
+            return p.pos === pos;
+        }).sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0));
+
+        const pick = eligible[0];
+        if (pick) {
+            used.add(pick.id);
+            lineup.push({ slot: pos, player: pick });
+        } else {
+            lineup.push({ slot: pos, player: null });
+        }
+    }
+    return lineup;
+}
+
 function renderRosterOptimizer() {
     const sport = State.currentSport;
     const config = SPORT_CONFIG[sport];
     const players = [...(PLAYERS[sport] || [])].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0));
 
-    const optimalLineup = config.fantasyPositions.map(pos => {
-        const eligible = players.filter(p => p.pos === pos || pos === 'UTIL' || pos === 'FLEX' || pos === 'G' && ['PG','SG'].includes(p.pos) || pos === 'F' && ['SF','PF'].includes(p.pos));
-        const best = eligible.find(p => !config.fantasyPositions.slice(0, config.fantasyPositions.indexOf(pos)).some((_, i) => {
-            // simplified — just use top available
-            return false;
-        }));
-        return { slot: pos, player: best || eligible[0] };
-    });
+    const optimalLineup = optimizeLineup(players, config.fantasyPositions);
 
     document.getElementById('rosterContainer').innerHTML = `
         <div class="card">
             <div class="card-header">
-                <div class="card-title">⚡ Optimal Lineup</div>
+                <div class="card-title">Optimal Lineup</div>
                 <span class="badge badge-${sport}">${config.label}</span>
             </div>
             <table class="data-table">
@@ -2606,6 +2886,36 @@ function renderRosterOptimizer() {
                     ${optimalLineup.reduce((s, l) => s + (l.player?.fantasyPts || 0), 0).toFixed(1)} FPTS
                 </span>
             </div>
+        </div>
+    `;
+}
+
+function runFantasyOptimizer() {
+    const sport = State.currentSport;
+    const config = SPORT_CONFIG[sport];
+    const players = [...(PLAYERS[sport] || [])].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0));
+    const salaryCap = parseFloat(document.getElementById('optimizerSalaryCap').value) || Infinity;
+
+    const lineup = optimizeLineup(players, config.fantasyPositions, salaryCap);
+
+    document.getElementById('optimizerResult').innerHTML = `
+        <table class="data-table">
+            <thead><tr><th>Slot</th><th>Player</th><th>Team</th><th>Pos</th><th>Proj FPTS</th></tr></thead>
+            <tbody>${lineup.map(l => `
+                <tr>
+                    <td><span class="position-tag">${l.slot}</span></td>
+                    <td style="font-weight:600;">${l.player?.name || '—'}</td>
+                    <td>${l.player?.team || '—'}</td>
+                    <td>${l.player?.pos || '—'}</td>
+                    <td style="font-weight:700;color:var(--success);">${l.player?.fantasyPts?.toFixed(1) || '—'}</td>
+                </tr>
+            `).join('')}</tbody>
+        </table>
+        <div style="margin-top:12px;padding:12px;background:var(--accent-glow);border:1px solid var(--accent);border-radius:var(--radius);display:flex;justify-content:space-between;">
+            <strong>Total Projected:</strong>
+            <span style="font-family:var(--font-mono);font-weight:700;color:var(--accent);">
+                ${lineup.reduce((s, l) => s + (l.player?.fantasyPts || 0), 0).toFixed(1)} FPTS
+            </span>
         </div>
     `;
 }
@@ -3073,7 +3383,7 @@ function renderPlayerProfile() {
     document.getElementById('profileDisplay').innerHTML = `
         <!-- HERO -->
         <div class="player-hero">
-            <div class="player-avatar" style="background:linear-gradient(135deg, ${config.color}, #8b5cf6);">${p.name.split(' ').map(n=>n[0]).join('')}</div>
+            <div class="player-avatar" style="background:linear-gradient(135deg, ${config.color}, #ff9a33);">${p.name.split(' ').map(n=>n[0]).join('')}</div>
             <div class="player-headline" style="flex:1;">
                 <h1>${p.name}</h1>
                 <div class="team-pos">${p.team} · <span class="position-tag">${p.pos}</span> · <span class="badge badge-${sport}">${config.label}</span>
@@ -3095,7 +3405,7 @@ function renderPlayerProfile() {
             <div class="card">
                 <div class="card-title" style="margin-bottom:12px;">Player Info</div>
                 ${bioItems.map(([l, v]) => `
-                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
                         <span style="color:var(--text-muted);font-size:0.85rem;">${l}</span>
                         <span style="font-weight:600;font-size:0.85rem;">${v}</span>
                     </div>

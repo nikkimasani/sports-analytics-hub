@@ -1409,6 +1409,42 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                     <span class="icon">⚙️</span> Settings
                 </div>
             </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Advanced</div>
+                <div class="sidebar-item" onclick="showView('head-to-head')" data-view="head-to-head">
+                    <span class="icon">&#x2694;&#xFE0F;</span> Head-to-Head
+                </div>
+                <div class="sidebar-item" onclick="showView('season-sim')" data-view="season-sim">
+                    <span class="icon">&#x1F3B2;</span> Season Simulator
+                </div>
+                <div class="sidebar-item" onclick="showView('injury-dash')" data-view="injury-dash">
+                    <span class="icon">&#x1FA79;</span> Injury Dashboard
+                </div>
+                <div class="sidebar-item" onclick="showView('career-arc')" data-view="career-arc">
+                    <span class="icon">&#x1F4C8;</span> Career Arcs
+                </div>
+                <div class="sidebar-item" onclick="showView('fantasy-scoring')" data-view="fantasy-scoring">
+                    <span class="icon">&#x1F3AF;</span> Fantasy Scoring
+                </div>
+                <div class="sidebar-item" onclick="showView('win-probability')" data-view="win-probability">
+                    <span class="icon">&#x1F4CA;</span> Win Probability
+                </div>
+                <div class="sidebar-item" onclick="showView('draft-trade')" data-view="draft-trade">
+                    <span class="icon">&#x1F4B1;</span> Draft Trade Chart
+                </div>
+                <div class="sidebar-item" onclick="showView('ai-scout')" data-view="ai-scout">
+                    <span class="icon">&#x1F916;</span> AI Scout
+                </div>
+                <div class="sidebar-item" onclick="showView('prop-analyzer')" data-view="prop-analyzer">
+                    <span class="icon">&#x1F4B0;</span> Prop Analyzer
+                </div>
+                <div class="sidebar-item" onclick="showView('power-rankings')" data-view="power-rankings">
+                    <span class="icon">&#x1F3C6;</span> Power Rankings
+                </div>
+            </div>
         </nav>
         <div class="sidebar-overlay" onclick="document.getElementById('sidebar').classList.remove('open','mobile-open');"></div>
 
@@ -1898,10 +1934,10 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                             <label class="form-label">Top N Players</label>
                             <select class="form-select" id="labTopN">
                                 <option value="10">Top 10</option>
-                                <option value="20" selected>Top 20</option>
+                                <option value="20">Top 20</option>
                                 <option value="30">Top 30</option>
                                 <option value="50">Top 50</option>
-                                <option value="0">All Players</option>
+                                <option value="0" selected>All Players</option>
                             </select>
                         </div>
                     </div>
@@ -1950,6 +1986,200 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                     </div>
                     <div id="profileDisplay"></div>
                 </div>
+            </div>
+
+            <!-- ============ HEAD-TO-HEAD COMPARISON ============ -->
+            <div class="view" id="view-head-to-head">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Head-to-Head Comparison</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Compare two players side-by-side with radar charts and stat breakdowns</p>
+                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Sport</label>
+                        <select class="form-select" id="h2hSport" onchange="updateH2HPlayers()">
+                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option><option value="ncaa">NCAA</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Player A</label>
+                        <select class="form-select" id="h2hPlayerA" style="width:220px;"></select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Player B</label>
+                        <select class="form-select" id="h2hPlayerB" style="width:220px;"></select>
+                    </div>
+                    <button class="btn btn-primary" onclick="renderH2H()">Compare</button>
+                </div>
+                <div id="h2hDisplay"></div>
+            </div>
+
+            <!-- ============ SEASON SIMULATOR ============ -->
+            <div class="view" id="view-season-sim">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Season Simulator</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Monte Carlo simulation of remaining season — playoff odds, win totals, seeding</p>
+                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Sport</label>
+                        <select class="form-select" id="simSport" onchange="renderSeasonSim()">
+                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Simulations</label>
+                        <select class="form-select" id="simCount">
+                            <option value="1000">1,000</option><option value="5000" selected>5,000</option><option value="10000">10,000</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="runSeasonSim()">Run Simulation</button>
+                </div>
+                <div id="simDisplay"></div>
+            </div>
+
+            <!-- ============ INJURY DASHBOARD ============ -->
+            <div class="view" id="view-injury-dash">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Injury Impact Dashboard</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Track injuries across leagues and analyze fantasy/team impact</p>
+                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Sport</label>
+                        <select class="form-select" id="injurySport" onchange="renderInjuryDash()">
+                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Filter</label>
+                        <select class="form-select" id="injuryFilter">
+                            <option value="all">All Injuries</option><option value="out">Out / Suspended</option><option value="questionable">Questionable</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="renderInjuryDash()">Refresh</button>
+                </div>
+                <div id="injuryDisplay"></div>
+            </div>
+
+            <!-- ============ CAREER ARCS ============ -->
+            <div class="view" id="view-career-arc">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Career Arc Visualization</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Visualize player career trajectories, peaks, and projected decline</p>
+                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Sport</label>
+                        <select class="form-select" id="careerSport" onchange="updateCareerPlayers()">
+                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Player</label>
+                        <select class="form-select" id="careerPlayer" style="width:260px;"></select>
+                    </div>
+                    <button class="btn btn-primary" onclick="renderCareerArc()">Visualize</button>
+                </div>
+                <div id="careerDisplay"></div>
+            </div>
+
+            <!-- ============ CUSTOM FANTASY SCORING ============ -->
+            <div class="view" id="view-fantasy-scoring">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Custom Fantasy Scoring Builder</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Create custom scoring rules and re-rank players instantly</p>
+                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Sport</label>
+                        <select class="form-select" id="fscSport" onchange="initFantasyScoring()">
+                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Preset</label>
+                        <select class="form-select" id="fscPreset" onchange="loadScoringPreset()">
+                            <option value="standard">Standard</option><option value="ppr">PPR (NFL)</option><option value="half-ppr">Half-PPR (NFL)</option><option value="points">Points League (NBA)</option><option value="categories">Categories (NBA)</option><option value="custom">Custom</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="fscWeights" style="margin-bottom:24px;"></div>
+                <button class="btn btn-primary" onclick="calcFantasyScoring()" style="margin-bottom:24px;">Calculate Rankings</button>
+                <div id="fscDisplay"></div>
+            </div>
+
+            <!-- ============ WIN PROBABILITY ============ -->
+            <div class="view" id="view-win-probability">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Live Win Probability</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Simulate game scenarios and visualize win probability over time</p>
+                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Sport</label>
+                        <select class="form-select" id="wpSport" onchange="initWinProb()">
+                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Home Team</label>
+                        <select class="form-select" id="wpHome" style="width:180px;"></select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Away Team</label>
+                        <select class="form-select" id="wpAway" style="width:180px;"></select>
+                    </div>
+                    <button class="btn btn-primary" onclick="renderWinProb()">Simulate</button>
+                </div>
+                <div id="wpDisplay"></div>
+            </div>
+
+            <!-- ============ DRAFT TRADE CHART ============ -->
+            <div class="view" id="view-draft-trade">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Draft Pick Trade Chart</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">NFL draft pick value chart — evaluate trade fairness</p>
+                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Team A Picks (comma-sep)</label>
+                        <input type="text" class="form-input" id="dtPicksA" placeholder="e.g. 1, 33, 65" style="width:220px;">
+                    </div>
+                    <div class="form-group"><label class="form-label">Team B Picks (comma-sep)</label>
+                        <input type="text" class="form-input" id="dtPicksB" placeholder="e.g. 12, 15" style="width:220px;">
+                    </div>
+                    <button class="btn btn-primary" onclick="renderDraftTrade()">Evaluate Trade</button>
+                </div>
+                <div id="dtDisplay"></div>
+            </div>
+
+            <!-- ============ AI SCOUT ============ -->
+            <div class="view" id="view-ai-scout">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">AI Scouting Reports</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">AI-generated comprehensive scouting reports using player data</p>
+                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Sport</label>
+                        <select class="form-select" id="scoutSport" onchange="updateScoutPlayers()">
+                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option><option value="ncaa">NCAA</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Player</label>
+                        <select class="form-select" id="scoutPlayer" style="width:260px;"></select>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateScoutReport()">Generate Report</button>
+                </div>
+                <div id="scoutDisplay"></div>
+            </div>
+
+            <!-- ============ PROP ANALYZER ============ -->
+            <div class="view" id="view-prop-analyzer">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Prop Bet Analyzer</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Analyze player props against historical averages to find value</p>
+                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Sport</label>
+                        <select class="form-select" id="propSport" onchange="updatePropPlayers()">
+                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Player</label>
+                        <select class="form-select" id="propPlayer" style="width:220px;"></select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Prop Type</label>
+                        <select class="form-select" id="propType"></select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Line</label>
+                        <input type="number" class="form-input" id="propLine" step="0.5" style="width:100px;">
+                    </div>
+                    <button class="btn btn-primary" onclick="analyzeProp()">Analyze</button>
+                </div>
+                <div id="propDisplay"></div>
+            </div>
+
+            <!-- ============ POWER RANKINGS ============ -->
+            <div class="view" id="view-power-rankings">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">League Power Rankings</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Composite power rankings using Elo, SOS, recent form, and net rating</p>
+                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Sport</label>
+                        <select class="form-select" id="prSport" onchange="renderPowerRankings()">
+                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="renderPowerRankings()">Generate Rankings</button>
+                </div>
+                <div id="prDisplay"></div>
             </div>
 
         </main>
@@ -2110,6 +2340,16 @@ function initView(viewId) {
         case 'betting': renderBettingModels(); break;
         case 'settings': renderSettings(); break;
         case 'player-profile': initPlayerProfileView(); break;
+        case 'head-to-head': updateH2HPlayers(); break;
+        case 'season-sim': renderSeasonSim(); break;
+        case 'injury-dash': renderInjuryDash(); break;
+        case 'career-arc': updateCareerPlayers(); break;
+        case 'fantasy-scoring': initFantasyScoring(); break;
+        case 'win-probability': initWinProb(); break;
+        case 'draft-trade': renderDraftTradeChart(); break;
+        case 'ai-scout': updateScoutPlayers(); break;
+        case 'prop-analyzer': updatePropPlayers(); break;
+        case 'power-rankings': renderPowerRankings(); break;
     }
 }
 
@@ -4000,18 +4240,26 @@ async function renderStandings() {
 
         const hasConf = confSections.length > 0;
         const hasDiv = divSections.length > 0;
-        const hasBoth = hasConf && hasDiv;
 
-        const toggleHtml = hasBoth ? `
-            <div style="display:flex;gap:6px;margin-bottom:18px;">
-                <button id="standingsToggleDiv" onclick="document.getElementById('standingsDivView').style.display='';document.getElementById('standingsConfView').style.display='none';this.style.background='var(--accent)';this.style.color='var(--night)';document.getElementById('standingsToggleConf').style.background='var(--bg-input)';document.getElementById('standingsToggleConf').style.color='var(--text-primary)';" style="padding:7px 16px;border-radius:4px;font-family:var(--font-mono);font-size:0.78rem;font-weight:700;background:var(--accent);color:var(--night);border:none;cursor:pointer;">Division</button>
-                <button id="standingsToggleConf" onclick="document.getElementById('standingsConfView').style.display='';document.getElementById('standingsDivView').style.display='none';this.style.background='var(--accent)';this.style.color='var(--night)';document.getElementById('standingsToggleDiv').style.background='var(--bg-input)';document.getElementById('standingsToggleDiv').style.color='var(--text-primary)';" style="padding:7px 16px;border-radius:4px;font-family:var(--font-mono);font-size:0.78rem;font-weight:700;background:var(--bg-input);color:var(--text-primary);border:none;cursor:pointer;">Conference</button>
-            </div>` : '';
-
-        const divHtml = hasDiv ? `<div id="standingsDivView">${buildStandingsHtml(divSections)}</div>` : '';
-        const confHtml = hasConf ? `<div id="standingsConfView" style="${hasBoth ? 'display:none;' : ''}">${buildStandingsHtml(confSections)}</div>` : '';
-
-        container.innerHTML = toggleHtml + divHtml + confHtml;
+        let html = '';
+        if (hasDiv) {
+            html += `<div style="margin-bottom:28px;">
+                <h3 style="font-family:var(--font-mono);font-size:1.1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--accent);color:var(--text-primary);">
+                    <span style="color:var(--accent);margin-right:8px;">&#9642;</span>Division Standings
+                </h3>
+                ${buildStandingsHtml(divSections)}
+            </div>`;
+        }
+        if (hasConf) {
+            html += `<div style="margin-bottom:28px;">
+                <h3 style="font-family:var(--font-mono);font-size:1.1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--accent);color:var(--text-primary);">
+                    <span style="color:var(--accent);margin-right:8px;">&#9642;</span>Conference Standings
+                </h3>
+                ${buildStandingsHtml(confSections)}
+            </div>`;
+        }
+        if (!html) throw new Error('No standings entries found');
+        container.innerHTML = html;
     } catch(e) {
         container.innerHTML = `<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Could Not Load Standings</div><div class="subtitle">${e.message}</div></div>`;
     }
@@ -6600,6 +6848,855 @@ document.addEventListener('DOMContentLoaded', () => {
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
 }
+
+/* ============================================================
+   FEATURE 1: HEAD-TO-HEAD COMPARISON
+   ============================================================ */
+function updateH2HPlayers() {
+    const sport = document.getElementById('h2hSport').value;
+    const players = PLAYERS[sport] || [];
+    const opts = players.map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
+    document.getElementById('h2hPlayerA').innerHTML = opts;
+    document.getElementById('h2hPlayerB').innerHTML = players.length > 1 ? players.map((p,i) => `<option value="${p.id}" ${i===1?'selected':''}>${p.name} (${p.team})</option>`).join('') : opts;
+}
+
+function renderH2H() {
+    const sport = document.getElementById('h2hSport').value;
+    const players = PLAYERS[sport] || [];
+    const pA = players.find(p => p.id == document.getElementById('h2hPlayerA').value);
+    const pB = players.find(p => p.id == document.getElementById('h2hPlayerB').value);
+    if (!pA || !pB) return;
+    const display = document.getElementById('h2hDisplay');
+
+    const metrics = sport === 'nba' ? [{k:'ppg',l:'PPG'},{k:'rpg',l:'RPG'},{k:'apg',l:'APG'},{k:'spg',l:'STL'},{k:'bpg',l:'BLK'},{k:'fg',l:'FG%'},{k:'ft',l:'FT%'},{k:'per',l:'PER'},{k:'ts',l:'TS%'},{k:'ws',l:'Win Shares'}] :
+                  sport === 'nfl' ? (pA.pos === 'QB' ? [{k:'passYds',l:'Pass Yds'},{k:'passTd',l:'Pass TD'},{k:'rushYds',l:'Rush Yds'},{k:'comp',l:'Comp%'},{k:'qbr',l:'QBR'},{k:'ints',l:'INT',inv:true}] :
+                                    pA.pos === 'RB' ? [{k:'rushYds',l:'Rush Yds'},{k:'rushTd',l:'Rush TD'},{k:'recYds',l:'Rec Yds'},{k:'rec',l:'Receptions'},{k:'targets',l:'Targets'},{k:'fantasyPts',l:'FPTS'}] :
+                                    [{k:'recYds',l:'Rec Yds'},{k:'recTd',l:'Rec TD'},{k:'rec',l:'Receptions'},{k:'targets',l:'Targets'},{k:'fantasyPts',l:'FPTS'}]) :
+                  sport === 'mlb' ? (pA.pos === 'SP' ? [{k:'era',l:'ERA',inv:true},{k:'wins',l:'Wins'},{k:'so',l:'SO'},{k:'whip',l:'WHIP',inv:true},{k:'ip',l:'IP'},{k:'fip',l:'FIP',inv:true},{k:'war',l:'WAR'}] :
+                                    [{k:'avg',l:'AVG'},{k:'hr',l:'HR'},{k:'rbi',l:'RBI'},{k:'r',l:'Runs'},{k:'sb',l:'SB'},{k:'obp',l:'OBP'},{k:'slg',l:'SLG'},{k:'ops',l:'OPS'},{k:'war',l:'WAR'}]) :
+                  [{k:'fantasyPts',l:'FPTS'}];
+
+    // Radar chart via SVG
+    const radarSize = 280, cx = radarSize, cy = radarSize;
+    const n = Math.min(metrics.length, 10);
+    const radarMetrics = metrics.slice(0, n);
+    let svgPaths = '', labels = '', gridLines = '';
+    for (let ring = 1; ring <= 5; ring++) {
+        const r = (ring/5) * (radarSize - 40);
+        let pts = [];
+        for (let i = 0; i < n; i++) {
+            const angle = (Math.PI * 2 * i / n) - Math.PI/2;
+            pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+        }
+        gridLines += `<polygon points="${pts.join(' ')}" fill="none" stroke="var(--border)" stroke-width="0.5" opacity="0.5"/>`;
+    }
+    let ptsA = [], ptsB = [];
+    for (let i = 0; i < n; i++) {
+        const m = radarMetrics[i];
+        const allVals = players.filter(p => p[m.k] !== undefined).map(p => p[m.k]);
+        const minV = Math.min(...allVals), maxV = Math.max(...allVals);
+        const range = maxV - minV || 1;
+        let normA = (pA[m.k] - minV) / range, normB = (pB[m.k] - minV) / range;
+        if (m.inv) { normA = 1 - normA; normB = 1 - normB; }
+        const angle = (Math.PI * 2 * i / n) - Math.PI/2;
+        const maxR = radarSize - 40;
+        ptsA.push(`${cx + maxR * normA * Math.cos(angle)},${cy + maxR * normA * Math.sin(angle)}`);
+        ptsB.push(`${cx + maxR * normB * Math.cos(angle)},${cy + maxR * normB * Math.sin(angle)}`);
+        const lx = cx + (maxR + 20) * Math.cos(angle), ly = cy + (maxR + 20) * Math.sin(angle);
+        labels += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="var(--text-muted)" font-size="11" font-family="var(--font-mono)">${m.l}</text>`;
+    }
+
+    const radarSvg = `<svg viewBox="0 0 ${radarSize*2} ${radarSize*2}" style="max-width:500px;width:100%;margin:0 auto;display:block;">
+        ${gridLines}
+        <polygon points="${ptsA.join(' ')}" fill="rgba(99,102,241,0.25)" stroke="var(--accent)" stroke-width="2"/>
+        <polygon points="${ptsB.join(' ')}" fill="rgba(239,68,68,0.2)" stroke="#ef4444" stroke-width="2"/>
+        ${labels}
+    </svg>`;
+
+    const legend = `<div style="display:flex;gap:24px;justify-content:center;margin:16px 0;">
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:3px;background:var(--accent);display:inline-block;"></span><strong>${pA.name}</strong> (${pA.team})</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:3px;background:#ef4444;display:inline-block;"></span><strong>${pB.name}</strong> (${pB.team})</span>
+    </div>`;
+
+    const tableRows = metrics.map(m => {
+        const vA = pA[m.k] ?? '—', vB = pB[m.k] ?? '—';
+        const better = m.inv ? (vA < vB ? 'A' : vB < vA ? 'B' : '') : (vA > vB ? 'A' : vB > vA ? 'B' : '');
+        return `<tr>
+            <td style="padding:8px 12px;font-family:var(--font-mono);font-weight:${better==='A'?'700':'400'};color:${better==='A'?'var(--accent)':'inherit'};">${vA}</td>
+            <td style="padding:8px 12px;text-align:center;font-weight:600;">${m.l}</td>
+            <td style="padding:8px 12px;text-align:right;font-family:var(--font-mono);font-weight:${better==='B'?'700':'400'};color:${better==='B'?'#ef4444':'inherit'};">${vB}</td>
+        </tr>`;
+    }).join('');
+
+    display.innerHTML = `<div class="card">${legend}${radarSvg}</div>
+    <div class="card" style="margin-top:20px;">
+        <div class="card-title">Stat Comparison</div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.87rem;">
+                <thead><tr style="border-bottom:2px solid var(--border);">
+                    <th style="padding:8px 12px;text-align:left;color:var(--accent);">${pA.name}</th>
+                    <th style="padding:8px 12px;text-align:center;color:var(--text-muted);">Stat</th>
+                    <th style="padding:8px 12px;text-align:right;color:#ef4444;">${pB.name}</th>
+                </tr></thead>
+                <tbody>${tableRows}</tbody>
+            </table>
+        </div>
+    </div>`;
+}
+
+/* ============================================================
+   FEATURE 2: SEASON SIMULATOR (Monte Carlo)
+   ============================================================ */
+function renderSeasonSim() {
+    const sport = document.getElementById('simSport').value;
+    const display = document.getElementById('simDisplay');
+    const teams = getTeamsForSport(sport);
+    display.innerHTML = `<div class="card"><div class="card-title">Ready to Simulate</div>
+        <p style="color:var(--text-muted);margin-bottom:12px;">${teams.length} teams loaded for ${sport.toUpperCase()}. Click "Run Simulation" to project the season using Monte Carlo methods.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;">${teams.map(t => `<div style="padding:8px;background:var(--bg-input);border-radius:6px;text-align:center;font-family:var(--font-mono);font-size:0.82rem;font-weight:600;">${t}</div>`).join('')}</div>
+    </div>`;
+}
+
+function getTeamsForSport(sport) {
+    const teamSet = new Set();
+    (PLAYERS[sport] || []).forEach(p => teamSet.add(p.team));
+    return [...teamSet].sort();
+}
+
+function runSeasonSim() {
+    const sport = document.getElementById('simSport').value;
+    const simCount = parseInt(document.getElementById('simCount').value);
+    const display = document.getElementById('simDisplay');
+    const teams = getTeamsForSport(sport);
+    if (teams.length < 4) { display.innerHTML = '<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Not enough teams</div></div>'; return; }
+
+    // Assign base strength from player talent
+    const teamStrength = {};
+    teams.forEach(t => {
+        const roster = (PLAYERS[sport] || []).filter(p => p.team === t);
+        teamStrength[t] = roster.reduce((s, p) => s + (p.fantasyPts || 0), 0) / Math.max(roster.length, 1);
+    });
+
+    const gamesPerSeason = sport === 'nba' ? 82 : sport === 'nfl' ? 17 : 162;
+    const playoffSpots = sport === 'nba' ? 8 : sport === 'nfl' ? 7 : 6;
+    const results = {};
+    teams.forEach(t => results[t] = { totalWins: 0, playoffCount: 0, champCount: 0, winDist: [] });
+
+    for (let sim = 0; sim < simCount; sim++) {
+        const wins = {};
+        teams.forEach(t => wins[t] = 0);
+        // Simulate season
+        for (let g = 0; g < Math.floor(gamesPerSeason * teams.length / 2); g++) {
+            const tA = teams[Math.floor(Math.random() * teams.length)];
+            let tB = teams[Math.floor(Math.random() * teams.length)];
+            while (tB === tA) tB = teams[Math.floor(Math.random() * teams.length)];
+            const sA = teamStrength[tA] + (Math.random() - 0.5) * 20;
+            const sB = teamStrength[tB] + (Math.random() - 0.5) * 20;
+            if (sA > sB) wins[tA]++; else wins[tB]++;
+        }
+        // Normalize to games per season
+        const maxW = Math.max(...Object.values(wins));
+        const scale = maxW > 0 ? gamesPerSeason / maxW : 1;
+        teams.forEach(t => {
+            const w = Math.round(wins[t] * scale);
+            results[t].totalWins += w;
+            results[t].winDist.push(w);
+        });
+        // Determine playoffs
+        const sorted = [...teams].sort((a, b) => wins[b] - wins[a]);
+        sorted.slice(0, playoffSpots).forEach(t => results[t].playoffCount++);
+        results[sorted[0]].champCount++;
+    }
+
+    const rows = teams.map(t => {
+        const r = results[t];
+        const avgW = (r.totalWins / simCount).toFixed(1);
+        const avgL = (gamesPerSeason - r.totalWins / simCount).toFixed(1);
+        const playoffPct = ((r.playoffCount / simCount) * 100).toFixed(1);
+        const champPct = ((r.champCount / simCount) * 100).toFixed(1);
+        return { team: t, avgW, avgL, playoffPct: parseFloat(playoffPct), champPct: parseFloat(champPct) };
+    }).sort((a, b) => b.playoffPct - a.playoffPct);
+
+    display.innerHTML = `<div class="card">
+        <div class="card-title">Simulation Results (${simCount.toLocaleString()} seasons)</div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.87rem;">
+                <thead><tr style="border-bottom:2px solid var(--border);">
+                    <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Team</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Avg W</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Avg L</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Playoff %</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Title %</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Odds Bar</th>
+                </tr></thead>
+                <tbody>${rows.map((r, i) => `<tr style="border-bottom:1px solid var(--border);${i < playoffSpots ? 'background:rgba(99,102,241,0.04);' : ''}">
+                    <td style="padding:8px 12px;font-weight:700;">${r.team}</td>
+                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${r.avgW}</td>
+                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${r.avgL}</td>
+                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;color:${r.playoffPct > 50 ? 'var(--success)' : r.playoffPct > 20 ? 'var(--warning)' : 'var(--danger)'};">${r.playoffPct}%</td>
+                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;">${r.champPct}%</td>
+                    <td style="padding:8px 10px;"><div style="background:var(--bg-input);border-radius:4px;height:14px;overflow:hidden;"><div style="height:100%;width:${Math.min(r.playoffPct, 100)}%;background:linear-gradient(90deg,var(--accent),var(--success));border-radius:4px;"></div></div></td>
+                </tr>`).join('')}</tbody>
+            </table>
+        </div>
+        <div style="margin-top:12px;padding:8px 12px;background:var(--bg-input);border-radius:6px;font-size:0.78rem;color:var(--text-muted);">
+            Shaded rows indicate projected playoff teams (top ${playoffSpots}). Simulation uses roster talent (fantasy points) as base team strength with randomized variance.
+        </div>
+    </div>`;
+}
+
+/* ============================================================
+   FEATURE 3: INJURY IMPACT DASHBOARD
+   ============================================================ */
+function renderInjuryDash() {
+    const sport = document.getElementById('injurySport').value;
+    const filter = document.getElementById('injuryFilter').value;
+    const display = document.getElementById('injuryDisplay');
+    const players = PLAYERS[sport] || [];
+
+    let injured = players.filter(p => p.injury && p.injury.trim() !== '');
+    if (filter === 'out') injured = injured.filter(p => /out|suspend|acl|torn|broken/i.test(p.injury));
+    else if (filter === 'questionable') injured = injured.filter(p => /quest|day-to-day|load|probable|doubt/i.test(p.injury));
+
+    // Group by team
+    const byTeam = {};
+    injured.forEach(p => { if (!byTeam[p.team]) byTeam[p.team] = []; byTeam[p.team].push(p); });
+
+    const teamCards = Object.entries(byTeam).sort((a,b) => b[1].reduce((s,p) => s + (p.fantasyPts||0), 0) - a[1].reduce((s,p) => s + (p.fantasyPts||0), 0))
+    .map(([team, pls]) => {
+        const totalImpact = pls.reduce((s, p) => s + (p.fantasyPts || 0), 0).toFixed(1);
+        const rows = pls.map(p => {
+            const severity = /out|suspend|acl|torn|broken/i.test(p.injury) ? 'danger' : /quest|doubt/i.test(p.injury) ? 'warning' : 'info';
+            return `<tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:6px 10px;font-weight:600;">${p.name}</td>
+                <td style="padding:6px 10px;font-family:var(--font-mono);font-size:0.82rem;">${p.pos}</td>
+                <td style="padding:6px 10px;"><span style="padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;background:var(--${severity});color:#fff;">${p.injury}</span></td>
+                <td style="padding:6px 10px;text-align:center;font-family:var(--font-mono);">${(p.fantasyPts || 0).toFixed(1)}</td>
+            </tr>`;
+        }).join('');
+        return `<div class="card" style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div class="card-title" style="margin:0;">${team}</div>
+                <span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--danger);font-weight:700;">-${totalImpact} FPTS lost</span>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="border-bottom:2px solid var(--border);">
+                    <th style="padding:6px 10px;text-align:left;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Player</th>
+                    <th style="padding:6px 10px;text-align:left;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Pos</th>
+                    <th style="padding:6px 10px;text-align:left;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Status</th>
+                    <th style="padding:6px 10px;text-align:center;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">FPTS</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+    }).join('');
+
+    const totalInjured = injured.length;
+    const totalImpact = injured.reduce((s, p) => s + (p.fantasyPts || 0), 0).toFixed(1);
+
+    display.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+        <div class="card" style="text-align:center;"><div style="font-size:2rem;font-weight:900;color:var(--danger);">${totalInjured}</div><div style="font-size:0.82rem;color:var(--text-muted);">Players Injured/Out</div></div>
+        <div class="card" style="text-align:center;"><div style="font-size:2rem;font-weight:900;color:var(--warning);">${Object.keys(byTeam).length}</div><div style="font-size:0.82rem;color:var(--text-muted);">Teams Affected</div></div>
+        <div class="card" style="text-align:center;"><div style="font-size:2rem;font-weight:900;color:var(--accent);">${totalImpact}</div><div style="font-size:0.82rem;color:var(--text-muted);">Total FPTS Impact</div></div>
+    </div>${teamCards || '<div class="empty-state"><div class="icon">&#x2705;</div><div class="title">No Injuries</div><div class="subtitle">All players are healthy for ' + sport.toUpperCase() + '</div></div>'}`;
+}
+
+/* ============================================================
+   FEATURE 4: CAREER ARC VISUALIZATION
+   ============================================================ */
+function updateCareerPlayers() {
+    const sport = document.getElementById('careerSport').value;
+    const players = PLAYERS[sport] || [];
+    document.getElementById('careerPlayer').innerHTML = players.map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
+}
+
+function renderCareerArc() {
+    const sport = document.getElementById('careerSport').value;
+    const pid = document.getElementById('careerPlayer').value;
+    const player = (PLAYERS[sport] || []).find(p => p.id == pid);
+    if (!player) return;
+    const display = document.getElementById('careerDisplay');
+
+    const age = player.age || 25;
+    const exp = player.exp || 1;
+    const startAge = age - exp;
+    const peakAge = sport === 'nba' ? 27 : sport === 'nfl' ? 26 : sport === 'mlb' ? 28 : 21;
+    const declineStart = sport === 'nba' ? 31 : sport === 'nfl' ? 30 : sport === 'mlb' ? 33 : 23;
+    const retireAge = sport === 'nba' ? 38 : sport === 'nfl' ? 36 : sport === 'mlb' ? 40 : 23;
+    const mainStat = sport === 'nba' ? player.ppg : sport === 'mlb' ? (player.pos === 'SP' ? player.era : player.avg) : (player.pos === 'QB' ? player.passYds : player.pos === 'RB' ? player.rushYds : player.recYds);
+    const statLabel = sport === 'nba' ? 'PPG' : sport === 'mlb' ? (player.pos === 'SP' ? 'ERA' : 'AVG') : (player.pos === 'QB' ? 'Pass Yds' : player.pos === 'RB' ? 'Rush Yds' : 'Rec Yds');
+    const inverted = (sport === 'mlb' && player.pos === 'SP');
+
+    // Generate career curve data points
+    const points = [];
+    const currentVal = mainStat || 20;
+    for (let a = startAge; a <= retireAge; a++) {
+        let factor;
+        if (a <= peakAge) factor = 0.7 + 0.3 * ((a - startAge) / Math.max(peakAge - startAge, 1));
+        else if (a <= declineStart) factor = 1.0;
+        else factor = Math.max(0.3, 1.0 - 0.08 * (a - declineStart));
+        let val = inverted ? currentVal / factor : currentVal * factor;
+        // Add slight randomness for past seasons
+        if (a < age) val *= (0.92 + Math.random() * 0.16);
+        points.push({ age: a, val: parseFloat(val.toFixed(1)), isCurrent: a === age, isPast: a <= age, isFuture: a > age });
+    }
+
+    // SVG line chart
+    const w = 700, h = 320, pad = 50;
+    const minVal = Math.min(...points.map(p => p.val)) * 0.85;
+    const maxVal = Math.max(...points.map(p => p.val)) * 1.15;
+    const xScale = (a) => pad + ((a - startAge) / (retireAge - startAge)) * (w - pad * 2);
+    const yScale = (v) => h - pad - ((v - minVal) / (maxVal - minVal)) * (h - pad * 2);
+
+    let pathPast = '', pathFuture = '', dots = '';
+    const pastPts = points.filter(p => p.isPast);
+    const futurePts = points.filter(p => p.isFuture || p.isCurrent);
+
+    pathPast = pastPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${xScale(p.age)},${yScale(p.val)}`).join(' ');
+    pathFuture = futurePts.map((p, i) => `${i === 0 ? 'M' : 'L'}${xScale(p.age)},${yScale(p.val)}`).join(' ');
+    dots = points.map(p => `<circle cx="${xScale(p.age)}" cy="${yScale(p.val)}" r="${p.isCurrent ? 6 : 3.5}" fill="${p.isCurrent ? 'var(--accent)' : p.isPast ? 'var(--text-primary)' : 'var(--text-muted)'}" stroke="${p.isCurrent ? '#fff' : 'none'}" stroke-width="2"/>`).join('');
+
+    // Grid lines + labels
+    let xLabels = '', yLabels = '', gridY = '';
+    for (let a = startAge; a <= retireAge; a += 2) {
+        xLabels += `<text x="${xScale(a)}" y="${h - 10}" text-anchor="middle" fill="var(--text-muted)" font-size="11">${a}</text>`;
+    }
+    const steps = 5;
+    for (let i = 0; i <= steps; i++) {
+        const v = minVal + (i / steps) * (maxVal - minVal);
+        const y = yScale(v);
+        yLabels += `<text x="${pad - 8}" y="${y + 4}" text-anchor="end" fill="var(--text-muted)" font-size="11">${v.toFixed(inverted ? 2 : 0)}</text>`;
+        gridY += `<line x1="${pad}" y1="${y}" x2="${w - pad}" y2="${y}" stroke="var(--border)" stroke-width="0.5"/>`;
+    }
+
+    const peakLine = `<line x1="${xScale(peakAge)}" y1="${pad}" x2="${xScale(peakAge)}" y2="${h-pad}" stroke="var(--success)" stroke-dasharray="4,4" stroke-width="1"/>
+        <text x="${xScale(peakAge)}" y="${pad - 8}" text-anchor="middle" fill="var(--success)" font-size="10">Peak</text>`;
+    const declineLine = `<line x1="${xScale(declineStart)}" y1="${pad}" x2="${xScale(declineStart)}" y2="${h-pad}" stroke="var(--danger)" stroke-dasharray="4,4" stroke-width="1"/>
+        <text x="${xScale(declineStart)}" y="${pad - 8}" text-anchor="middle" fill="var(--danger)" font-size="10">Decline</text>`;
+
+    display.innerHTML = `<div class="card">
+        <div class="card-title">${player.name} — Career Arc (${statLabel})</div>
+        <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+            <span style="font-size:0.82rem;color:var(--text-muted);">Age: <strong>${age}</strong></span>
+            <span style="font-size:0.82rem;color:var(--text-muted);">Exp: <strong>${exp} yrs</strong></span>
+            <span style="font-size:0.82rem;color:var(--text-muted);">Current ${statLabel}: <strong>${currentVal}</strong></span>
+            <span style="font-size:0.82rem;color:var(--text-muted);">Phase: <strong style="color:${age <= peakAge ? 'var(--success)' : age <= declineStart ? 'var(--accent)' : 'var(--danger)'}">${age <= peakAge ? 'Rising' : age <= declineStart ? 'Prime' : 'Declining'}</strong></span>
+        </div>
+        <svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:${w}px;">
+            ${gridY}${peakLine}${declineLine}
+            <path d="${pathPast}" fill="none" stroke="var(--text-primary)" stroke-width="2.5"/>
+            <path d="${pathFuture}" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="6,4"/>
+            ${dots}${xLabels}${yLabels}
+        </svg>
+        <div style="display:flex;gap:20px;margin-top:12px;font-size:0.78rem;color:var(--text-muted);">
+            <span>&#x2014; Actual</span><span style="border-top:2px dashed var(--text-muted);padding-top:2px;">Projected</span>
+            <span style="color:var(--success);">&#x25CF; Peak window</span><span style="color:var(--danger);">&#x25CF; Decline phase</span>
+        </div>
+    </div>`;
+}
+
+/* ============================================================
+   FEATURE 5: CUSTOM FANTASY SCORING BUILDER
+   ============================================================ */
+function initFantasyScoring() {
+    const sport = document.getElementById('fscSport').value;
+    const container = document.getElementById('fscWeights');
+    const presets = {
+        nba: { ppg:1, rpg:1.2, apg:1.5, spg:3, bpg:3, fg:0, ft:0, tpg:-1 },
+        nfl: { passYds:0.04, passTd:4, rushYds:0.1, rushTd:6, recYds:0.1, rec:1, recTd:6, ints:-2 },
+        mlb: { avg:0, hr:4, rbi:1, r:1, sb:2, obp:0, slg:0, wins:5, so:1, era:0, whip:0 }
+    };
+    const weights = presets[sport] || presets.nba;
+    const html = Object.entries(weights).map(([k, v]) => `
+        <div style="display:inline-flex;align-items:center;gap:6px;margin:4px 8px 4px 0;">
+            <label style="font-family:var(--font-mono);font-size:0.82rem;font-weight:600;min-width:70px;">${k.toUpperCase()}</label>
+            <input type="number" class="form-input fsc-weight" data-stat="${k}" value="${v}" step="0.5" style="width:75px;font-size:0.82rem;">
+        </div>`).join('');
+    container.innerHTML = `<div class="card"><div class="card-title">Scoring Weights</div>${html}</div>`;
+}
+
+function loadScoringPreset() {
+    initFantasyScoring();
+}
+
+function calcFantasyScoring() {
+    const sport = document.getElementById('fscSport').value;
+    const display = document.getElementById('fscDisplay');
+    const weights = {};
+    document.querySelectorAll('.fsc-weight').forEach(el => { weights[el.dataset.stat] = parseFloat(el.value) || 0; });
+    const players = (PLAYERS[sport] || []).map(p => {
+        let score = 0;
+        Object.entries(weights).forEach(([stat, w]) => { if (p[stat] !== undefined) score += p[stat] * w; });
+        return { ...p, customScore: parseFloat(score.toFixed(1)) };
+    }).sort((a, b) => b.customScore - a.customScore);
+
+    display.innerHTML = `<div class="card">
+        <div class="card-title">Custom Rankings — ${sport.toUpperCase()}</div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="border-bottom:2px solid var(--border);">
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;width:40px;">#</th>
+                    <th style="padding:8px 10px;text-align:left;color:var(--text-muted);font-size:0.72rem;">Player</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Team</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Pos</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Custom Score</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Default FPTS</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Diff</th>
+                </tr></thead>
+                <tbody>${players.slice(0, 50).map((p, i) => {
+                    const diff = (p.customScore - (p.fantasyPts || 0)).toFixed(1);
+                    return `<tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:6px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--text-muted);">${i + 1}</td>
+                        <td style="padding:6px 10px;font-weight:600;">${p.name}</td>
+                        <td style="padding:6px 10px;text-align:center;font-family:var(--font-mono);">${p.team}</td>
+                        <td style="padding:6px 10px;text-align:center;">${p.pos}</td>
+                        <td style="padding:6px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--accent);">${p.customScore}</td>
+                        <td style="padding:6px 10px;text-align:center;font-family:var(--font-mono);">${(p.fantasyPts || 0).toFixed(1)}</td>
+                        <td style="padding:6px 10px;text-align:center;font-family:var(--font-mono);font-weight:600;color:${diff > 0 ? 'var(--success)' : 'var(--danger)'};">${diff > 0 ? '+' : ''}${diff}</td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>
+        </div>
+    </div>`;
+}
+
+/* ============================================================
+   FEATURE 6: WIN PROBABILITY CHARTS
+   ============================================================ */
+function initWinProb() {
+    const sport = document.getElementById('wpSport').value;
+    const teams = getTeamsForSport(sport);
+    const opts = teams.map(t => `<option value="${t}">${t}</option>`).join('');
+    document.getElementById('wpHome').innerHTML = opts;
+    document.getElementById('wpAway').innerHTML = teams.length > 1 ? teams.map((t, i) => `<option value="${t}" ${i === 1 ? 'selected' : ''}>${t}</option>`).join('') : opts;
+}
+
+function renderWinProb() {
+    const sport = document.getElementById('wpSport').value;
+    const home = document.getElementById('wpHome').value;
+    const away = document.getElementById('wpAway').value;
+    const display = document.getElementById('wpDisplay');
+    if (home === away) { display.innerHTML = '<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Select different teams</div></div>'; return; }
+
+    // Calculate team strengths
+    const homeRoster = (PLAYERS[sport] || []).filter(p => p.team === home);
+    const awayRoster = (PLAYERS[sport] || []).filter(p => p.team === away);
+    const homeStr = homeRoster.reduce((s, p) => s + (p.fantasyPts || 0), 0) / Math.max(homeRoster.length, 1);
+    const awayStr = awayRoster.reduce((s, p) => s + (p.fantasyPts || 0), 0) / Math.max(awayRoster.length, 1);
+    const homeAdv = 3;
+    const totalStr = homeStr + homeAdv + awayStr;
+    const homeWinPct = ((homeStr + homeAdv) / totalStr * 100).toFixed(1);
+    const awayWinPct = (100 - homeWinPct).toFixed(1);
+
+    // Simulate game flow (quarters/innings/halves)
+    const periods = sport === 'nba' ? 4 : sport === 'nfl' ? 4 : 9;
+    const periodName = sport === 'mlb' ? 'Inning' : 'Quarter';
+    const dataPoints = [{ period: 0, homeWp: 50 }];
+    let wp = parseFloat(homeWinPct);
+    for (let q = 1; q <= periods; q++) {
+        wp = Math.max(2, Math.min(98, wp + (Math.random() - 0.48) * 18));
+        dataPoints.push({ period: q, homeWp: wp });
+    }
+    // Final convergence
+    dataPoints.push({ period: periods + 1, homeWp: parseFloat(homeWinPct) > 50 ? 85 + Math.random() * 12 : 15 + Math.random() * 12 });
+
+    // SVG chart
+    const w = 650, h = 300, pad = 50;
+    const xScale = (p) => pad + (p / (periods + 1)) * (w - pad * 2);
+    const yScale = (v) => h - pad - (v / 100) * (h - pad * 2);
+
+    let path = dataPoints.map((d, i) => `${i === 0 ? 'M' : 'L'}${xScale(d.period)},${yScale(d.homeWp)}`).join(' ');
+    let area = path + ` L${xScale(periods + 1)},${yScale(50)} L${xScale(0)},${yScale(50)} Z`;
+    let xLabels = dataPoints.map(d => `<text x="${xScale(d.period)}" y="${h - 12}" text-anchor="middle" fill="var(--text-muted)" font-size="10">${d.period === 0 ? 'Start' : d.period > periods ? 'Final' : d.period}</text>`).join('');
+    let midLine = `<line x1="${pad}" y1="${yScale(50)}" x2="${w-pad}" y2="${yScale(50)}" stroke="var(--text-muted)" stroke-dasharray="4,4" stroke-width="1"/>`;
+    let dots = dataPoints.map(d => `<circle cx="${xScale(d.period)}" cy="${yScale(d.homeWp)}" r="4" fill="var(--accent)" stroke="#fff" stroke-width="1.5"/>`).join('');
+
+    display.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card" style="text-align:center;"><div style="font-size:2.2rem;font-weight:900;color:var(--accent);">${homeWinPct}%</div><div style="font-size:0.9rem;font-weight:700;">${home} (Home)</div></div>
+        <div class="card" style="text-align:center;"><div style="font-size:2.2rem;font-weight:900;color:#ef4444;">${awayWinPct}%</div><div style="font-size:0.9rem;font-weight:700;">${away} (Away)</div></div>
+    </div>
+    <div class="card">
+        <div class="card-title">Win Probability Chart</div>
+        <svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:${w}px;">
+            <text x="${pad}" y="${yScale(100) - 8}" fill="var(--accent)" font-size="11" font-weight="700">${home}</text>
+            <text x="${pad}" y="${yScale(0) + 16}" fill="#ef4444" font-size="11" font-weight="700">${away}</text>
+            ${midLine}
+            <path d="${area}" fill="rgba(99,102,241,0.1)"/>
+            <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+            ${dots}${xLabels}
+            <text x="${w - pad}" y="${yScale(50) - 6}" text-anchor="end" fill="var(--text-muted)" font-size="10">50%</text>
+        </svg>
+    </div>
+    <div class="card" style="margin-top:16px;">
+        <div class="card-title">Key Factors</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+            <div style="padding:10px;background:var(--bg-input);border-radius:6px;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Home Roster Strength</div><div style="font-size:1.2rem;font-weight:800;font-family:var(--font-mono);">${homeStr.toFixed(1)}</div></div>
+            <div style="padding:10px;background:var(--bg-input);border-radius:6px;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Away Roster Strength</div><div style="font-size:1.2rem;font-weight:800;font-family:var(--font-mono);">${awayStr.toFixed(1)}</div></div>
+            <div style="padding:10px;background:var(--bg-input);border-radius:6px;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Home Court Advantage</div><div style="font-size:1.2rem;font-weight:800;font-family:var(--font-mono);">+${homeAdv}</div></div>
+        </div>
+    </div>`;
+}
+
+/* ============================================================
+   FEATURE 7: DRAFT PICK TRADE CHART
+   ============================================================ */
+function renderDraftTradeChart() {
+    const display = document.getElementById('dtDisplay');
+    // Jimmy Johnson chart values (classic NFL draft pick value chart)
+    const pickValues = [3000,2600,2200,1800,1700,1600,1500,1400,1350,1300,1250,1200,1150,1100,1050,1000,950,900,875,850,800,780,760,740,720,700,680,660,640,620,600,580,560,540,520,500,480,460,440,420,400,390,380,370,360,350,340,330,320,310,300,292,284,276,268,260,252,244,236,228,220,214,208,202,196,190,184,178,172,166,160,155,150,145,140,136,132,128,124,120,116,113,110,107,104,101,98,95,92,89,86,84,82,80,78,76,74,72,70,68,66,64,62,60,58,56,54,52,50,48,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10];
+    const getVal = (pick) => pick >= 1 && pick <= pickValues.length ? pickValues[pick - 1] : 10;
+
+    // Show the full value chart
+    let chartRows = '';
+    for (let r = 0; r < 8; r++) {
+        let cells = '';
+        for (let c = 0; c < 32; c++) {
+            const pick = r * 32 + c + 1;
+            if (pick > 256) break;
+            const val = getVal(pick);
+            const intensity = Math.min(1, val / 3000);
+            cells += `<td style="padding:3px;text-align:center;font-size:0.65rem;font-family:var(--font-mono);background:rgba(99,102,241,${intensity * 0.3});border:1px solid var(--border);" title="Pick ${pick}: ${val} pts">
+                <div style="font-weight:700;font-size:0.7rem;">${pick}</div><div style="color:var(--text-muted);">${val}</div>
+            </td>`;
+        }
+        chartRows += `<tr>${cells}</tr>`;
+    }
+
+    display.innerHTML = `<div class="card" style="margin-bottom:20px;">
+        <div class="card-title">NFL Draft Pick Value Chart (Jimmy Johnson)</div>
+        <div style="overflow-x:auto;">
+            <table style="border-collapse:collapse;width:100%;">${chartRows}</table>
+        </div>
+    </div>
+    <div id="dtTradeResult"></div>`;
+}
+
+function renderDraftTrade() {
+    const pickValues = [3000,2600,2200,1800,1700,1600,1500,1400,1350,1300,1250,1200,1150,1100,1050,1000,950,900,875,850,800,780,760,740,720,700,680,660,640,620,600,580,560,540,520,500,480,460,440,420,400,390,380,370,360,350,340,330,320,310,300,292,284,276,268,260,252,244,236,228,220,214,208,202,196,190,184,178,172,166,160,155,150,145,140,136,132,128,124,120,116,113,110,107,104,101,98,95,92,89,86,84,82,80,78,76,74,72,70,68,66,64,62,60,58,56,54,52,50,48,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10];
+    const getVal = (pick) => pick >= 1 && pick <= pickValues.length ? pickValues[pick - 1] : 10;
+
+    const picksA = (document.getElementById('dtPicksA').value || '').split(',').map(s => parseInt(s.trim())).filter(n => n > 0);
+    const picksB = (document.getElementById('dtPicksB').value || '').split(',').map(s => parseInt(s.trim())).filter(n => n > 0);
+    const result = document.getElementById('dtTradeResult') || document.getElementById('dtDisplay');
+
+    if (!picksA.length || !picksB.length) { result.innerHTML = '<div class="card"><div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Enter picks for both teams</div></div></div>'; return; }
+
+    const totalA = picksA.reduce((s, p) => s + getVal(p), 0);
+    const totalB = picksB.reduce((s, p) => s + getVal(p), 0);
+    const diff = totalA - totalB;
+    const winner = diff > 100 ? 'Team A' : diff < -100 ? 'Team B' : 'Even';
+
+    result.innerHTML = `<div class="card">
+        <div class="card-title">Trade Analysis</div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center;">
+            <div style="text-align:center;">
+                <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:8px;">TEAM A</div>
+                ${picksA.map(p => `<div style="padding:6px 12px;background:var(--bg-input);border-radius:4px;margin:4px 0;font-family:var(--font-mono);font-size:0.85rem;"><strong>Pick #${p}</strong> — ${getVal(p)} pts</div>`).join('')}
+                <div style="margin-top:12px;font-size:1.4rem;font-weight:900;color:var(--accent);">${totalA} pts</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:2rem;font-weight:900;color:${winner === 'Even' ? 'var(--text-muted)' : 'var(--success)'};">VS</div>
+                <div style="font-size:0.85rem;font-weight:700;margin-top:8px;padding:6px 14px;border-radius:6px;background:${winner === 'Even' ? 'var(--bg-input)' : 'rgba(34,197,94,0.15)'};color:${winner === 'Even' ? 'var(--text-muted)' : 'var(--success)'};">${winner === 'Even' ? 'Fair Trade' : winner + ' Wins'}</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">Diff: ${Math.abs(diff)} pts</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:8px;">TEAM B</div>
+                ${picksB.map(p => `<div style="padding:6px 12px;background:var(--bg-input);border-radius:4px;margin:4px 0;font-family:var(--font-mono);font-size:0.85rem;"><strong>Pick #${p}</strong> — ${getVal(p)} pts</div>`).join('')}
+                <div style="margin-top:12px;font-size:1.4rem;font-weight:900;color:#ef4444;">${totalB} pts</div>
+            </div>
+        </div>
+    </div>`;
+}
+
+/* ============================================================
+   FEATURE 8: AI SCOUTING REPORTS
+   ============================================================ */
+function updateScoutPlayers() {
+    const sport = document.getElementById('scoutSport').value;
+    const players = PLAYERS[sport] || [];
+    document.getElementById('scoutPlayer').innerHTML = players.map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
+}
+
+function generateScoutReport() {
+    const sport = document.getElementById('scoutSport').value;
+    const pid = document.getElementById('scoutPlayer').value;
+    const player = (PLAYERS[sport] || []).find(p => p.id == pid);
+    if (!player) return;
+    const display = document.getElementById('scoutDisplay');
+
+    // Generate AI-style scouting report from data
+    const allPlayers = PLAYERS[sport] || [];
+    const posGroup = allPlayers.filter(p => p.pos === player.pos);
+    const posRank = posGroup.sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).findIndex(p => p.id === player.id) + 1;
+
+    let strengths = [], weaknesses = [], outlook = '', grade = 'B+';
+
+    if (sport === 'nba') {
+        const avgPpg = allPlayers.reduce((s, p) => s + (p.ppg || 0), 0) / allPlayers.length;
+        const avgRpg = allPlayers.reduce((s, p) => s + (p.rpg || 0), 0) / allPlayers.length;
+        const avgApg = allPlayers.reduce((s, p) => s + (p.apg || 0), 0) / allPlayers.length;
+        if (player.ppg > avgPpg * 1.3) strengths.push(`Elite scorer averaging ${player.ppg} PPG — top-tier offensive production`);
+        else if (player.ppg > avgPpg) strengths.push(`Above-average scorer at ${player.ppg} PPG`);
+        else weaknesses.push(`Scoring production (${player.ppg} PPG) below league average for position`);
+        if (player.rpg > avgRpg * 1.2) strengths.push(`Strong rebounder at ${player.rpg} RPG — controls the glass`);
+        if (player.apg > avgApg * 1.3) strengths.push(`Excellent playmaker averaging ${player.apg} APG`);
+        if (player.ts > 60) strengths.push(`Highly efficient shooter — ${player.ts}% true shooting`);
+        else if (player.ts < 54) weaknesses.push(`Below-average efficiency at ${player.ts}% TS`);
+        if (player.per > 25) strengths.push(`Elite PER of ${player.per} — dominant all-around impact`);
+        if (player.age > 33) weaknesses.push(`Age concern at ${player.age} — potential decline curve`);
+        if (player.injury) weaknesses.push(`Health risk: ${player.injury}`);
+        if ((player.spg || 0) + (player.bpg || 0) > 2.5) strengths.push(`Defensive impact: ${player.spg} STL + ${player.bpg} BLK per game`);
+        grade = player.per > 28 ? 'A+' : player.per > 24 ? 'A' : player.per > 20 ? 'A-' : player.per > 17 ? 'B+' : player.per > 14 ? 'B' : 'B-';
+        outlook = player.age < 25 ? 'Ascending talent with significant upside remaining. Project continued development over the next 3-4 seasons.' :
+                  player.age < 30 ? 'In his prime window. Expect consistent production with possible peak seasons ahead.' :
+                  'Veteran presence. Production may begin declining but still capable of high-level contributions.';
+    } else if (sport === 'nfl') {
+        if (player.pos === 'QB') {
+            if (player.passTd > 25) strengths.push(`Strong TD production with ${player.passTd} passing touchdowns`);
+            if (player.qbr > 70) strengths.push(`Above-average efficiency — ${player.qbr} QBR`);
+            if (player.rushYds > 400) strengths.push(`Dual-threat mobility with ${player.rushYds} rushing yards`);
+            if (player.ints > 10) weaknesses.push(`Turnover-prone — ${player.ints} interceptions is concerning`);
+            if (player.comp < 63) weaknesses.push(`Accuracy below threshold at ${player.comp}% completion rate`);
+            grade = player.qbr > 75 ? 'A' : player.qbr > 65 ? 'B+' : player.qbr > 55 ? 'B' : 'C+';
+        } else {
+            if (player.fantasyPts > 18) strengths.push(`Elite fantasy producer at ${player.fantasyPts} FPTS/game`);
+            if ((player.rec || 0) > 80) strengths.push(`High-volume target earner with ${player.rec} receptions`);
+            if ((player.rushYds || 0) > 1200) strengths.push(`Workhorse runner with ${player.rushYds} yards`);
+            grade = player.fantasyPts > 20 ? 'A' : player.fantasyPts > 15 ? 'B+' : player.fantasyPts > 10 ? 'B' : 'C+';
+        }
+        outlook = player.age < 26 ? 'Young talent on an ascending trajectory.' : player.age < 30 ? 'Prime production years.' : 'Declining phase — monitor for snap count changes.';
+    } else {
+        if (player.pos === 'SP') {
+            if (player.era < 3.0) strengths.push(`Ace-caliber ERA of ${player.era} — dominant on the mound`);
+            if (player.so > 200) strengths.push(`Elite strikeout arm — ${player.so} K's`);
+            if (player.whip > 1.3) weaknesses.push(`Elevated WHIP of ${player.whip} — too many baserunners`);
+            grade = player.era < 2.5 ? 'A+' : player.era < 3.0 ? 'A' : player.era < 3.5 ? 'B+' : 'B';
+        } else {
+            if (player.ops > 0.900) strengths.push(`Premium bat — ${player.ops} OPS is elite`);
+            if (player.hr > 30) strengths.push(`Power threat with ${player.hr} home runs`);
+            if (player.sb > 20) strengths.push(`Speed asset with ${player.sb} stolen bases`);
+            if (player.avg < .240) weaknesses.push(`Batting average of ${player.avg} is below threshold`);
+            grade = player.war > 6 ? 'A+' : player.war > 4 ? 'A' : player.war > 3 ? 'B+' : 'B';
+        }
+        outlook = 'Expect production consistent with career norms barring injury.';
+    }
+
+    if (!strengths.length) strengths.push('Reliable contributor at position');
+    if (!weaknesses.length) weaknesses.push('No major weaknesses identified');
+
+    display.innerHTML = `<div class="card" style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+            <div>
+                <h3 style="font-size:1.4rem;font-weight:900;margin-bottom:4px;">${player.name}</h3>
+                <div style="font-size:0.9rem;color:var(--text-muted);">${player.team} | ${player.pos} | Age ${player.age || '—'}${player.draft ? ' | ' + player.draft : ''}</div>
+            </div>
+            <div style="padding:12px 20px;border-radius:12px;background:${grade.startsWith('A') ? 'rgba(34,197,94,0.15)' : 'rgba(99,102,241,0.15)'};text-align:center;">
+                <div style="font-size:2rem;font-weight:900;color:${grade.startsWith('A') ? 'var(--success)' : 'var(--accent)'};">${grade}</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Scout Grade</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+            <div>
+                <h4 style="color:var(--success);font-size:0.85rem;text-transform:uppercase;margin-bottom:10px;">&#x2705; Strengths</h4>
+                ${strengths.map(s => `<div style="padding:8px 12px;background:rgba(34,197,94,0.08);border-left:3px solid var(--success);border-radius:4px;margin-bottom:8px;font-size:0.85rem;">${s}</div>`).join('')}
+            </div>
+            <div>
+                <h4 style="color:var(--danger);font-size:0.85rem;text-transform:uppercase;margin-bottom:10px;">&#x26A0;&#xFE0F; Weaknesses</h4>
+                ${weaknesses.map(w => `<div style="padding:8px 12px;background:rgba(239,68,68,0.08);border-left:3px solid var(--danger);border-radius:4px;margin-bottom:8px;font-size:0.85rem;">${w}</div>`).join('')}
+            </div>
+        </div>
+        <div style="padding:16px;background:var(--bg-input);border-radius:8px;margin-bottom:16px;">
+            <h4 style="font-size:0.85rem;text-transform:uppercase;margin-bottom:8px;color:var(--accent);">Outlook</h4>
+            <p style="font-size:0.9rem;line-height:1.5;margin:0;">${outlook}</p>
+        </div>
+        <div style="font-size:0.78rem;color:var(--text-muted);">Position Rank: <strong>#${posRank}</strong> of ${posGroup.length} | Fantasy Points: <strong>${(player.fantasyPts || 0).toFixed(1)}</strong> | Trend: <strong>${player.trend || '—'}</strong></div>
+    </div>`;
+}
+
+/* ============================================================
+   FEATURE 9: PROP BET ANALYZER
+   ============================================================ */
+function updatePropPlayers() {
+    const sport = document.getElementById('propSport').value;
+    const players = PLAYERS[sport] || [];
+    document.getElementById('propPlayer').innerHTML = players.map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
+    const propTypes = sport === 'nba' ? ['Points','Rebounds','Assists','Steals','Blocks','3-Pointers','PRA'] :
+                      sport === 'nfl' ? ['Pass Yards','Pass TDs','Rush Yards','Receptions','Rec Yards'] :
+                      ['Hits','Home Runs','RBIs','Runs','Strikeouts (P)'];
+    document.getElementById('propType').innerHTML = propTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+function analyzeProp() {
+    const sport = document.getElementById('propSport').value;
+    const pid = document.getElementById('propPlayer').value;
+    const propType = document.getElementById('propType').value;
+    const line = parseFloat(document.getElementById('propLine').value);
+    const player = (PLAYERS[sport] || []).find(p => p.id == pid);
+    if (!player) return;
+    const display = document.getElementById('propDisplay');
+
+    // Map prop type to stat
+    const statMap = {
+        'Points': 'ppg', 'Rebounds': 'rpg', 'Assists': 'apg', 'Steals': 'spg', 'Blocks': 'bpg', '3-Pointers': 'tpg',
+        'PRA': null, 'Pass Yards': 'passYds', 'Pass TDs': 'passTd', 'Rush Yards': 'rushYds', 'Receptions': 'rec',
+        'Rec Yards': 'recYds', 'Hits': 'avg', 'Home Runs': 'hr', 'RBIs': 'rbi', 'Runs': 'r', 'Strikeouts (P)': 'so'
+    };
+    const statKey = statMap[propType];
+    let avg;
+    if (propType === 'PRA') avg = (player.ppg || 0) + (player.rpg || 0) + (player.apg || 0);
+    else if (propType === 'Hits') avg = (player.avg || 0) * 4; // ~4 AB/game
+    else if (propType === 'Home Runs') avg = (player.hr || 0) / (sport === 'mlb' ? 162 : 82);
+    else if (propType === 'RBIs') avg = (player.rbi || 0) / (sport === 'mlb' ? 162 : 82);
+    else if (propType === 'Runs') avg = (player.r || 0) / (sport === 'mlb' ? 162 : 82);
+    else if (propType === 'Strikeouts (P)') avg = (player.so || 0) / ((player.ip || 180) / 6); // per start
+    else if (propType === 'Pass Yards') avg = (player.passYds || 0) / 17;
+    else if (propType === 'Pass TDs') avg = (player.passTd || 0) / 17;
+    else if (propType === 'Rush Yards') avg = (player.rushYds || 0) / 17;
+    else if (propType === 'Receptions') avg = (player.rec || 0) / 17;
+    else if (propType === 'Rec Yards') avg = (player.recYds || 0) / 17;
+    else avg = player[statKey] || 0;
+
+    if (!line || isNaN(line)) {
+        display.innerHTML = `<div class="card"><p style="color:var(--text-muted);">Enter a betting line to analyze. ${player.name}'s average for <strong>${propType}</strong> is <strong>${avg.toFixed(1)}</strong> per game.</p></div>`;
+        return;
+    }
+
+    // Simulate distribution (normal approx around average)
+    const stdDev = avg * 0.25;
+    const sims = 10000;
+    let overCount = 0;
+    const distribution = [];
+    for (let i = 0; i < sims; i++) {
+        let val = avg;
+        for (let j = 0; j < 6; j++) val += (Math.random() - 0.5) * stdDev;
+        if (val > line) overCount++;
+        distribution.push(Math.max(0, val));
+    }
+    const overPct = ((overCount / sims) * 100).toFixed(1);
+    const underPct = (100 - overPct).toFixed(1);
+    const edge = avg - line;
+    const edgePct = ((edge / line) * 100).toFixed(1);
+
+    // Histogram buckets
+    const buckets = 20;
+    const minD = Math.min(...distribution), maxD = Math.max(...distribution);
+    const bucketWidth = (maxD - minD) / buckets;
+    const hist = new Array(buckets).fill(0);
+    distribution.forEach(v => { const b = Math.min(buckets - 1, Math.floor((v - minD) / bucketWidth)); hist[b]++; });
+    const maxH = Math.max(...hist);
+
+    const histBars = hist.map((count, i) => {
+        const x = minD + i * bucketWidth;
+        const pct = (count / maxH * 100);
+        const isOverLine = x + bucketWidth / 2 > line;
+        return `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:120px;">
+            <div style="width:100%;background:${isOverLine ? 'var(--success)' : 'var(--danger)'};height:${pct}%;border-radius:2px 2px 0 0;opacity:0.7;min-height:1px;"></div>
+        </div>`;
+    }).join('');
+
+    const verdict = parseFloat(overPct) > 60 ? 'OVER' : parseFloat(overPct) < 40 ? 'UNDER' : 'TOSS-UP';
+    const verdictColor = verdict === 'OVER' ? 'var(--success)' : verdict === 'UNDER' ? 'var(--danger)' : 'var(--warning)';
+
+    display.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px;">
+        <div class="card" style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Average</div><div style="font-size:2rem;font-weight:900;color:var(--accent);">${avg.toFixed(1)}</div></div>
+        <div class="card" style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Line</div><div style="font-size:2rem;font-weight:900;">${line}</div></div>
+        <div class="card" style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Edge</div><div style="font-size:2rem;font-weight:900;color:${edge > 0 ? 'var(--success)' : 'var(--danger)'};">${edge > 0 ? '+' : ''}${edge.toFixed(1)}</div></div>
+        <div class="card" style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Verdict</div><div style="font-size:2rem;font-weight:900;color:${verdictColor};">${verdict}</div></div>
+    </div>
+    <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">${player.name} — ${propType} Distribution (${sims.toLocaleString()} sims)</div>
+        <div style="display:flex;align-items:flex-end;gap:1px;height:120px;margin-bottom:8px;">${histBars}</div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);">
+            <span>${minD.toFixed(1)}</span><span>Line: ${line}</span><span>${maxD.toFixed(1)}</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Probability Breakdown</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div style="text-align:center;padding:16px;background:rgba(34,197,94,0.08);border-radius:8px;">
+                <div style="font-size:2.2rem;font-weight:900;color:var(--success);">${overPct}%</div>
+                <div style="font-size:0.85rem;font-weight:700;">OVER ${line}</div>
+            </div>
+            <div style="text-align:center;padding:16px;background:rgba(239,68,68,0.08);border-radius:8px;">
+                <div style="font-size:2.2rem;font-weight:900;color:var(--danger);">${underPct}%</div>
+                <div style="font-size:0.85rem;font-weight:700;">UNDER ${line}</div>
+            </div>
+        </div>
+    </div>`;
+}
+
+/* ============================================================
+   FEATURE 10: LEAGUE POWER RANKINGS
+   ============================================================ */
+function renderPowerRankings() {
+    const sport = document.getElementById('prSport').value;
+    const display = document.getElementById('prDisplay');
+    const teams = getTeamsForSport(sport);
+    const allPlayers = PLAYERS[sport] || [];
+
+    const rankings = teams.map(team => {
+        const roster = allPlayers.filter(p => p.team === team);
+        const rosterSize = roster.length;
+        if (!rosterSize) return null;
+
+        // Composite metrics
+        const avgFpts = roster.reduce((s, p) => s + (p.fantasyPts || 0), 0) / rosterSize;
+        const totalFpts = roster.reduce((s, p) => s + (p.fantasyPts || 0), 0);
+        const starPower = roster.filter(p => (p.fantasyPts || 0) > 35).length;
+        const depth = roster.filter(p => (p.fantasyPts || 0) > 20).length;
+        const avgAge = roster.reduce((s, p) => s + (p.age || 25), 0) / rosterSize;
+        const trending = roster.filter(p => p.trend === 'up').length;
+        const declining = roster.filter(p => p.trend === 'down').length;
+        const momentum = trending - declining;
+        const injured = roster.filter(p => p.injury && p.injury.trim()).length;
+
+        // Weighted composite score
+        const score = (totalFpts * 0.35) + (avgFpts * 8) + (starPower * 15) + (depth * 8) + (momentum * 5) - (injured * 10) - (Math.max(0, avgAge - 27) * 3);
+
+        return { team, roster: rosterSize, avgFpts, totalFpts, starPower, depth, avgAge, momentum, injured, score, trending, declining };
+    }).filter(Boolean).sort((a, b) => b.score - a.score);
+
+    const maxScore = rankings[0]?.score || 1;
+
+    display.innerHTML = `<div class="card">
+        <div class="card-title">${sport.toUpperCase()} Power Rankings</div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="border-bottom:2px solid var(--border);">
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;width:40px;">#</th>
+                    <th style="padding:8px 10px;text-align:left;color:var(--text-muted);font-size:0.72rem;">Team</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Score</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Stars</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Depth</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Avg Age</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Momentum</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Tier</th>
+                    <th style="padding:8px 10px;color:var(--text-muted);font-size:0.72rem;">Rating</th>
+                </tr></thead>
+                <tbody>${rankings.map((r, i) => {
+                    const tier = i < 5 ? 'Contender' : i < 12 ? 'Playoff' : i < 20 ? 'Fringe' : 'Rebuilding';
+                    const tierColor = i < 5 ? 'var(--success)' : i < 12 ? 'var(--accent)' : i < 20 ? 'var(--warning)' : 'var(--danger)';
+                    const barPct = (r.score / maxScore * 100).toFixed(0);
+                    return `<tr style="border-bottom:1px solid var(--border);${i < 5 ? 'background:rgba(34,197,94,0.04);' : ''}">
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:900;color:${i < 3 ? 'var(--accent)' : 'var(--text-muted)'};">${i + 1}</td>
+                        <td style="padding:8px 10px;font-weight:700;">${r.team}</td>
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;">${r.score.toFixed(0)}</td>
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${r.starPower}</td>
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${r.depth}</td>
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${r.avgAge.toFixed(1)}</td>
+                        <td style="padding:8px 10px;text-align:center;font-weight:700;color:${r.momentum > 0 ? 'var(--success)' : r.momentum < 0 ? 'var(--danger)' : 'var(--text-muted)'};">${r.momentum > 0 ? '+' : ''}${r.momentum}</td>
+                        <td style="padding:8px 10px;text-align:center;"><span style="padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;background:${tierColor};color:#fff;">${tier}</span></td>
+                        <td style="padding:8px 10px;width:120px;"><div style="background:var(--bg-input);border-radius:4px;height:12px;overflow:hidden;"><div style="height:100%;width:${barPct}%;background:linear-gradient(90deg,${tierColor},var(--accent));border-radius:4px;"></div></div></td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>
+        </div>
+        <div style="margin-top:16px;padding:10px 14px;background:var(--bg-input);border-radius:6px;font-size:0.78rem;color:var(--text-muted);">
+            Rankings based on: total roster talent (35%), average player quality (25%), star power (15%), depth (10%), momentum (10%), health (5%). Stars = players with 35+ FPTS; Depth = players with 20+ FPTS.
+        </div>
+    </div>`;
+}
+
     </script>
 </body>
 </html>

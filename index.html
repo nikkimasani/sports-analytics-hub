@@ -1294,7 +1294,9 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 <div class="sidebar-item" onclick="showView('live')" data-view="live">
                     <span class="icon">🔴</span> Live Scores
                 </div>
-                <div class="sidebar-item" data-view="standings" onclick="showView('standings')">📊 Standings</div>
+                <div class="sidebar-item" data-view="standings" onclick="showView('standings')">
+                    <span class="icon">📊</span> Standings
+                </div>
             </div>
 
             <div class="sidebar-divider"></div>
@@ -1443,8 +1445,11 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
 
             <!-- ============ STANDINGS VIEW ============ -->
             <div class="view" id="view-standings">
-                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">League Standings</h2>
-                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Current season standings from ESPN</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;">League Standings</h2>
+                    <button class="btn btn-sm btn-secondary" onclick="renderStandings()" style="font-size:0.78rem;">↻ Refresh</button>
+                </div>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Live standings from ESPN — updated hourly</p>
                 <div id="standingsContainer"></div>
             </div>
 
@@ -2738,8 +2743,88 @@ function computeAdvancedMetrics() {
                 </div>`;
         }
 
+    } else if (sport === 'ncaa') {
+        // NCAA Football advanced metrics
+        if (!p) {
+            metricCards = `<div class="card"><div style="text-align:center;padding:40px;color:var(--text-muted);">
+                <div style="font-size:2rem;margin-bottom:10px;">🏈</div>
+                <div style="font-weight:700;margin-bottom:6px;">Select a Player Above</div>
+                <div style="font-size:0.82rem;">Choose an NCAA player to view advanced metrics like QBR, EPA, and efficiency ratings.</div>
+            </div></div>`;
+        } else {
+            const passEff = p.passYds && p.passAtt ? +(p.passYds / p.passAtt).toFixed(1) : 0;
+            const tdRate = p.passTd && p.passAtt ? +((p.passTd / p.passAtt) * 100).toFixed(1) : 0;
+            const intRate = p.int && p.passAtt ? +((p.int / p.passAtt) * 100).toFixed(1) : 0;
+            const ypc = p.rushYds && p.rushAtt ? +(p.rushYds / p.rushAtt).toFixed(1) : 0;
+            const totalYds = (p.passYds || 0) + (p.rushYds || 0) + (p.recYds || 0);
+            const totalTd = (p.passTd || 0) + (p.rushTd || 0) + (p.recTd || 0);
+            const qbr = p.qbr || (p.passYds ? Math.min(99, Math.max(10, +(40 + passEff * 2 + tdRate * 5 - intRate * 8).toFixed(1))) : 0);
+
+            const isQB = ['QB'].includes(p.pos);
+            const isRB = ['RB','FB'].includes(p.pos);
+            const isWR = ['WR','TE'].includes(p.pos);
+
+            const qbMetrics = [
+                { label:'QBR', val:qbr.toFixed(1), sub:qbr>80?'Elite':'', color:qbr>80?'var(--success)':qbr>55?'var(--accent)':'var(--danger)' },
+                { label:'YPA', val:passEff, sub:'Yards/Attempt', color:passEff>9?'var(--success)':passEff>7?'var(--accent)':'var(--text-muted)' },
+                { label:'TD%', val:tdRate+'%', sub:'TD Rate', color:tdRate>6?'var(--success)':tdRate>4?'var(--accent)':'var(--text-muted)' },
+                { label:'INT%', val:intRate+'%', sub:'INT Rate', color:intRate<2?'var(--success)':intRate<3.5?'var(--accent)':'var(--danger)' },
+                { label:'Total YDS', val:totalYds.toLocaleString(), sub:'Pass+Rush', color:'var(--accent)' },
+                { label:'Total TD', val:totalTd, sub:'All touchdowns', color:totalTd>25?'var(--success)':'var(--accent)' },
+            ];
+            const rbMetrics = [
+                { label:'YPC', val:ypc, sub:'Yards/Carry', color:ypc>5.5?'var(--success)':ypc>4?'var(--accent)':'var(--text-muted)' },
+                { label:'Rush YDS', val:(p.rushYds||0).toLocaleString(), sub:'Total rushing', color:'var(--accent)' },
+                { label:'Rush TD', val:p.rushTd||0, sub:'Touchdowns', color:(p.rushTd||0)>10?'var(--success)':'var(--accent)' },
+                { label:'Total YDS', val:totalYds.toLocaleString(), sub:'Rush+Rec', color:'var(--accent)' },
+                { label:'Rec', val:p.rec||0, sub:'Receptions', color:'var(--text-muted)' },
+                { label:'FPTS', val:p.fantasyPts?.toFixed(1)||'—', sub:'Fantasy points', color:'var(--success)' },
+            ];
+            const wrMetrics = [
+                { label:'Rec YDS', val:(p.recYds||0).toLocaleString(), sub:'Receiving yards', color:'var(--accent)' },
+                { label:'Rec TD', val:p.recTd||0, sub:'Touchdowns', color:(p.recTd||0)>8?'var(--success)':'var(--accent)' },
+                { label:'Rec', val:p.rec||0, sub:'Receptions', color:'var(--text-muted)' },
+                { label:'YPR', val:p.rec&&p.recYds?+(p.recYds/p.rec).toFixed(1):0, sub:'Yards/Rec', color:'var(--accent)' },
+                { label:'Total TD', val:totalTd, sub:'All touchdowns', color:totalTd>10?'var(--success)':'var(--accent)' },
+                { label:'FPTS', val:p.fantasyPts?.toFixed(1)||'—', sub:'Fantasy points', color:'var(--success)' },
+            ];
+
+            const metrics = isQB ? qbMetrics : isRB ? rbMetrics : isWR ? wrMetrics : qbMetrics;
+
+            metricCards = `
+                <div class="card" style="margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                        ${playerAvatarHtml(p, 64)}
+                        <div>
+                            <div style="font-weight:800;font-size:1.3rem;">${p.name}</div>
+                            <div style="color:var(--text-muted);font-size:0.9rem;">${p.team} · ${p.pos}</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
+                        ${metrics.map(m => `
+                            <div style="background:var(--bg-input);border-radius:var(--radius);padding:14px;text-align:center;">
+                                <div style="font-family:var(--font-mono);font-weight:800;font-size:1.4rem;color:${m.color};">${m.val}</div>
+                                <div style="font-weight:700;font-size:0.78rem;margin:4px 0 2px;">${m.label}</div>
+                                <div style="font-size:0.68rem;color:var(--text-muted);">${m.sub}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="card" style="margin-top:16px;">
+                    <div class="card-title" style="margin-bottom:16px;">NCAA Football Formula Reference</div>
+                    ${[
+                        { name:'QBR', formula:'QBR = Composite of EPA, completion %, sack rate, scrambles (0-100 scale)' },
+                        { name:'EPA/Play', formula:'EPA = Expected Points Added per play vs league-average at same down/distance' },
+                        { name:'YPA', formula:'YPA = Passing Yards / Pass Attempts' },
+                        { name:'Passer Rating', formula:'Rating = f(Comp%, YPA, TD%, INT%) — NCAA uses NFL formula' },
+                    ].map(f => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+                        <span style="font-weight:700;font-size:0.82rem;min-width:120px;">${f.name}</span>
+                        <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);text-align:right;">${f.formula}</span>
+                    </div>`).join('')}
+                </div>`;
+        }
     } else {
-        metricCards = `<div class="card"><div style="text-align:center;padding:20px;color:var(--text-muted);">Advanced metrics for NCAA coming soon.</div></div>`;
+        metricCards = `<div class="card"><div style="text-align:center;padding:20px;color:var(--text-muted);">Advanced metrics not available for this sport.</div></div>`;
     }
 
     container.innerHTML = metricCards;
@@ -3718,51 +3803,99 @@ async function renderStandings() {
         container.innerHTML = '<div class="empty-state"><div class="icon">📊</div><div class="title">Not Available</div><div class="subtitle">Standings not available for this sport.</div></div>';
         return;
     }
-    container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Loading Standings...</div><div class="subtitle">Fetching data from ESPN</div></div>';
+    container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Loading Standings...</div><div class="subtitle">Fetching live data from ESPN</div></div>';
     try {
         const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=standings`);
         if (!res.ok) throw new Error(`ESPN returned ${res.status}`);
         const data = await res.json();
-        const children = (data.children || data.leagues?.[0]?.children || []);
-        if (!children.length) throw new Error('No standings data');
-        container.innerHTML = children.map(division => {
-            const teams = (division.standings?.entries || []).map(entry => {
-                const name = entry.team?.displayName || entry.team?.name || '\u2014';
+        // ESPN v2 standings: data.children[] = conferences, each has .standings.entries[]
+        const groups = (data.children || []);
+        if (!groups.length) throw new Error('No standings data returned');
+
+        // Flatten: each group may have sub-children (divisions) or direct standings
+        const sections = [];
+        for (const group of groups) {
+            if (group.children && group.children.length) {
+                for (const sub of group.children) {
+                    sections.push({ name: `${group.name} — ${sub.name}`, entries: sub.standings?.entries || [] });
+                }
+            } else if (group.standings?.entries?.length) {
+                sections.push({ name: group.name || group.abbreviation || 'Division', entries: group.standings.entries });
+            }
+        }
+
+        if (!sections.length) throw new Error('No standings entries found');
+
+        const extraCols = sport === 'nba' ? ['Home','Road','vs. Conf.','Last Ten Games'] :
+                          sport === 'nfl' ? ['Home','Road','vs. Div.','pointsFor','pointsAgainst'] :
+                          sport === 'mlb' ? ['Home','Road','vs. Div.','Last Ten Games'] : ['Home','Road'];
+
+        const extraHeaders = sport === 'nfl' ? ['Home','Road','Div','PF','PA'] :
+                             extraCols.map(c => c === 'Last Ten Games' ? 'L10' : c === 'vs. Conf.' ? 'Conf' : c === 'vs. Div.' ? 'Div' : c);
+
+        container.innerHTML = sections.map(section => {
+            const rows = section.entries.map((entry, idx) => {
+                const team = entry.team || {};
+                const name = team.displayName || team.name || '\u2014';
+                const logo = team.logos?.[0]?.href || '';
                 const stats = {};
                 (entry.stats || []).forEach(s => { stats[s.name] = s.displayValue ?? s.value; });
-                const w = stats['wins'] ?? stats['W'] ?? '\u2014';
-                const l = stats['losses'] ?? stats['L'] ?? '\u2014';
-                const pct = stats['winPercent'] ?? stats['PCT'] ?? '\u2014';
-                const gb = stats['gamesBehind'] ?? stats['GB'] ?? '\u2014';
-                const streak = stats['streak'] ?? stats['streakCode'] ?? '\u2014';
-                return `<tr>
-                    <td style="padding:8px 12px;font-weight:600;">${name}</td>
-                    <td style="padding:8px 12px;text-align:center;font-family:var(--font-mono);">${w}</td>
-                    <td style="padding:8px 12px;text-align:center;font-family:var(--font-mono);">${l}</td>
-                    <td style="padding:8px 12px;text-align:center;font-family:var(--font-mono);">${typeof pct === 'number' ? pct.toFixed(3) : pct}</td>
-                    <td style="padding:8px 12px;text-align:center;font-family:var(--font-mono);">${gb}</td>
-                    <td style="padding:8px 12px;text-align:center;font-family:var(--font-mono);">${streak}</td>
+                const w = stats['wins'] ?? '\u2014';
+                const l = stats['losses'] ?? '\u2014';
+                const pct = stats['winPercent'] ?? '\u2014';
+                const gb = stats['gamesBehind'] ?? '\u2014';
+                const streak = stats['streak'] ?? '\u2014';
+                const seed = stats['playoffSeed'] ?? '';
+                const clinch = stats['clincher'] ?? '';
+                const clinchBadge = clinch === 'z' ? '<span title="Clinched best record" style="color:var(--success);font-weight:700;margin-left:4px;">z</span>' :
+                                    clinch === 'x' ? '<span title="Clinched playoff spot" style="color:var(--accent);font-weight:700;margin-left:4px;">x</span>' :
+                                    clinch === 'y' ? '<span title="Clinched division" style="color:var(--success);font-weight:700;margin-left:4px;">y</span>' :
+                                    clinch === 'e' ? '<span title="Eliminated" style="color:var(--danger);font-weight:700;margin-left:4px;">e</span>' : '';
+
+                const extraTds = extraCols.map(col => {
+                    const val = stats[col] ?? '\u2014';
+                    return `<td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-size:0.82rem;">${val}</td>`;
+                }).join('');
+
+                const streakColor = typeof streak === 'string' && streak.startsWith('W') ? 'var(--success)' :
+                                    typeof streak === 'string' && streak.startsWith('L') ? 'var(--danger)' : 'inherit';
+
+                return `<tr style="border-bottom:1px solid var(--border);${idx < 6 && sport === 'nba' ? 'background:rgba(99,102,241,0.03);' : ''}${idx < 7 && sport === 'nfl' ? 'background:rgba(99,102,241,0.03);' : ''}">
+                    <td style="padding:8px 12px;font-weight:600;white-space:nowrap;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            ${seed ? `<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);width:16px;text-align:right;">${seed}</span>` : ''}
+                            ${logo ? `<img src="${logo}" width="22" height="22" style="border-radius:2px;" onerror="this.style.display='none'">` : ''}
+                            <span>${name}</span>${clinchBadge}
+                        </div>
+                    </td>
+                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;">${w}</td>
+                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${l}</td>
+                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${pct}</td>
+                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${gb}</td>
+                    <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:600;color:${streakColor};">${streak}</td>
+                    ${extraTds}
                 </tr>`;
             }).join('');
             return `<div class="card" style="margin-bottom:20px;">
-                <div class="card-title" style="margin-bottom:14px;">${division.name || division.abbreviation || 'Division'}</div>
+                <div class="card-title" style="margin-bottom:14px;">${section.name}</div>
                 <div style="overflow-x:auto;">
                     <table style="width:100%;border-collapse:collapse;font-size:0.87rem;">
                         <thead>
-                            <tr style="border-bottom:1px solid var(--border);">
-                                <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">Team</th>
-                                <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">W</th>
-                                <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">L</th>
-                                <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">PCT</th>
-                                <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">GB</th>
-                                <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;">Streak</th>
+                            <tr style="border-bottom:2px solid var(--border);">
+                                <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">Team</th>
+                                <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">W</th>
+                                <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">L</th>
+                                <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">PCT</th>
+                                <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">GB</th>
+                                <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">STRK</th>
+                                ${extraHeaders.map(h => `<th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;">${h}</th>`).join('')}
                             </tr>
                         </thead>
-                        <tbody>${teams || '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">No team data</td></tr>'}</tbody>
+                        <tbody>${rows || '<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--text-muted);">No team data</td></tr>'}</tbody>
                     </table>
                 </div>
             </div>`;
-        }).join('') || '<div class="empty-state"><div class="icon">📊</div><div class="title">No Standings Available</div><div class="subtitle">Try a different sport or check back later.</div></div>';
+        }).join('');
     } catch(e) {
         container.innerHTML = `<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Could Not Load Standings</div><div class="subtitle">${e.message}</div></div>`;
     }

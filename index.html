@@ -2099,6 +2099,7 @@ function renderLeaderboards() {
                 ${sorted.map((p, j) => `
                     <div style="display:flex;align-items:center;gap:10px;padding:6px 0;${j < sorted.length - 1 ? 'border-bottom:1px solid rgba(0,0,0,0.06);' : ''}">
                         <span style="font-family:var(--font-mono);font-weight:700;color:${j === 0 ? 'var(--warning)' : 'var(--text-muted)'};width:20px;">${j + 1}</span>
+                        ${playerAvatarHtml(p, 26)}
                         <div style="flex:1;font-weight:600;font-size:0.85rem;">${p.name}</div>
                         <div style="font-family:var(--font-mono);font-weight:700;">${p[key]}</div>
                     </div>
@@ -2447,10 +2448,12 @@ function renderTrends() {
                 ${risers.map(p => `
                     <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
                         <span style="color:var(--success);font-size:1.1rem;">▲</span>
+                        ${playerAvatarHtml(p, 30)}
                         <div style="flex:1;">
                             <div style="font-weight:600;">${p.name}</div>
                             <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
                         </div>
+                        ${sparklineHtml(p, 55, 22)}
                         <div style="font-family:var(--font-mono);font-weight:700;">${p.fantasyPts?.toFixed(1)}</div>
                     </div>
                 `).join('')}
@@ -2460,10 +2463,12 @@ function renderTrends() {
                 ${fallers.length ? fallers.map(p => `
                     <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
                         <span style="color:var(--danger);font-size:1.1rem;">▼</span>
+                        ${playerAvatarHtml(p, 30)}
                         <div style="flex:1;">
                             <div style="font-weight:600;">${p.name}</div>
                             <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
                         </div>
+                        ${sparklineHtml(p, 55, 22)}
                         <div style="font-family:var(--font-mono);font-weight:700;">${p.fantasyPts?.toFixed(1)}</div>
                     </div>
                 `).join('') : '<div class="empty-state"><div class="subtitle">No falling players right now</div></div>'}
@@ -3048,7 +3053,7 @@ function renderRosterOptimizer() {
                 <tbody>${optimalLineup.map(l => `
                     <tr>
                         <td><span class="position-tag">${l.slot}</span></td>
-                        <td style="font-family:var(--font-sans);font-weight:600;">${l.player?.name || '—'}</td>
+                        <td style="font-family:var(--font-sans);font-weight:600;">${l.player ? `<div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(l.player, 26)}${l.player.name}</div>` : '—'}</td>
                         <td>${l.player?.team || '—'}</td>
                         <td>${l.player?.pos || '—'}</td>
                         <td style="font-weight:700;color:var(--success);">${l.player?.fantasyPts?.toFixed(1) || '—'}</td>
@@ -3079,7 +3084,7 @@ function runFantasyOptimizer() {
             <tbody>${lineup.map(l => `
                 <tr>
                     <td><span class="position-tag">${l.slot}</span></td>
-                    <td style="font-weight:600;">${l.player?.name || '—'}</td>
+                    <td style="font-weight:600;">${l.player ? `<div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(l.player, 26)}${l.player.name}</div>` : '—'}</td>
                     <td>${l.player?.team || '—'}</td>
                     <td>${l.player?.pos || '—'}</td>
                     <td style="font-weight:700;color:var(--success);">${l.player?.fantasyPts?.toFixed(1) || '—'}</td>
@@ -3222,7 +3227,7 @@ function renderProjections() {
                     return `
                         <tr>
                             <td class="rank">${i + 1}</td>
-                            <td style="font-family:var(--font-sans);font-weight:600;">${p.name}</td>
+                            <td style="font-family:var(--font-sans);font-weight:600;"><div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(p, 26)}${p.name}</div></td>
                             <td>${p.team}</td>
                             <td><span class="position-tag">${p.pos}</span></td>
                             <td style="font-weight:700;color:var(--success);">${p.fantasyPts?.toFixed(1)}</td>

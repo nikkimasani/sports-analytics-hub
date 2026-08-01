@@ -70,9 +70,9 @@ function buildEspnUrl(sport, league, endpoint, query) {
     return `${base}/${sport}/${league}/teams?${params}`;
   }
 
-  // Standings uses a different API base path
+  // Standings uses a different API base path; level=3 returns divisions
   if (endpoint === 'standings') {
-    return `https://site.api.espn.com/apis/v2/sports/${sport}/${league}/standings`;
+    return `https://site.api.espn.com/apis/v2/sports/${sport}/${league}/standings?level=3`;
   }
 
   // Standard endpoints: scoreboard, teams, athletes (no team)

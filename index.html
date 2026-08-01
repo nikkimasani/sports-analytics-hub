@@ -2145,13 +2145,12 @@ function renderDashboard() {
    PLAYER STATS
    ============================================================ */
 function renderPlayerStats() {
-    const sport = State.currentSport;
-    const config = SPORT_CONFIG[sport];
+    // Sync sport dropdown to current sport
+    const sportFilter = document.getElementById('playerSportFilter');
+    if (sportFilter) sportFilter.value = State.currentSport;
 
-    // Update position filter
-    const posFilter = document.getElementById('playerPosFilter');
-    posFilter.innerHTML = '<option value="all">All Positions</option>' +
-        config.positions.map(p => `<option value="${p}">${p}</option>`).join('');
+    // Update positions to match
+    updatePlayerPositions();
 
     filterPlayers();
 }

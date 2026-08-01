@@ -1299,7 +1299,17 @@ input, select, textarea { font-family: inherit; color: inherit; }
 
             <!-- ============ LIVE SCORES VIEW ============ -->
             <div class="view" id="view-live">
-                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Live Scores</h2>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;">Live Scores</h2>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span id="liveLastUpdated" style="font-size:0.75rem;color:var(--text-muted);"></span>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;">
+                            <input type="checkbox" id="liveAutoRefresh" checked onchange="toggleLiveAutoRefresh()" style="accent-color:var(--accent);">
+                            Auto (30s)
+                        </label>
+                        <button class="btn btn-sm btn-secondary" onclick="renderLiveScores()" style="font-size:0.78rem;">↻ Refresh</button>
+                    </div>
+                </div>
                 <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Real-time scores and game updates</p>
                 <div id="liveScoresContainer" class="card-grid card-grid-3"></div>
             </div>
@@ -2150,6 +2160,10 @@ function openModelTool(modelName) {
         toolHtml = renderInjuryImpactCalculator();
     } else if (modelName === 'Draft Value Analyzer') {
         toolHtml = renderDraftValueCalculator();
+    } else if (modelName === 'Hierarchical Sports Model') {
+        toolHtml = renderHierarchicalCalculator();
+    } else if (modelName === 'Player Tracking Metrics') {
+        toolHtml = renderTrackingMetricsCalculator();
     } else {
         toolHtml = `<div class="card" style="margin-top:20px;text-align:center;padding:40px;" id="modelToolPanel">
             <div style="font-size:2rem;margin-bottom:12px;">🔧</div>
@@ -2176,6 +2190,8 @@ function openModelTool(modelName) {
     if (modelName === 'Bayesian Player Projections') calculateBayesian();
     if (modelName === 'Injury Impact Model') calculateInjuryImpact();
     if (modelName === 'Draft Value Analyzer') calculateDraftValue();
+    if (modelName === 'Hierarchical Sports Model') calculateHierarchical();
+    if (modelName === 'Player Tracking Metrics') calculateTracking();
 }
 
 function renderEloCalculator() {
@@ -2913,6 +2929,30 @@ async function renderLiveScores() {
             </div>
         </div>
     `).join('') : '<div class="empty-state"><div class="icon">📺</div><div class="title">No Games Today</div><div class="subtitle">Check back on game day for live scores.</div></div>';
+
+    // Update timestamp
+    const ts = document.getElementById('liveLastUpdated');
+    if (ts) ts.textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+    // Start auto-refresh if checked
+    startLiveAutoRefresh();
+}
+
+let liveRefreshTimer = null;
+function startLiveAutoRefresh() {
+    if (liveRefreshTimer) clearInterval(liveRefreshTimer);
+    const cb = document.getElementById('liveAutoRefresh');
+    if (cb && cb.checked && State.currentView === 'live') {
+        liveRefreshTimer = setInterval(() => {
+            if (State.currentView === 'live') renderLiveScores();
+            else { clearInterval(liveRefreshTimer); liveRefreshTimer = null; }
+        }, 30000);
+    }
+}
+function toggleLiveAutoRefresh() {
+    if (liveRefreshTimer) { clearInterval(liveRefreshTimer); liveRefreshTimer = null; }
+    const cb = document.getElementById('liveAutoRefresh');
+    if (cb && cb.checked) startLiveAutoRefresh();
 }
 
 /* ============================================================
@@ -4264,6 +4304,193 @@ function calculateDraftValue() {
         </div>
         <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;color:var(--text-secondary);">
             <strong>Analysis:</strong> At ADP ${adp} in a ${leagueSize}-team league, this player projects ${projFpts.toFixed(1)} FPTS/g (adj. ${(projFpts * injuryMult).toFixed(1)} for injury risk). ${surplus > 3 ? 'Strong buy — significantly outperforming draft cost.' : surplus > 0 ? 'Solid pick — fair-to-good value at this slot.' : 'Consider alternatives — being overdrafted relative to projected output.'}
+        </div>`;
+}
+
+/* ============================================================
+   HIERARCHICAL SPORTS MODEL CALCULATOR
+   ============================================================ */
+function renderHierarchicalCalculator() {
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Hierarchical Sports Model</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Multi-level model decomposing performance into player talent, team system effects, and league-wide trends. Estimates partial pooling to separate signal from noise.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div class="form-group"><label class="form-label">Player Raw Stat</label><input type="number" class="form-input" id="hierPlayerStat" value="24.5" step="0.1" oninput="calculateHierarchical()"></div>
+                <div class="form-group"><label class="form-label">Team Avg at Position</label><input type="number" class="form-input" id="hierTeamAvg" value="18.0" step="0.1" oninput="calculateHierarchical()"></div>
+                <div class="form-group"><label class="form-label">League Avg at Position</label><input type="number" class="form-input" id="hierLeagueAvg" value="16.5" step="0.1" oninput="calculateHierarchical()"></div>
+                <div class="form-group"><label class="form-label">Games Played</label><input type="number" class="form-input" id="hierGames" value="35" min="1" max="82" oninput="calculateHierarchical()"></div>
+                <div class="form-group"><label class="form-label">Player Variance</label><input type="number" class="form-input" id="hierPlayerVar" value="6.0" step="0.1" oninput="calculateHierarchical()"></div>
+                <div class="form-group"><label class="form-label">Team System Boost %</label><input type="number" class="form-input" id="hierTeamBoost" value="8" min="-20" max="30" step="0.5" oninput="calculateHierarchical()"></div>
+            </div>
+            <div id="hierResult" style="margin-top:20px;"></div>
+        </div>`;
+}
+
+function calculateHierarchical() {
+    const playerStat = parseFloat(document.getElementById('hierPlayerStat').value) || 0;
+    const teamAvg = parseFloat(document.getElementById('hierTeamAvg').value) || 0;
+    const leagueAvg = parseFloat(document.getElementById('hierLeagueAvg').value) || 0;
+    const games = parseInt(document.getElementById('hierGames').value) || 1;
+    const playerVar = parseFloat(document.getElementById('hierPlayerVar').value) || 1;
+    const teamBoost = parseFloat(document.getElementById('hierTeamBoost').value) || 0;
+
+    // Shrinkage: partial pooling toward league mean based on sample size
+    const reliability = games / (games + 20); // 20 is a regularization constant
+    const shrunkPlayer = leagueAvg + reliability * (playerStat - leagueAvg);
+
+    // Decompose into levels
+    const teamEffect = teamAvg - leagueAvg;
+    const teamSystemEffect = playerStat * (teamBoost / 100);
+    const playerTalent = shrunkPlayer - leagueAvg - teamEffect;
+    const residual = playerStat - shrunkPlayer;
+
+    // True talent estimate (removing system and noise)
+    const trueTalent = leagueAvg + playerTalent;
+    const contextNeutral = playerStat - teamSystemEffect;
+
+    // Percentile estimate (assume normal)
+    const zScore = (shrunkPlayer - leagueAvg) / (playerVar || 1);
+    const percentile = Math.min(99.9, Math.max(0.1, (0.5 * (1 + erf(zScore / Math.sqrt(2)))) * 100));
+
+    function erf(x) {
+        const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+        const sign=x<0?-1:1; x=Math.abs(x);
+        const t=1/(1+p*x); const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+        return sign*y;
+    }
+
+    const shrinkPct = ((1 - reliability) * 100).toFixed(0);
+    const tierLabel = percentile >= 95 ? 'Elite' : percentile >= 80 ? 'Above Average' : percentile >= 50 ? 'Average' : percentile >= 20 ? 'Below Average' : 'Replacement';
+    const tierColor = percentile >= 95 ? 'var(--success)' : percentile >= 80 ? '#2e7d32' : percentile >= 50 ? 'var(--warning)' : percentile >= 20 ? '#e65100' : 'var(--danger)';
+
+    document.getElementById('hierResult').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">${shrunkPlayer.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Shrunk Estimate</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">${trueTalent.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">True Talent</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">${contextNeutral.toFixed(1)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Context-Neutral</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border:1px solid ${tierColor};border-radius:var(--radius);text-align:center;">
+                <div style="font-weight:900;font-size:1.1rem;color:${tierColor};">${tierLabel}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">P${percentile.toFixed(0)} Tier</div>
+            </div>
+        </div>
+        <div style="margin-bottom:16px;">
+            <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;">Variance Decomposition</div>
+            <div style="display:flex;height:28px;border-radius:var(--radius);overflow:hidden;font-size:0.7rem;font-weight:700;">
+                <div style="flex:${Math.abs(leagueAvg)};background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;">League ${leagueAvg.toFixed(1)}</div>
+                <div style="flex:${Math.max(0.5,Math.abs(teamEffect))};background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;">Team ${teamEffect >= 0 ? '+' : ''}${teamEffect.toFixed(1)}</div>
+                <div style="flex:${Math.max(0.5,Math.abs(playerTalent))};background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;">Talent ${playerTalent >= 0 ? '+' : ''}${playerTalent.toFixed(1)}</div>
+                <div style="flex:${Math.max(0.5,Math.abs(residual))};background:var(--text-muted);color:#fff;display:flex;align-items:center;justify-content:center;">Noise ${residual >= 0 ? '+' : ''}${residual.toFixed(1)}</div>
+            </div>
+        </div>
+        <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;color:var(--text-secondary);">
+            <strong>Pooling:</strong> ${shrinkPct}% shrinkage toward league mean (${games} games). Team system adds ${teamSystemEffect >= 0 ? '+' : ''}${teamSystemEffect.toFixed(1)} pts via usage/pace. Raw ${playerStat.toFixed(1)} → regressed ${shrunkPlayer.toFixed(1)} after accounting for noise.
+        </div>`;
+}
+
+/* ============================================================
+   PLAYER TRACKING METRICS CALCULATOR
+   ============================================================ */
+function renderTrackingMetricsCalculator() {
+    return `
+        <div class="card" style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Player Tracking Metrics Analyzer</div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">Analyze NBA player tracking data — speed, distance, touches, and shot quality — to build a composite hustle + impact score.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div class="form-group"><label class="form-label">Avg Speed (mph)</label><input type="number" class="form-input" id="trkSpeed" value="4.5" step="0.1" oninput="calculateTracking()"></div>
+                <div class="form-group"><label class="form-label">Distance/Game (mi)</label><input type="number" class="form-input" id="trkDistance" value="2.6" step="0.1" oninput="calculateTracking()"></div>
+                <div class="form-group"><label class="form-label">Touches/Game</label><input type="number" class="form-input" id="trkTouches" value="65" step="1" oninput="calculateTracking()"></div>
+                <div class="form-group"><label class="form-label">Avg Touch Time (sec)</label><input type="number" class="form-input" id="trkTouchTime" value="2.8" step="0.1" oninput="calculateTracking()"></div>
+                <div class="form-group"><label class="form-label">Contested Shot %</label><input type="number" class="form-input" id="trkContested" value="42" min="0" max="100" step="1" oninput="calculateTracking()"></div>
+                <div class="form-group"><label class="form-label">Open Shot %</label><input type="number" class="form-input" id="trkOpen" value="38" min="0" max="100" step="1" oninput="calculateTracking()"></div>
+                <div class="form-group"><label class="form-label">Rebounds Chances/Game</label><input type="number" class="form-input" id="trkRebChances" value="12" step="0.1" oninput="calculateTracking()"></div>
+                <div class="form-group"><label class="form-label">Reb Chance Conversion %</label><input type="number" class="form-input" id="trkRebConv" value="55" min="0" max="100" step="1" oninput="calculateTracking()"></div>
+                <div class="form-group"><label class="form-label">Deflections/Game</label><input type="number" class="form-input" id="trkDeflections" value="3.2" step="0.1" oninput="calculateTracking()"></div>
+            </div>
+            <div id="trkResult" style="margin-top:20px;"></div>
+        </div>`;
+}
+
+function calculateTracking() {
+    const speed = parseFloat(document.getElementById('trkSpeed').value) || 0;
+    const distance = parseFloat(document.getElementById('trkDistance').value) || 0;
+    const touches = parseInt(document.getElementById('trkTouches').value) || 0;
+    const touchTime = parseFloat(document.getElementById('trkTouchTime').value) || 0;
+    const contested = parseFloat(document.getElementById('trkContested').value) || 0;
+    const openPct = parseFloat(document.getElementById('trkOpen').value) || 0;
+    const rebChances = parseFloat(document.getElementById('trkRebChances').value) || 0;
+    const rebConv = parseFloat(document.getElementById('trkRebConv').value) || 0;
+    const deflections = parseFloat(document.getElementById('trkDeflections').value) || 0;
+
+    // Normalize each metric to a 0-100 scale based on NBA ranges
+    const speedScore = Math.min(100, (speed / 5.5) * 100);
+    const distanceScore = Math.min(100, (distance / 3.0) * 100);
+    const touchScore = Math.min(100, (touches / 90) * 100);
+    const quickDecision = Math.min(100, Math.max(0, (4.0 - touchTime) / 3.0 * 100));
+    const shotDifficulty = contested;
+    const shotQuality = openPct;
+    const rebScore = Math.min(100, (rebChances / 15) * 100);
+    const rebEfficiency = rebConv;
+    const hustleScore = Math.min(100, (deflections / 5.0) * 100);
+
+    // Composite scores
+    const offenseComposite = (touchScore * 0.3 + quickDecision * 0.2 + shotQuality * 0.25 + shotDifficulty * 0.25);
+    const defenseComposite = (hustleScore * 0.35 + rebEfficiency * 0.3 + speedScore * 0.2 + distanceScore * 0.15);
+    const overallImpact = (offenseComposite * 0.5 + defenseComposite * 0.5);
+
+    const grade = overallImpact >= 80 ? 'A+' : overallImpact >= 70 ? 'A' : overallImpact >= 60 ? 'B+' : overallImpact >= 50 ? 'B' : overallImpact >= 40 ? 'C+' : overallImpact >= 30 ? 'C' : 'D';
+    const gradeColor = overallImpact >= 70 ? 'var(--success)' : overallImpact >= 50 ? 'var(--warning)' : 'var(--danger)';
+
+    function bar(label, value, color) {
+        return `<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px;"><span>${label}</span><span style="font-weight:700;">${value.toFixed(0)}</span></div><div style="height:6px;background:rgba(0,0,0,0.06);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${Math.min(100, value)}%;background:${color};border-radius:3px;transition:width 0.3s;"></div></div></div>`;
+    }
+
+    document.getElementById('trkResult').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">${offenseComposite.toFixed(0)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Offense Score</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.3rem;font-weight:900;">${defenseComposite.toFixed(0)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Defense Score</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border:1px solid ${gradeColor};border-radius:var(--radius);text-align:center;">
+                <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:900;color:${gradeColor};">${overallImpact.toFixed(0)}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Overall Impact</div>
+            </div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);text-align:center;">
+                <div style="font-weight:900;font-size:1.8rem;color:${gradeColor};">${grade}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Grade</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
+            <div>
+                <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;">Offense Breakdown</div>
+                ${bar('Ball Handling (touches)', touchScore, 'var(--accent)')}
+                ${bar('Quick Decisions', quickDecision, 'var(--accent)')}
+                ${bar('Shot Quality (open%)', shotQuality, '#2e7d32')}
+                ${bar('Shot Difficulty (contested%)', shotDifficulty, '#f59e0b')}
+            </div>
+            <div>
+                <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;">Defense & Hustle</div>
+                ${bar('Hustle (deflections)', hustleScore, 'var(--danger)')}
+                ${bar('Rebound Efficiency', rebEfficiency, 'var(--danger)')}
+                ${bar('Speed', speedScore, '#7c3aed')}
+                ${bar('Distance Covered', distanceScore, '#7c3aed')}
+            </div>
+        </div>
+        <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius);font-size:0.82rem;color:var(--text-secondary);">
+            <strong>Profile:</strong> ${speed >= 4.8 ? 'High-motor' : speed >= 4.2 ? 'Average-motor' : 'Low-motor'} player covering ${distance} mi/game. ${touchTime <= 2.0 ? 'Elite decision speed — moves ball quickly.' : touchTime <= 3.0 ? 'Solid decision-making pace.' : 'Holds ball longer than average — could improve pace.'} ${deflections >= 3.0 ? 'Active hands on defense.' : ''} ${rebConv >= 60 ? 'Elite rebounder when in position.' : ''}
         </div>`;
 }
 

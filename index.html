@@ -1135,6 +1135,9 @@ input, select, textarea { font-family: inherit; color: inherit; }
                 <div class="sidebar-item" onclick="showView('compare')" data-view="compare">
                     <span class="icon">⚖️</span> Compare Players
                 </div>
+                <div class="sidebar-item" onclick="showView('player-profile')" data-view="player-profile">
+                    <span class="icon">🔬</span> Player Deep Dive
+                </div>
                 <div class="sidebar-item" onclick="showView('leaders')" data-view="leaders">
                     <span class="icon">🏆</span> Leaderboards
                 </div>
@@ -1556,11 +1559,31 @@ input, select, textarea { font-family: inherit; color: inherit; }
                 <div class="settings-panel" id="settingsPanel"></div>
             </div>
 
+            <!-- ============ PLAYER DEEP DIVE / PROFILE VIEW ============ -->
+            <div class="view" id="view-player-profile">
+                <div id="playerProfileContent">
+                    <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Player Deep Dive</h2>
+                    <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Select a player to research their full profile</p>
+                    <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+                        <select class="form-select" style="width:160px;" id="profileSportFilter" onchange="updateProfilePlayerList()">
+                            <option value="nba">NBA</option>
+                            <option value="nfl">NFL</option>
+                            <option value="mlb">MLB</option>
+                            <option value="ncaa">NCAA</option>
+                        </select>
+                        <select class="form-select" style="width:300px;" id="profilePlayerSelect" onchange="renderPlayerProfile()"></select>
+                        <input type="text" class="form-input" style="width:240px;" placeholder="Search player name..." id="profileSearchInput" oninput="searchProfilePlayer()">
+                    </div>
+                    <div id="profileDisplay"></div>
+                </div>
+            </div>
+
         </main>
     </div>
 
     <div class="toast-container" id="toastContainer"></div>
 
+    <script src="data.js"></script>
     <script>
 /* ============================================================
    APP STATE
@@ -1579,64 +1602,7 @@ const State = {
     },
 };
 
-/* ============================================================
-   DATA — Player databases per sport
-   ============================================================ */
-const PLAYERS = {
-    nba: [
-        { id: 1, name: 'Nikola Jokić', team: 'DEN', pos: 'C', ppg: 26.4, rpg: 12.4, apg: 9.0, spg: 1.4, bpg: 0.9, fg: 56.3, per: 31.5, adp: 1, fantasyPts: 62.8, trend: 'up' },
-        { id: 2, name: 'Luka Dončić', team: 'LAL', pos: 'PG', ppg: 28.1, rpg: 8.3, apg: 8.8, spg: 1.3, bpg: 0.4, fg: 48.7, per: 28.2, adp: 2, fantasyPts: 55.4, trend: 'stable' },
-        { id: 3, name: 'Shai Gilgeous-Alexander', team: 'OKC', pos: 'SG', ppg: 31.4, rpg: 5.5, apg: 6.2, spg: 2.0, bpg: 0.9, fg: 53.5, per: 30.1, adp: 3, fantasyPts: 53.1, trend: 'up' },
-        { id: 4, name: 'Giannis Antetokounmpo', team: 'MIL', pos: 'PF', ppg: 31.1, rpg: 11.6, apg: 5.8, spg: 1.1, bpg: 1.5, fg: 61.1, per: 32.0, adp: 4, fantasyPts: 58.2, trend: 'up' },
-        { id: 5, name: 'Jayson Tatum', team: 'BOS', pos: 'SF', ppg: 26.9, rpg: 8.1, apg: 4.9, spg: 1.1, bpg: 0.6, fg: 47.1, per: 23.8, adp: 5, fantasyPts: 45.6, trend: 'down' },
-        { id: 6, name: 'Anthony Davis', team: 'LAL', pos: 'C', ppg: 24.7, rpg: 12.6, apg: 3.5, spg: 1.2, bpg: 2.3, fg: 55.6, per: 28.5, adp: 6, fantasyPts: 51.3, trend: 'up' },
-        { id: 7, name: 'Victor Wembanyama', team: 'SAS', pos: 'C', ppg: 24.4, rpg: 10.6, apg: 3.7, spg: 1.0, bpg: 3.6, fg: 47.2, per: 26.4, adp: 7, fantasyPts: 52.9, trend: 'up' },
-        { id: 8, name: 'Anthony Edwards', team: 'MIN', pos: 'SG', ppg: 25.9, rpg: 5.4, apg: 5.1, spg: 1.3, bpg: 0.5, fg: 46.1, per: 22.5, adp: 8, fantasyPts: 41.8, trend: 'stable' },
-        { id: 9, name: 'Kevin Durant', team: 'PHX', pos: 'SF', ppg: 27.1, rpg: 6.6, apg: 5.0, spg: 0.9, bpg: 1.2, fg: 52.3, per: 26.8, adp: 9, fantasyPts: 44.2, trend: 'down' },
-        { id: 10, name: 'Stephen Curry', team: 'GSW', pos: 'PG', ppg: 26.4, rpg: 5.1, apg: 6.1, spg: 1.0, bpg: 0.4, fg: 45.0, per: 24.1, adp: 10, fantasyPts: 42.7, trend: 'stable' },
-        { id: 11, name: 'Tyrese Haliburton', team: 'IND', pos: 'PG', ppg: 20.1, rpg: 3.9, apg: 10.9, spg: 1.2, bpg: 0.3, fg: 47.7, per: 22.8, adp: 11, fantasyPts: 44.1, trend: 'up' },
-        { id: 12, name: 'Donovan Mitchell', team: 'CLE', pos: 'SG', ppg: 23.2, rpg: 4.5, apg: 4.6, spg: 1.8, bpg: 0.4, fg: 46.2, per: 21.3, adp: 12, fantasyPts: 39.5, trend: 'stable' },
-        { id: 13, name: 'Joel Embiid', team: 'PHI', pos: 'C', ppg: 33.0, rpg: 11.2, apg: 5.7, spg: 1.1, bpg: 1.7, fg: 52.9, per: 33.6, adp: 13, fantasyPts: 56.7, trend: 'down' },
-        { id: 14, name: 'Jalen Brunson', team: 'NYK', pos: 'PG', ppg: 28.7, rpg: 3.5, apg: 6.7, spg: 0.9, bpg: 0.2, fg: 47.9, per: 23.9, adp: 14, fantasyPts: 41.0, trend: 'up' },
-        { id: 15, name: 'Trae Young', team: 'SAS', pos: 'PG', ppg: 25.7, rpg: 2.8, apg: 10.8, spg: 1.0, bpg: 0.2, fg: 43.0, per: 22.1, adp: 15, fantasyPts: 42.5, trend: 'stable' },
-        { id: 16, name: 'Jaylen Brown', team: 'BOS', pos: 'SG', ppg: 23.0, rpg: 5.5, apg: 3.6, spg: 1.2, bpg: 0.5, fg: 49.9, per: 20.1, adp: 16, fantasyPts: 35.8, trend: 'stable' },
-        { id: 17, name: 'Domantas Sabonis', team: 'SAC', pos: 'C', ppg: 19.4, rpg: 13.7, apg: 8.2, spg: 0.8, bpg: 0.5, fg: 59.4, per: 25.3, adp: 17, fantasyPts: 49.6, trend: 'up' },
-        { id: 18, name: 'De\'Aaron Fox', team: 'SAC', pos: 'PG', ppg: 26.6, rpg: 4.6, apg: 5.6, spg: 2.0, bpg: 0.4, fg: 46.5, per: 22.4, adp: 18, fantasyPts: 42.2, trend: 'stable' },
-        { id: 19, name: 'LaMelo Ball', team: 'CHA', pos: 'PG', ppg: 22.3, rpg: 5.5, apg: 8.0, spg: 1.5, bpg: 0.3, fg: 43.8, per: 21.7, adp: 19, fantasyPts: 41.6, trend: 'up' },
-        { id: 20, name: 'Chet Holmgren', team: 'OKC', pos: 'PF', ppg: 16.5, rpg: 7.9, apg: 2.4, spg: 0.8, bpg: 2.6, fg: 53.0, per: 20.2, adp: 20, fantasyPts: 36.2, trend: 'up' },
-    ],
-    nfl: [
-        { id: 101, name: 'Patrick Mahomes', team: 'KC', pos: 'QB', passYds: 4183, passTd: 26, rushYds: 389, ints: 11, adp: 3, fantasyPts: 22.1, trend: 'stable' },
-        { id: 102, name: 'Josh Allen', team: 'BUF', pos: 'QB', passYds: 3731, passTd: 28, rushYds: 531, ints: 6, adp: 1, fantasyPts: 24.8, trend: 'up' },
-        { id: 103, name: 'Ja\'Marr Chase', team: 'CIN', pos: 'WR', recYds: 1708, recTd: 17, rec: 127, targets: 158, adp: 2, fantasyPts: 23.5, trend: 'up' },
-        { id: 104, name: 'Saquon Barkley', team: 'PHI', pos: 'RB', rushYds: 2005, rushTd: 13, recYds: 278, rec: 33, adp: 4, fantasyPts: 21.4, trend: 'stable' },
-        { id: 105, name: 'CeeDee Lamb', team: 'DAL', pos: 'WR', recYds: 1194, recTd: 8, rec: 101, targets: 145, adp: 5, fantasyPts: 18.2, trend: 'down' },
-        { id: 106, name: 'Lamar Jackson', team: 'BAL', pos: 'QB', passYds: 4172, passTd: 41, rushYds: 915, ints: 4, adp: 6, fantasyPts: 26.3, trend: 'up' },
-        { id: 107, name: 'Derrick Henry', team: 'BAL', pos: 'RB', rushYds: 1921, rushTd: 16, recYds: 167, rec: 20, adp: 7, fantasyPts: 19.8, trend: 'stable' },
-        { id: 108, name: 'Tyreek Hill', team: 'MIA', pos: 'WR', recYds: 959, recTd: 6, rec: 81, targets: 127, adp: 8, fantasyPts: 14.2, trend: 'down' },
-        { id: 109, name: 'Bijan Robinson', team: 'ATL', pos: 'RB', rushYds: 1456, rushTd: 11, recYds: 456, rec: 58, adp: 9, fantasyPts: 20.1, trend: 'up' },
-        { id: 110, name: 'Amon-Ra St. Brown', team: 'DET', pos: 'WR', recYds: 1205, recTd: 10, rec: 119, targets: 146, adp: 10, fantasyPts: 19.6, trend: 'up' },
-        { id: 111, name: 'Breece Hall', team: 'NYJ', pos: 'RB', rushYds: 1012, rushTd: 5, recYds: 410, rec: 47, adp: 11, fantasyPts: 15.3, trend: 'down' },
-        { id: 112, name: 'Travis Kelce', team: 'KC', pos: 'TE', recYds: 823, recTd: 3, rec: 97, targets: 127, adp: 12, fantasyPts: 12.8, trend: 'down' },
-    ],
-    mlb: [
-        { id: 201, name: 'Shohei Ohtani', team: 'LAD', pos: 'DH', avg: .310, hr: 54, rbi: 130, sb: 59, ops: 1.036, war: 9.2, adp: 1, fantasyPts: 48.2, trend: 'up' },
-        { id: 202, name: 'Aaron Judge', team: 'NYY', pos: 'RF', avg: .322, hr: 58, rbi: 144, sb: 3, ops: 1.159, war: 10.8, adp: 2, fantasyPts: 42.7, trend: 'stable' },
-        { id: 203, name: 'Mookie Betts', team: 'LAD', pos: 'SS', avg: .289, hr: 24, rbi: 69, sb: 14, ops: .858, war: 5.1, adp: 3, fantasyPts: 35.4, trend: 'down' },
-        { id: 204, name: 'Ronald Acuña Jr.', team: 'ATL', pos: 'RF', avg: .279, hr: 15, rbi: 39, sb: 24, ops: .822, war: 3.8, adp: 4, fantasyPts: 31.2, trend: 'up' },
-        { id: 205, name: 'Trea Turner', team: 'PHI', pos: 'SS', avg: .295, hr: 21, rbi: 63, sb: 28, ops: .832, war: 5.5, adp: 5, fantasyPts: 33.8, trend: 'up' },
-        { id: 206, name: 'Freddie Freeman', team: 'LAD', pos: '1B', avg: .282, hr: 22, rbi: 89, sb: 3, ops: .854, war: 5.7, adp: 6, fantasyPts: 30.1, trend: 'stable' },
-        { id: 207, name: 'Bobby Witt Jr.', team: 'KC', pos: 'SS', avg: .332, hr: 32, rbi: 109, sb: 31, ops: .957, war: 8.1, adp: 7, fantasyPts: 40.5, trend: 'up' },
-        { id: 208, name: 'Corey Seager', team: 'TEX', pos: 'SS', avg: .278, hr: 33, rbi: 90, sb: 3, ops: .872, war: 5.4, adp: 8, fantasyPts: 32.6, trend: 'stable' },
-    ],
-    ncaa: [
-        { id: 301, name: 'Carson Beck', team: 'Miami', pos: 'QB', passYds: 3941, passTd: 24, rushYds: 78, ints: 12, adp: 15, fantasyPts: 18.2, trend: 'down' },
-        { id: 302, name: 'Travis Hunter', team: 'NFL', pos: 'WR/CB', recYds: 1152, recTd: 14, tackles: 32, ints: 4, adp: 1, fantasyPts: 22.1, trend: 'up' },
-        { id: 303, name: 'Cam Ward', team: 'NFL', pos: 'QB', passYds: 4313, passTd: 39, rushYds: 282, ints: 7, adp: 2, fantasyPts: 24.8, trend: 'up' },
-        { id: 304, name: 'Ashton Jeanty', team: 'NFL', pos: 'RB', rushYds: 2497, rushTd: 29, recYds: 119, rec: 14, adp: 3, fantasyPts: 28.4, trend: 'up' },
-        { id: 305, name: 'Tetairoa McMillan', team: 'NFL', pos: 'WR', recYds: 1319, recTd: 8, rec: 84, targets: 120, adp: 4, fantasyPts: 17.6, trend: 'stable' },
-    ],
-};
+/* PLAYERS loaded from data.js */
 
 /* ============================================================
    SPORT CONFIG
@@ -1762,6 +1728,7 @@ function initView(viewId) {
         case 'projections': renderProjections(); break;
         case 'betting': renderBettingModels(); break;
         case 'settings': renderSettings(); break;
+        case 'player-profile': initPlayerProfileView(); break;
     }
 }
 
@@ -2959,19 +2926,254 @@ function handleGlobalSearch(query) {
 }
 
 /* ============================================================
-   PLAYER PROFILE (stub)
+   PLAYER DEEP DIVE / PROFILE
    ============================================================ */
-function showPlayerProfile(id) {
-    // Find player across all sports
-    let player = null;
-    let sport = null;
+function findPlayerById(id) {
+    let player = null, sport = null;
     Object.entries(PLAYERS).forEach(([s, players]) => {
         const found = players.find(p => p.id === id);
         if (found) { player = found; sport = s; }
     });
-    if (!player) return;
+    return { player, sport };
+}
 
-    showToast(`${player.name} — ${player.team} · ${player.pos} · ${player.fantasyPts?.toFixed(1)} FPTS`, 'info');
+function showPlayerProfile(id) {
+    const { player, sport } = findPlayerById(id);
+    if (!player) return;
+    State.currentSport = sport;
+    document.querySelectorAll('.sport-pill').forEach(p => p.classList.toggle('active', p.dataset.sport === sport));
+    document.getElementById('profileSportFilter').value = sport;
+    updateProfilePlayerList();
+    document.getElementById('profilePlayerSelect').value = id;
+    showView('player-profile');
+    renderPlayerProfile();
+}
+
+function initPlayerProfileView() {
+    const sel = document.getElementById('profileSportFilter');
+    if (sel) sel.value = State.currentSport;
+    updateProfilePlayerList();
+}
+
+function updateProfilePlayerList() {
+    const sport = document.getElementById('profileSportFilter').value;
+    const players = (PLAYERS[sport] || []).sort((a, b) => a.name.localeCompare(b.name));
+    const sel = document.getElementById('profilePlayerSelect');
+    sel.innerHTML = '<option value="">— Choose a player —</option>' + players.map(p =>
+        `<option value="${p.id}">${p.name} (${p.team} · ${p.pos})</option>`
+    ).join('');
+}
+
+function searchProfilePlayer() {
+    const q = document.getElementById('profileSearchInput').value.toLowerCase();
+    if (q.length < 2) return;
+    const sport = document.getElementById('profileSportFilter').value;
+    const match = (PLAYERS[sport] || []).find(p => p.name.toLowerCase().includes(q));
+    if (match) {
+        document.getElementById('profilePlayerSelect').value = match.id;
+        renderPlayerProfile();
+    }
+}
+
+function renderPlayerProfile() {
+    const id = parseInt(document.getElementById('profilePlayerSelect').value);
+    if (!id) { document.getElementById('profileDisplay').innerHTML = ''; return; }
+    const sport = document.getElementById('profileSportFilter').value;
+    const config = SPORT_CONFIG[sport];
+    const players = PLAYERS[sport] || [];
+    const p = players.find(pl => pl.id === id);
+    if (!p) return;
+
+    // Rank among peers
+    const sorted = [...players].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0));
+    const rank = sorted.findIndex(pl => pl.id === id) + 1;
+    const posPlayers = sorted.filter(pl => pl.pos === p.pos);
+    const posRank = posPlayers.findIndex(pl => pl.id === id) + 1;
+
+    // Percentiles
+    function pctile(key) {
+        const vals = players.map(pl => pl[key]).filter(v => v !== undefined).sort((a, b) => a - b);
+        if (!vals.length) return 0;
+        const v = p[key]; if (v === undefined) return 0;
+        const idx = vals.filter(x => x < v).length;
+        return Math.round((idx / vals.length) * 100);
+    }
+
+    // Comparable players (same position, closest fantasy points)
+    const comps = posPlayers.filter(pl => pl.id !== id)
+        .sort((a, b) => Math.abs((a.fantasyPts||0) - (p.fantasyPts||0)) - Math.abs((b.fantasyPts||0) - (p.fantasyPts||0)))
+        .slice(0, 3);
+
+    // Stat bars
+    const statBars = config.statKeys.map((key, i) => {
+        const pct = pctile(key);
+        const color = pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--accent)' : pct >= 30 ? 'var(--warning)' : 'var(--danger)';
+        return `
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                <div style="width:80px;font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);">${config.statCols[i]}</div>
+                <div style="flex:1;height:10px;background:var(--bg-input);border-radius:5px;overflow:hidden;">
+                    <div style="height:100%;width:${pct}%;background:${color};border-radius:5px;transition:width 0.5s;"></div>
+                </div>
+                <div style="width:60px;text-align:right;font-family:var(--font-mono);font-weight:700;font-size:0.85rem;">${p[key] !== undefined ? p[key] : '—'}</div>
+                <div style="width:40px;text-align:right;font-size:0.72rem;color:${color};font-weight:700;">${pct}%</div>
+            </div>
+        `;
+    }).join('');
+
+    // Bio details for expanded data
+    const bioItems = [];
+    if (p.age) bioItems.push(['Age', p.age]);
+    if (p.exp !== undefined) bioItems.push(['Experience', p.exp + ' yrs']);
+    if (p.draft) bioItems.push(['Draft', p.draft]);
+    if (p.salary) bioItems.push(['Salary', p.salary]);
+    if (p.conf) bioItems.push(['Conference', p.conf]);
+    if (p.injury) bioItems.push(['Injury', `<span style="color:var(--danger);">${p.injury}</span>`]);
+
+    // Sport-specific extra stats
+    let extraStats = '';
+    if (sport === 'nba') {
+        extraStats = [
+            ['TS%', p.ts], ['BPM', p.bpm], ['Win Shares', p.ws],
+            ['Usage Rate', p.usg ? p.usg + '%' : '—'], ['FT%', p.ft], ['MPG', p.mpg], ['TO/G', p.tpg]
+        ].filter(([,v]) => v !== undefined).map(([l, v]) => `
+            <div style="text-align:center;padding:12px;background:var(--bg-input);border-radius:var(--radius);">
+                <div style="font-family:var(--font-mono);font-weight:800;font-size:1.2rem;">${v}</div>
+                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-top:2px;">${l}</div>
+            </div>
+        `).join('');
+    } else if (sport === 'nfl') {
+        const nflExtra = [];
+        if (p.pos === 'QB') { if (p.comp) nflExtra.push(['Comp%', p.comp]); if (p.qbr) nflExtra.push(['QBR', p.qbr]); if (p.rushTd) nflExtra.push(['Rush TD', p.rushTd]); }
+        if (p.pos === 'RB') { if (p.rushTd) nflExtra.push(['Rush TD', p.rushTd]); if (p.rec) nflExtra.push(['Rec', p.rec]); if (p.recYds) nflExtra.push(['Rec YDS', p.recYds]); if (p.targets) nflExtra.push(['Targets', p.targets]); }
+        if (p.pos === 'WR') { if (p.rec) nflExtra.push(['Rec', p.rec]); if (p.recTd) nflExtra.push(['Rec TD', p.recTd]); if (p.targets) nflExtra.push(['Targets', p.targets]); if (p.recYds) nflExtra.push(['Rec YDS', p.recYds]); }
+        if (p.pos === 'TE') { if (p.rec) nflExtra.push(['Rec', p.rec]); if (p.recTd) nflExtra.push(['Rec TD', p.recTd]); if (p.targets) nflExtra.push(['Targets', p.targets]); }
+        extraStats = nflExtra.map(([l, v]) => `
+            <div style="text-align:center;padding:12px;background:var(--bg-input);border-radius:var(--radius);">
+                <div style="font-family:var(--font-mono);font-weight:800;font-size:1.2rem;">${v}</div>
+                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-top:2px;">${l}</div>
+            </div>
+        `).join('');
+    } else if (sport === 'mlb') {
+        const mlbExtra = [];
+        if (p.pos === 'SP' || p.pos === 'RP') { if (p.era !== undefined) mlbExtra.push(['ERA', p.era]); if (p.wins) mlbExtra.push(['W', p.wins]); if (p.so) mlbExtra.push(['K', p.so]); if (p.whip) mlbExtra.push(['WHIP', p.whip]); if (p.ip) mlbExtra.push(['IP', p.ip]); if (p.fip) mlbExtra.push(['FIP', p.fip]); }
+        else { if (p.obp) mlbExtra.push(['OBP', p.obp]); if (p.slg) mlbExtra.push(['SLG', p.slg]); if (p.wrc) mlbExtra.push(['wRC+', p.wrc]); if (p.r) mlbExtra.push(['Runs', p.r]); }
+        extraStats = mlbExtra.map(([l, v]) => `
+            <div style="text-align:center;padding:12px;background:var(--bg-input);border-radius:var(--radius);">
+                <div style="font-family:var(--font-mono);font-weight:800;font-size:1.2rem;">${v}</div>
+                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-top:2px;">${l}</div>
+            </div>
+        `).join('');
+    }
+
+    // Fantasy analysis
+    const value = p.adp ? (p.fantasyPts / p.adp).toFixed(2) : '—';
+    const floor = (p.fantasyPts * 0.75).toFixed(1);
+    const ceiling = (p.fantasyPts * 1.25).toFixed(1);
+
+    document.getElementById('profileDisplay').innerHTML = `
+        <!-- HERO -->
+        <div class="player-hero">
+            <div class="player-avatar" style="background:linear-gradient(135deg, ${config.color}, #8b5cf6);">${p.name.split(' ').map(n=>n[0]).join('')}</div>
+            <div class="player-headline" style="flex:1;">
+                <h1>${p.name}</h1>
+                <div class="team-pos">${p.team} · <span class="position-tag">${p.pos}</span> · <span class="badge badge-${sport}">${config.label}</span>
+                    ${p.injury ? ` · <span style="color:var(--danger);font-weight:600;">Injured: ${p.injury}</span>` : ''}
+                </div>
+                <div class="player-quick-stats" style="margin-top:12px;">
+                    <div class="player-quick-stat"><div class="qs-value" style="color:var(--success);">${p.fantasyPts?.toFixed(1) || '—'}</div><div class="qs-label">FPTS/G</div></div>
+                    <div class="player-quick-stat"><div class="qs-value">#${rank}</div><div class="qs-label">Overall</div></div>
+                    <div class="player-quick-stat"><div class="qs-value">#${posRank}</div><div class="qs-label">${p.pos} Rank</div></div>
+                    <div class="player-quick-stat"><div class="qs-value">${p.adp || '—'}</div><div class="qs-label">ADP</div></div>
+                    <div class="player-quick-stat"><div class="qs-value" style="color:${p.trend==='up'?'var(--success)':p.trend==='down'?'var(--danger)':'var(--text-muted)'};">${p.trend === 'up' ? '▲ Rising' : p.trend === 'down' ? '▼ Falling' : '— Stable'}</div><div class="qs-label">Trend</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BIO & EXTRA STATS -->
+        <div class="card-grid card-grid-2" style="margin-bottom:20px;">
+            ${bioItems.length ? `
+            <div class="card">
+                <div class="card-title" style="margin-bottom:12px;">Player Info</div>
+                ${bioItems.map(([l, v]) => `
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                        <span style="color:var(--text-muted);font-size:0.85rem;">${l}</span>
+                        <span style="font-weight:600;font-size:0.85rem;">${v}</span>
+                    </div>
+                `).join('')}
+            </div>` : ''}
+            <div class="card">
+                <div class="card-title" style="margin-bottom:12px;">Fantasy Valuation</div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+                    <div style="text-align:center;padding:16px;background:var(--bg-input);border-radius:var(--radius);">
+                        <div style="font-family:var(--font-mono);font-weight:800;font-size:1.5rem;color:var(--success);">${p.fantasyPts?.toFixed(1)}</div>
+                        <div style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Proj FPTS/G</div>
+                    </div>
+                    <div style="text-align:center;padding:16px;background:var(--bg-input);border-radius:var(--radius);">
+                        <div style="font-family:var(--font-mono);font-weight:800;font-size:1.5rem;color:var(--accent);">${value}</div>
+                        <div style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Value / ADP</div>
+                    </div>
+                    <div style="text-align:center;padding:16px;background:var(--bg-input);border-radius:var(--radius);">
+                        <div style="font-family:var(--font-mono);font-weight:800;font-size:1.5rem;color:var(--danger);">${floor}</div>
+                        <div style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Floor</div>
+                    </div>
+                    <div style="text-align:center;padding:16px;background:var(--bg-input);border-radius:var(--radius);">
+                        <div style="font-family:var(--font-mono);font-weight:800;font-size:1.5rem;color:var(--success);">${ceiling}</div>
+                        <div style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Ceiling</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STAT PERCENTILES -->
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Statistical Percentiles (vs. ${config.label} Players)</div>
+            ${statBars}
+        </div>
+
+        ${extraStats ? `
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Extended Stats</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;">
+                ${extraStats}
+            </div>
+        </div>
+        ` : ''}
+
+        <!-- SIMILAR PLAYERS -->
+        ${comps.length ? `
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-title" style="margin-bottom:16px;">Most Similar Players</div>
+            <div class="card-grid card-grid-3">
+                ${comps.map(c => `
+                    <div style="background:var(--bg-input);border-radius:var(--radius);padding:16px;cursor:pointer;" onclick="showPlayerProfile(${c.id})">
+                        <div style="font-weight:700;margin-bottom:4px;">${c.name}</div>
+                        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;">${c.team} · ${c.pos}</div>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span style="font-family:var(--font-mono);font-weight:700;color:var(--success);">${c.fantasyPts?.toFixed(1)} FPTS</span>
+                            <span style="font-size:0.78rem;color:var(--text-muted);">ADP ${c.adp}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        ` : ''}
+
+        <!-- DRAFT VERDICT -->
+        <div class="card">
+            <div class="card-title" style="margin-bottom:12px;">Draft Verdict</div>
+            <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius);line-height:1.7;font-size:0.9rem;color:var(--text-secondary);">
+                <strong style="color:var(--text-primary);">${p.name}</strong> ranks
+                <strong>#${rank}</strong> overall and <strong>#${posRank}</strong> at ${p.pos} in ${config.label}.
+                ${p.adp && rank < p.adp ? `At ADP ${p.adp}, he's a <strong style="color:var(--success);">value pick</strong> — his production outperforms his draft cost by ${((p.fantasyPts / (p.adp||1)) - 1).toFixed(1)} FPTS/ADP.` :
+                  p.adp && rank > p.adp ? `At ADP ${p.adp}, he may be <strong style="color:var(--warning);">slightly overvalued</strong> — consider waiting unless positional need is urgent.` :
+                  `At ADP ${p.adp || '—'}, he's <strong>fairly valued</strong> relative to production.`}
+                ${p.trend === 'up' ? ` Currently <strong style="color:var(--success);">trending up</strong> — could outperform projections.` :
+                  p.trend === 'down' ? ` Currently <strong style="color:var(--danger);">trending down</strong> — monitor closely before drafting.` : ''}
+                ${p.injury ? ` <strong style="color:var(--danger);">Injury note:</strong> ${p.injury} — factor health risk into draft position.` : ''}
+                Projected range: <strong>${floor}</strong> (floor) to <strong>${ceiling}</strong> (ceiling) FPTS/G.
+            </div>
+        </div>
+    `;
 }
 
 /* ============================================================

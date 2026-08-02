@@ -320,6 +320,14 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
     box-shadow: var(--shadow);
 }
 
+.dash-widget.drag-over {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.25);
+}
+.dash-widget[draggable="true"]:active {
+    cursor: grabbing;
+}
+
 .card-header {
     display: flex;
     align-items: center;
@@ -1514,40 +1522,18 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
 
             <!-- ============ DASHBOARD VIEW ============ -->
             <div class="view active" id="view-dashboard">
-                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Dashboard</h2>
-                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Your sports analytics command center</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:0;">Dashboard</h2>
+                    <button class="btn btn-sm btn-secondary" onclick="resetDashboardWidgets()" title="Reset widget order">↻ Reset Layout</button>
+                </div>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Your sports analytics command center — drag widgets to reorder</p>
 
                 <div class="card-grid card-grid-4" style="margin-bottom:24px;" id="dashboardStats">
                     <!-- Populated by JS -->
                 </div>
 
-                <div class="hash-divider" aria-hidden="true"><div class="line"></div><div class="ticks"><i></i><i></i><i></i></div><div class="line"></div></div>
-
-                <div class="card-grid card-grid-2" style="margin-bottom:24px;">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">📈 Trending Players</div>
-                            <button class="btn btn-sm btn-secondary" onclick="showView('players')">View All</button>
-                        </div>
-                        <div id="trendingPlayers"></div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">🔥 Fantasy Risers</div>
-                            <button class="btn btn-sm btn-secondary" onclick="showView('fantasy-hub')">Fantasy Hub</button>
-                        </div>
-                        <div id="fantasyRisers"></div>
-                    </div>
-                </div>
-
-                <div class="hash-divider" aria-hidden="true"><div class="line"></div><div class="ticks"><i></i><i></i><i></i></div><div class="line"></div></div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">🏆 League Leaders — <span id="dashSportLabel">NBA</span></div>
-                        <div class="view-tabs" id="dashLeaderTabs"></div>
-                    </div>
-                    <div id="dashLeaderTable"></div>
+                <div id="dashWidgetContainer" style="display:flex;flex-direction:column;gap:20px;">
+                    <!-- Widgets populated by renderDashboard() -->
                 </div>
             </div>
 
@@ -2504,12 +2490,31 @@ function initView(viewId) {
 /* ============================================================
    DASHBOARD
    ============================================================ */
+const DASH_WIDGETS = [
+    { id: 'trending', title: '📈 Trending Players', action: 'showView(\'players\')', actionLabel: 'View All' },
+    { id: 'risers', title: '🔥 Fantasy Risers', action: 'showView(\'fantasy-hub\')', actionLabel: 'Fantasy Hub' },
+    { id: 'leaders', title: '🏆 League Leaders', fullWidth: true },
+    { id: 'watchlist', title: '⭐ Watchlist Preview' },
+    { id: 'streaks', title: '🔥 Streak Alerts' },
+    { id: 'scores', title: '🏟️ Live Scores Mini', fullWidth: true },
+];
+
+function getDashWidgetOrder() {
+    try { return JSON.parse(localStorage.getItem('sv_widget_order') || 'null'); } catch { return null; }
+}
+function saveDashWidgetOrder(order) {
+    localStorage.setItem('sv_widget_order', JSON.stringify(order));
+}
+function resetDashboardWidgets() {
+    localStorage.removeItem('sv_widget_order');
+    renderDashboard();
+    showToast('Dashboard layout reset', 'info');
+}
+
 function renderDashboard() {
     const sport = State.currentSport;
     const players = PLAYERS[sport] || [];
     const config = SPORT_CONFIG[sport];
-
-    document.getElementById('dashSportLabel').textContent = config.label;
 
     // Stat tiles
     const statsHtml = [
@@ -2525,60 +2530,208 @@ function renderDashboard() {
     `).join('');
     document.getElementById('dashboardStats').innerHTML = statsHtml;
 
-    // Trending players
-    const trending = [...players].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 5);
-    document.getElementById('trendingPlayers').innerHTML = trending.map((p, i) => `
-        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < 4 ? 'border-bottom:1px solid var(--border);' : ''}">
-            <span style="font-family:var(--font-mono);font-weight:700;color:var(--text-muted);width:24px;">${i + 1}</span>
-            ${playerAvatarHtml(p, 32)}
-            <div style="flex:1;">
-                <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
-                <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;">
-                ${sparklineHtml(p, 50, 22)}
-                <span style="font-family:var(--font-mono);font-weight:700;${p.trend === 'up' ? 'color:var(--success)' : p.trend === 'down' ? 'color:var(--danger)' : 'color:var(--text-secondary)'}">${p.fantasyPts?.toFixed(1) || '—'}</span>
-            </div>
-        </div>
-    `).join('');
+    // Get widget order (saved or default)
+    const savedOrder = getDashWidgetOrder();
+    const widgetOrder = savedOrder || DASH_WIDGETS.map(w => w.id);
+    const orderedWidgets = widgetOrder.map(id => DASH_WIDGETS.find(w => w.id === id)).filter(Boolean);
+    // Add any new widgets not in saved order
+    DASH_WIDGETS.forEach(w => { if (!orderedWidgets.find(ow => ow.id === w.id)) orderedWidgets.push(w); });
 
-    // Fantasy risers
-    const risers = players.filter(p => p.trend === 'up').slice(0, 5);
-    document.getElementById('fantasyRisers').innerHTML = risers.length ? risers.map((p, i) => `
-        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < risers.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
-            <span style="color:var(--success);font-size:1.1rem;">▲</span>
-            ${playerAvatarHtml(p, 28)}
-            <div style="flex:1;">
-                <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
-                <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ADP ${p.adp}</div>
-            </div>
-            <span class="badge badge-${sport}">${config.label}</span>
-        </div>
-    `).join('') : '<div class="empty-state"><div class="subtitle">No trending risers right now</div></div>';
+    const container = document.getElementById('dashWidgetContainer');
+    container.innerHTML = '';
 
-    // Leader table
-    const topPlayers = [...players].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 8);
-    const cols = config.statCols;
-    const keys = config.statKeys;
-    document.getElementById('dashLeaderTable').innerHTML = `
-        <table class="data-table">
-            <thead><tr>
-                <th>#</th><th>Player</th><th>Team</th><th>Pos</th>
-                ${cols.map(c => `<th>${c}</th>`).join('')}
-                <th>FPTS</th>
-            </tr></thead>
-            <tbody>${topPlayers.map((p, i) => `
-                <tr>
-                    <td class="rank">${i + 1}</td>
-                    <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})"><div style="display:flex;align-items:center;gap:8px;">${favStarHtml(p.id)}${playerAvatarHtml(p, 28)}${p.name}</div></td>
-                    <td>${p.team}</td>
-                    <td><span class="position-tag">${p.pos}</span></td>
-                    ${keys.map(k => `<td>${p[k] !== undefined ? (typeof p[k] === 'number' && k !== 'per' && k !== 'war' && k !== 'hr' && k !== 'rbi' && k !== 'sb' && k !== 'ints' && k !== 'rec' && k !== 'targets' && p[k] < 1 ? p[k].toFixed(3) : p[k]) : '—'}</td>`).join('')}
-                    <td style="font-weight:700;color:var(--success);">${p.fantasyPts?.toFixed(1) || '—'}</td>
-                </tr>
-            `).join('')}</tbody>
-        </table>
-    `;
+    // Build widgets in pairs for 2-column layout (full-width widgets get their own row)
+    let i = 0;
+    while (i < orderedWidgets.length) {
+        const w = orderedWidgets[i];
+        if (w.fullWidth) {
+            const card = createDashWidget(w, sport, players, config);
+            container.appendChild(card);
+            i++;
+        } else {
+            const row = document.createElement('div');
+            row.className = 'card-grid card-grid-2';
+            row.style.marginBottom = '0';
+            const card1 = createDashWidget(w, sport, players, config);
+            row.appendChild(card1);
+            if (i + 1 < orderedWidgets.length && !orderedWidgets[i + 1].fullWidth) {
+                const card2 = createDashWidget(orderedWidgets[i + 1], sport, players, config);
+                row.appendChild(card2);
+                i += 2;
+            } else {
+                i++;
+            }
+            container.appendChild(row);
+        }
+    }
+
+    // Enable drag-and-drop reordering
+    initDashDragDrop();
+}
+
+function createDashWidget(widget, sport, players, config) {
+    const card = document.createElement('div');
+    card.className = 'card dash-widget';
+    card.dataset.widgetId = widget.id;
+    card.draggable = true;
+    card.style.cursor = 'grab';
+
+    let headerHtml = `<div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+            <span style="cursor:grab;color:var(--text-muted);font-size:0.8rem;" title="Drag to reorder">⠿</span>
+            ${widget.title}${widget.id === 'leaders' ? ' — <span id="dashSportLabel">' + config.label + '</span>' : ''}
+        </div>
+        ${widget.action ? `<button class="btn btn-sm btn-secondary" onclick="${widget.action}">${widget.actionLabel}</button>` : ''}
+    </div>`;
+
+    let bodyHtml = '';
+    if (widget.id === 'trending') {
+        const trending = [...players].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 5);
+        bodyHtml = trending.map((p, i) => `
+            <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < 4 ? 'border-bottom:1px solid var(--border);' : ''}">
+                <span style="font-family:var(--font-mono);font-weight:700;color:var(--text-muted);width:24px;">${i + 1}</span>
+                ${playerAvatarHtml(p, 32)}
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    ${sparklineHtml(p, 50, 22)}
+                    <span style="font-family:var(--font-mono);font-weight:700;${p.trend === 'up' ? 'color:var(--success)' : p.trend === 'down' ? 'color:var(--danger)' : 'color:var(--text-secondary)'}">${p.fantasyPts?.toFixed(1) || '—'}</span>
+                </div>
+            </div>
+        `).join('');
+    } else if (widget.id === 'risers') {
+        const risers = players.filter(p => p.trend === 'up').slice(0, 5);
+        bodyHtml = risers.length ? risers.map((p, i) => `
+            <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < risers.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
+                <span style="color:var(--success);font-size:1.1rem;">▲</span>
+                ${playerAvatarHtml(p, 28)}
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ADP ${p.adp}</div>
+                </div>
+                <span class="badge badge-${sport}">${config.label}</span>
+            </div>
+        `).join('') : '<div class="empty-state"><div class="subtitle">No trending risers right now</div></div>';
+    } else if (widget.id === 'leaders') {
+        const topPlayers = [...players].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 8);
+        const cols = config.statCols;
+        const keys = config.statKeys;
+        bodyHtml = `<div id="dashLeaderTable">
+            <table class="data-table">
+                <thead><tr>
+                    <th>#</th><th>Player</th><th>Team</th><th>Pos</th>
+                    ${cols.map(c => `<th>${c}</th>`).join('')}
+                    <th>FPTS</th>
+                </tr></thead>
+                <tbody>${topPlayers.map((p, i) => `
+                    <tr>
+                        <td class="rank">${i + 1}</td>
+                        <td style="font-family:var(--font-sans);font-weight:600;cursor:pointer;" onclick="showPlayerProfile(${p.id})"><div style="display:flex;align-items:center;gap:8px;">${favStarHtml(p.id)}${playerAvatarHtml(p, 28)}${p.name}</div></td>
+                        <td>${p.team}</td>
+                        <td><span class="position-tag">${p.pos}</span></td>
+                        ${keys.map(k => `<td>${p[k] !== undefined ? (typeof p[k] === 'number' && k !== 'per' && k !== 'war' && k !== 'hr' && k !== 'rbi' && k !== 'sb' && k !== 'ints' && k !== 'rec' && k !== 'targets' && p[k] < 1 ? p[k].toFixed(3) : p[k]) : '—'}</td>`).join('')}
+                        <td style="font-weight:700;color:var(--success);">${p.fantasyPts?.toFixed(1) || '—'}</td>
+                    </tr>
+                `).join('')}</tbody>
+            </table>
+        </div>`;
+    } else if (widget.id === 'watchlist') {
+        const favIds = getFavorites();
+        const favPlayers = [];
+        for (const s of Object.keys(PLAYERS)) {
+            (PLAYERS[s] || []).forEach(p => { if (favIds.includes(p.id)) favPlayers.push(p); });
+        }
+        bodyHtml = favPlayers.length ? favPlayers.slice(0, 5).map((p, i) => `
+            <div style="display:flex;align-items:center;gap:12px;padding:8px 0;${i < Math.min(favPlayers.length, 5) - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
+                <span style="color:var(--warning);font-size:1rem;">⭐</span>
+                ${playerAvatarHtml(p, 28)}
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:0.88rem;">${p.name}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
+                </div>
+                <span style="font-family:var(--font-mono);font-weight:700;color:var(--success);">${p.fantasyPts?.toFixed(1) || '—'}</span>
+            </div>
+        `).join('') + (favPlayers.length > 5 ? `<div style="text-align:center;padding:8px;"><button class="btn btn-sm btn-secondary" onclick="showView('watchlist')">View All (${favPlayers.length})</button></div>` : '')
+        : '<div class="empty-state" style="padding:20px 0;"><div class="subtitle">Star players to add to watchlist</div></div>';
+    } else if (widget.id === 'streaks') {
+        const allP = [];
+        for (const s of Object.keys(PLAYERS)) (PLAYERS[s] || []).forEach(p => allP.push({...p, sport: s}));
+        const hot = allP.filter(p => p.trend === 'up').sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)).slice(0, 3);
+        const cold = allP.filter(p => p.trend === 'down').sort((a, b) => (a.fantasyPts || 0) - (b.fantasyPts || 0)).slice(0, 3);
+        bodyHtml = `<div style="margin-bottom:10px;font-size:0.78rem;font-weight:700;color:var(--success);">🔥 Hot Streaks</div>`;
+        bodyHtml += hot.length ? hot.map(p => `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;font-size:0.85rem;">
+            ${playerAvatarHtml(p, 24)} <span style="font-weight:600;">${p.name}</span>
+            <span style="margin-left:auto;font-family:var(--font-mono);color:var(--success);">▲ ${p.fantasyPts?.toFixed(1)}</span>
+        </div>`).join('') : '<div style="font-size:0.8rem;color:var(--text-muted);padding:4px 0;">No hot streaks</div>';
+        bodyHtml += `<div style="margin:10px 0 6px;font-size:0.78rem;font-weight:700;color:var(--danger);">❄️ Cold Streaks</div>`;
+        bodyHtml += cold.length ? cold.map(p => `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;font-size:0.85rem;">
+            ${playerAvatarHtml(p, 24)} <span style="font-weight:600;">${p.name}</span>
+            <span style="margin-left:auto;font-family:var(--font-mono);color:var(--danger);">▼ ${p.fantasyPts?.toFixed(1)}</span>
+        </div>`).join('') : '<div style="font-size:0.8rem;color:var(--text-muted);padding:4px 0;">No cold streaks</div>';
+    } else if (widget.id === 'scores') {
+        bodyHtml = '<div id="dashScoresMini" style="font-size:0.85rem;color:var(--text-muted);padding:8px 0;">Loading scores...</div>';
+        // Populate async after render
+        setTimeout(() => {
+            const el = document.getElementById('dashScoresMini');
+            if (!el) return;
+            const ticker = document.getElementById('scoreTicker');
+            if (ticker && ticker.innerHTML.trim()) {
+                el.innerHTML = ticker.innerHTML;
+                el.style.cssText = 'display:flex;gap:12px;overflow-x:auto;padding:8px 0;';
+            } else {
+                el.innerHTML = '<div style="text-align:center;padding:12px;color:var(--text-muted);">No live scores available</div>';
+            }
+        }, 500);
+    }
+
+    card.innerHTML = headerHtml + '<div class="dash-widget-body">' + bodyHtml + '</div>';
+    return card;
+}
+
+function initDashDragDrop() {
+    const container = document.getElementById('dashWidgetContainer');
+    let dragSrc = null;
+
+    container.querySelectorAll('.dash-widget').forEach(widget => {
+        widget.addEventListener('dragstart', (e) => {
+            dragSrc = widget;
+            widget.style.opacity = '0.4';
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', widget.dataset.widgetId);
+        });
+        widget.addEventListener('dragend', () => {
+            widget.style.opacity = '1';
+            container.querySelectorAll('.dash-widget').forEach(w => w.classList.remove('drag-over'));
+        });
+        widget.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            widget.classList.add('drag-over');
+        });
+        widget.addEventListener('dragleave', () => {
+            widget.classList.remove('drag-over');
+        });
+        widget.addEventListener('drop', (e) => {
+            e.preventDefault();
+            widget.classList.remove('drag-over');
+            if (!dragSrc || dragSrc === widget) return;
+            const fromId = dragSrc.dataset.widgetId;
+            const toId = widget.dataset.widgetId;
+            // Swap in order
+            const order = getDashWidgetOrder() || DASH_WIDGETS.map(w => w.id);
+            const fromIdx = order.indexOf(fromId);
+            const toIdx = order.indexOf(toId);
+            if (fromIdx >= 0 && toIdx >= 0) {
+                order.splice(fromIdx, 1);
+                order.splice(toIdx, 0, fromId);
+                saveDashWidgetOrder(order);
+                renderDashboard();
+                showToast('Widget order saved', 'success');
+            }
+        });
+    });
 }
 
 /* ============================================================
@@ -5555,6 +5708,19 @@ async function loadFullRosters() {
     const statusEl = document.getElementById('rosterStatus');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Loading...'; }
 
+    // Snapshot injury statuses for favorited players before loading
+    const favIds = getFavorites();
+    const injurySnapshot = {};
+    if (favIds.length > 0) {
+        for (const sport of Object.keys(PLAYERS)) {
+            (PLAYERS[sport] || []).forEach(p => {
+                if (favIds.includes(p.id)) {
+                    injurySnapshot[p.id] = { name: p.name, injury: p.injury || '', team: p.team };
+                }
+            });
+        }
+    }
+
     const sports = ['nba', 'nfl', 'mlb'];
     let totalImported = 0;
 
@@ -5567,6 +5733,27 @@ async function loadFullRosters() {
     // Cache everything for instant restore next time
     saveRostersToCache();
     populateHeadshots();
+
+    // Check for injury status changes on favorited players
+    if (favIds.length > 0) {
+        for (const sport of Object.keys(PLAYERS)) {
+            (PLAYERS[sport] || []).forEach(p => {
+                if (!favIds.includes(p.id)) return;
+                const prev = injurySnapshot[p.id];
+                const oldInjury = prev ? prev.injury : '';
+                const newInjury = p.injury || '';
+                if (newInjury !== oldInjury) {
+                    if (newInjury && !oldInjury) {
+                        showToast(`⚠️ ${p.name} (${p.team}) — NEW: ${newInjury}`, 'error');
+                    } else if (!newInjury && oldInjury) {
+                        showToast(`✅ ${p.name} (${p.team}) — Cleared from injury`, 'success');
+                    } else if (newInjury !== oldInjury) {
+                        showToast(`⚠️ ${p.name} (${p.team}) — Status: ${newInjury}`, 'error');
+                    }
+                }
+            });
+        }
+    }
 
     // Refresh current view
     initView(State.currentView);
@@ -7289,12 +7476,14 @@ function getTeamsForSport(sport) {
     return [...teamSet].sort();
 }
 
-function runSeasonSim() {
+async function runSeasonSim() {
     const sport = document.getElementById('simSport').value;
     const simCount = parseInt(document.getElementById('simCount').value);
     const display = document.getElementById('simDisplay');
     const teams = getTeamsForSport(sport);
     if (teams.length < 4) { display.innerHTML = '<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Not enough teams</div></div>'; return; }
+
+    display.innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div style="font-size:1.5rem;animation:pulse 1s infinite;">⏳</div><div style="margin-top:8px;color:var(--text-muted);">Fetching schedule & running simulations...</div></div>';
 
     // Assign base strength from player talent
     const teamStrength = {};
@@ -7302,6 +7491,43 @@ function runSeasonSim() {
         const roster = (PLAYERS[sport] || []).filter(p => p.team === t);
         teamStrength[t] = roster.reduce((s, p) => s + (p.fantasyPts || 0), 0) / Math.max(roster.length, 1);
     });
+
+    // Try to fetch real schedule from ESPN scoreboard
+    let schedule = [];
+    let scheduleSource = 'Random';
+    try {
+        const sportMap = { nba: { sport: 'basketball', league: 'nba' }, nfl: { sport: 'football', league: 'nfl' }, mlb: { sport: 'baseball', league: 'mlb' } };
+        const m = sportMap[sport];
+        if (m) {
+            const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=scoreboard`);
+            const data = await res.json();
+            const events = data.events || [];
+            // Parse matchups — completed games have scores, upcoming are future
+            for (const ev of events) {
+                const comps = ev.competitions?.[0];
+                if (!comps) continue;
+                const t1 = comps.competitors?.[0];
+                const t2 = comps.competitors?.[1];
+                if (!t1 || !t2) continue;
+                const abbr1 = t1.team?.abbreviation || '';
+                const abbr2 = t2.team?.abbreviation || '';
+                const completed = ev.status?.type?.completed || false;
+                const winner = completed ? (parseInt(t1.score) > parseInt(t2.score) ? abbr1 : abbr2) : null;
+                schedule.push({ home: abbr1, away: abbr2, completed, winner });
+            }
+            if (schedule.length > 0) scheduleSource = 'ESPN';
+        }
+    } catch(e) { /* fall back to random matchups */ }
+
+    // Build a mapping from ESPN abbreviations to our team abbreviations
+    const espnToLocal = {};
+    if (schedule.length > 0) {
+        const espnAbbrs = new Set(schedule.flatMap(g => [g.home, g.away]));
+        for (const ea of espnAbbrs) {
+            const match = teams.find(t => t === ea || t.toUpperCase() === ea.toUpperCase());
+            if (match) espnToLocal[ea] = match;
+        }
+    }
 
     const gamesPerSeason = sport === 'nba' ? 82 : sport === 'nfl' ? 17 : 162;
     const playoffSpots = sport === 'nba' ? 8 : sport === 'nfl' ? 7 : 6;
@@ -7311,13 +7537,35 @@ function runSeasonSim() {
     for (let sim = 0; sim < simCount; sim++) {
         const wins = {};
         teams.forEach(t => wins[t] = 0);
-        // Simulate season
-        for (let g = 0; g < Math.floor(gamesPerSeason * teams.length / 2); g++) {
+
+        // Credit completed real games
+        if (scheduleSource === 'ESPN') {
+            for (const g of schedule) {
+                const home = espnToLocal[g.home];
+                const away = espnToLocal[g.away];
+                if (!home || !away || home === away) continue;
+                if (g.completed && g.winner) {
+                    const w = espnToLocal[g.winner];
+                    if (w && wins[w] !== undefined) wins[w]++;
+                } else {
+                    // Simulate unplayed game using team strength
+                    const sA = (teamStrength[home] || 10) + (Math.random() - 0.5) * 15;
+                    const sB = (teamStrength[away] || 10) + (Math.random() - 0.5) * 15;
+                    if (sA > sB) wins[home]++; else wins[away]++;
+                }
+            }
+        }
+
+        // Fill remaining games with strength-based matchups
+        const totalGamesNeeded = Math.floor(gamesPerSeason * teams.length / 2);
+        const gamesPlayed = Object.values(wins).reduce((s, w) => s + w, 0) / 2;
+        const remaining = Math.max(0, totalGamesNeeded - gamesPlayed);
+        for (let g = 0; g < remaining; g++) {
             const tA = teams[Math.floor(Math.random() * teams.length)];
             let tB = teams[Math.floor(Math.random() * teams.length)];
             while (tB === tA) tB = teams[Math.floor(Math.random() * teams.length)];
-            const sA = teamStrength[tA] + (Math.random() - 0.5) * 20;
-            const sB = teamStrength[tB] + (Math.random() - 0.5) * 20;
+            const sA = (teamStrength[tA] || 10) + (Math.random() - 0.5) * 20;
+            const sB = (teamStrength[tB] || 10) + (Math.random() - 0.5) * 20;
             if (sA > sB) wins[tA]++; else wins[tB]++;
         }
         // Normalize to games per season
@@ -7343,8 +7591,11 @@ function runSeasonSim() {
         return { team: t, avgW, avgL, playoffPct: parseFloat(playoffPct), champPct: parseFloat(champPct) };
     }).sort((a, b) => b.playoffPct - a.playoffPct);
 
+    const realGames = schedule.filter(g => g.completed).length;
+    const upcomingGames = schedule.filter(g => !g.completed).length;
+
     display.innerHTML = `<div class="card">
-        <div class="card-title">Simulation Results (${simCount.toLocaleString()} seasons)</div>
+        <div class="card-title">Simulation Results (${simCount.toLocaleString()} seasons) <span style="font-size:0.7rem;font-weight:400;color:var(--text-muted);margin-left:8px;">${scheduleSource === 'ESPN' ? `✓ ESPN Schedule (${realGames} played, ${upcomingGames} upcoming)` : '~ Random Matchups'}</span></div>
         <div style="overflow-x:auto;">
             <table style="width:100%;border-collapse:collapse;font-size:0.87rem;">
                 <thead><tr style="border-bottom:2px solid var(--border);">
@@ -7366,7 +7617,7 @@ function runSeasonSim() {
             </table>
         </div>
         <div style="margin-top:12px;padding:8px 12px;background:var(--bg-input);border-radius:6px;font-size:0.78rem;color:var(--text-muted);">
-            Shaded rows indicate projected playoff teams (top ${playoffSpots}). Simulation uses roster talent (fantasy points) as base team strength with randomized variance.
+            ${scheduleSource === 'ESPN' ? `Uses real ESPN schedule data: ${realGames} completed game results are locked in, ${upcomingGames} upcoming games simulated using team strength ratings.` : 'Simulation uses roster talent (fantasy points) as base team strength with randomized variance.'} Shaded rows = projected playoff teams (top ${playoffSpots}).
         </div>
     </div>`;
 }
@@ -7443,26 +7694,6 @@ async function renderCareerArc() {
     if (!player) return;
     const display = document.getElementById('careerDisplay');
 
-    // Try fetching real ESPN career stats
-    if (player.espnId) {
-        try {
-            const sportMap = { nba: { sport: 'basketball', league: 'nba' }, nfl: { sport: 'football', league: 'nfl' }, mlb: { sport: 'baseball', league: 'mlb' } };
-            const m = sportMap[sport];
-            if (m) {
-                const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=athlete-stats&athleteId=${player.espnId}`);
-                const data = await res.json();
-                if (data.statistics && data.statistics.length > 0) {
-                    // ESPN sometimes returns season-by-season splits
-                    const splits = data.statistics.flatMap(s => s.splits || []);
-                    if (splits.length > 1) {
-                        // Use real season data for the chart
-                        console.log(`[CareerArc] Found ${splits.length} real seasons for ${player.name}`);
-                    }
-                }
-            }
-        } catch(e) { /* fall through to simulated */ }
-    }
-
     const age = player.age || 25;
     const exp = player.exp || 1;
     const startAge = age - exp;
@@ -7473,18 +7704,85 @@ async function renderCareerArc() {
     const statLabel = sport === 'nba' ? 'PPG' : sport === 'mlb' ? (player.pos === 'SP' ? 'ERA' : 'AVG') : (player.pos === 'QB' ? 'Pass Yds' : player.pos === 'RB' ? 'Rush Yds' : 'Rec Yds');
     const inverted = (sport === 'mlb' && player.pos === 'SP');
 
-    // Generate career curve data points
-    const points = [];
-    const currentVal = mainStat || 20;
-    for (let a = startAge; a <= retireAge; a++) {
-        let factor;
-        if (a <= peakAge) factor = 0.7 + 0.3 * ((a - startAge) / Math.max(peakAge - startAge, 1));
-        else if (a <= declineStart) factor = 1.0;
-        else factor = Math.max(0.3, 1.0 - 0.08 * (a - declineStart));
-        let val = inverted ? currentVal / factor : currentVal * factor;
-        // Add slight randomness for past seasons
-        if (a < age) val *= (0.92 + Math.random() * 0.16);
-        points.push({ age: a, val: parseFloat(val.toFixed(1)), isCurrent: a === age, isPast: a <= age, isFuture: a > age });
+    // Try fetching real ESPN career stats with season splits
+    let realSeasons = null;
+    if (player.espnId) {
+        try {
+            const sportMap = { nba: { sport: 'basketball', league: 'nba' }, nfl: { sport: 'football', league: 'nfl' }, mlb: { sport: 'baseball', league: 'mlb' } };
+            const m = sportMap[sport];
+            if (m) {
+                const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=athlete-stats&athleteId=${player.espnId}`);
+                const espnData = await res.json();
+                if (espnData.statistics && espnData.statistics.length > 0) {
+                    const splits = espnData.statistics.flatMap(s => s.splits || []);
+                    if (splits.length > 1) {
+                        // Parse real season-by-season data
+                        const parsed = [];
+                        for (const split of splits) {
+                            const seasonYear = parseInt((split.season?.displayName || split.season?.year || '').toString().slice(0, 4));
+                            if (!seasonYear || seasonYear < 2000) continue;
+                            const names = (split.categories?.[0]?.names || split.stats?.names || []).map(n => n.toLowerCase());
+                            const values = (split.categories?.[0]?.stats || split.stats?.values || split.stats || []);
+                            const statMap = {};
+                            if (Array.isArray(names) && Array.isArray(values)) {
+                                names.forEach((n, idx) => { statMap[n] = parseFloat(values[idx]) || 0; });
+                            }
+                            let val = 0;
+                            if (sport === 'nba') val = statMap['pts'] || statMap['points'] || statMap['avgpoints'] || 0;
+                            else if (sport === 'nfl') val = statMap['passyds'] || statMap['passingyards'] || statMap['rushyds'] || statMap['rushingyards'] || statMap['recyds'] || statMap['receivingyards'] || 0;
+                            else if (sport === 'mlb') val = player.pos === 'SP' ? (statMap['era'] || statMap['earnedrnaverage'] || 0) : (statMap['avg'] || statMap['battingaverage'] || 0);
+                            if (val > 0) parsed.push({ year: seasonYear, val: parseFloat(val.toFixed(sport === 'mlb' && player.pos !== 'SP' ? 3 : 1)) });
+                        }
+                        if (parsed.length >= 2) {
+                            parsed.sort((a, b) => a.year - b.year);
+                            realSeasons = parsed;
+                        }
+                    }
+                }
+            }
+        } catch(e) { /* fall through to simulated */ }
+    }
+
+    let points;
+    let dataSource = 'Simulated';
+
+    if (realSeasons) {
+        // Use real ESPN season data for past, then project future
+        dataSource = 'ESPN';
+        const currentYear = new Date().getFullYear();
+        const firstYear = realSeasons[0].year;
+        const seasonsPlayed = realSeasons.length;
+        const playerStartAge = age - seasonsPlayed;
+        points = realSeasons.map((s, i) => ({
+            age: playerStartAge + i + 1,
+            val: s.val,
+            year: s.year,
+            isCurrent: s.year >= currentYear - 1,
+            isPast: true,
+            isFuture: false
+        }));
+        // Project future seasons using decline curve from last real value
+        const lastVal = realSeasons[realSeasons.length - 1].val;
+        const lastAge = points[points.length - 1].age;
+        for (let a = lastAge + 1; a <= retireAge; a++) {
+            let factor = a <= declineStart ? 1.0 : Math.max(0.3, 1.0 - 0.08 * (a - declineStart));
+            let val = inverted ? lastVal / factor : lastVal * factor;
+            points.push({ age: a, val: parseFloat(val.toFixed(sport === 'mlb' && player.pos !== 'SP' ? 3 : 1)), isCurrent: false, isPast: false, isFuture: true });
+        }
+    } else {
+        // Generate simulated career curve data points
+        dataSource = 'Simulated';
+        points = [];
+        const currentVal = mainStat || 20;
+        for (let a = startAge; a <= retireAge; a++) {
+            let factor;
+            if (a <= peakAge) factor = 0.7 + 0.3 * ((a - startAge) / Math.max(peakAge - startAge, 1));
+            else if (a <= declineStart) factor = 1.0;
+            else factor = Math.max(0.3, 1.0 - 0.08 * (a - declineStart));
+            let val = inverted ? currentVal / factor : currentVal * factor;
+            if (a < age) val *= (0.92 + Math.random() * 0.16);
+            points.push({ age: a, val: parseFloat(val.toFixed(1)), isCurrent: a === age, isPast: a <= age, isFuture: a > age });
+        }
     }
 
     // SVG line chart
@@ -7521,7 +7819,7 @@ async function renderCareerArc() {
         <text x="${xScale(declineStart)}" y="${pad - 8}" text-anchor="middle" fill="var(--danger)" font-size="10">Decline</text>`;
 
     display.innerHTML = `<div class="card">
-        <div class="card-title">${player.name} — Career Arc (${statLabel})</div>
+        <div class="card-title">${player.name} — Career Arc (${statLabel}) <span style="font-size:0.7rem;font-weight:400;color:var(--text-muted);margin-left:8px;">${dataSource === 'ESPN' ? '✓ Real ESPN Data' : '~ Simulated'}</span></div>
         <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
             <span style="font-size:0.82rem;color:var(--text-muted);">Age: <strong>${age}</strong></span>
             <span style="font-size:0.82rem;color:var(--text-muted);">Exp: <strong>${exp} yrs</strong></span>

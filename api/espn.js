@@ -14,7 +14,7 @@ const https = require('https');
 
 const VALID_SPORTS = ['basketball', 'football', 'baseball'];
 const VALID_LEAGUES = ['nba', 'nfl', 'mlb', 'college-football', 'mens-college-basketball'];
-const VALID_ENDPOINTS = ['athletes', 'scoreboard', 'teams', 'standings', 'allteams', 'athlete-stats', 'news'];
+const VALID_ENDPOINTS = ['athletes', 'scoreboard', 'teams', 'standings', 'allteams', 'athlete-stats', 'athlete-gamelog', 'news'];
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -57,6 +57,11 @@ function buildEspnUrl(sport, league, endpoint, query) {
   // Individual athlete stats: /sports/{sport}/{league}/athletes/{athleteId}
   if (endpoint === 'athlete-stats' && query.athleteId) {
     return `${base}/${sport}/${league}/athletes/${query.athleteId}`;
+  }
+
+  // Athlete game log / career stats: uses the statistics sub-resource
+  if (endpoint === 'athlete-gamelog' && query.athleteId) {
+    return `${base}/${sport}/${league}/athletes/${query.athleteId}/statistics`;
   }
 
   // News: /sports/{sport}/{league}/news
@@ -137,10 +142,10 @@ module.exports = async (req, res) => {
     );
   }
 
-  if (endpoint === 'athlete-stats' && !req.query.athleteId) {
+  if ((endpoint === 'athlete-stats' || endpoint === 'athlete-gamelog') && !req.query.athleteId) {
     res.writeHead(400, { ...CORS_HEADERS, 'Content-Type': 'application/json' });
     return res.end(
-      JSON.stringify({ error: 'athlete-stats endpoint requires an "athleteId" query param' })
+      JSON.stringify({ error: `${endpoint} endpoint requires an "athleteId" query param` })
     );
   }
 

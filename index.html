@@ -1479,6 +1479,33 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                     <span class="icon">&#x1F3C6;</span> Power Rankings
                 </div>
             </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">More Tools</div>
+                <div class="sidebar-item" onclick="showView('depth-charts')" data-view="depth-charts">
+                    <span class="icon">&#x1F4CB;</span> Depth Charts
+                </div>
+                <div class="sidebar-item" onclick="showView('streak-tracker')" data-view="streak-tracker">
+                    <span class="icon">&#x1F525;</span> Streak Tracker
+                </div>
+                <div class="sidebar-item" onclick="showView('playoff-odds')" data-view="playoff-odds">
+                    <span class="icon">&#x1F3C8;</span> Playoff Odds
+                </div>
+                <div class="sidebar-item" onclick="showView('dfs-optimizer')" data-view="dfs-optimizer">
+                    <span class="icon">&#x1F4B5;</span> DFS Optimizer
+                </div>
+                <div class="sidebar-item" onclick="showView('bankroll')" data-view="bankroll">
+                    <span class="icon">&#x1F4B3;</span> Bankroll Tracker
+                </div>
+                <div class="sidebar-item" onclick="showView('trade-deadline')" data-view="trade-deadline">
+                    <span class="icon">&#x23F0;</span> Trade Deadline
+                </div>
+                <div class="sidebar-item" onclick="showView('export-data')" data-view="export-data">
+                    <span class="icon">&#x1F4E5;</span> Export Data
+                </div>
+            </div>
         </nav>
         <div class="sidebar-overlay" onclick="document.getElementById('sidebar').classList.remove('open','mobile-open');"></div>
 
@@ -2010,6 +2037,78 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
                 <div id="watchlistContainer"></div>
             </div>
 
+            <!-- ============ DEPTH CHARTS VIEW ============ -->
+            <div class="view" id="view-depth-charts">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Team Depth Charts</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Visual roster breakdown by position for each team</p>
+                <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+                    <select class="form-select" style="width:160px;" id="depthSport" onchange="renderDepthCharts()">
+                        <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option>
+                    </select>
+                    <select class="form-select" style="width:200px;" id="depthTeam" onchange="renderDepthCharts()"></select>
+                </div>
+                <div id="depthChartsContainer"></div>
+            </div>
+
+            <!-- ============ STREAK TRACKER VIEW ============ -->
+            <div class="view" id="view-streak-tracker">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Streak Tracker</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Hot and cold streaks across all sports</p>
+                <div id="streakContainer"></div>
+            </div>
+
+            <!-- ============ PLAYOFF ODDS VIEW ============ -->
+            <div class="view" id="view-playoff-odds">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Playoff Probability Calculator</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Monte Carlo simulation of remaining season — 10,000 iterations</p>
+                <div style="margin-bottom:20px;">
+                    <button class="btn btn-primary" onclick="runPlayoffSim()">Run Simulation</button>
+                </div>
+                <div id="playoffOddsContainer"></div>
+            </div>
+
+            <!-- ============ DFS OPTIMIZER VIEW ============ -->
+            <div class="view" id="view-dfs-optimizer">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">DFS Lineup Optimizer</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Build optimal DraftKings/FanDuel lineups under salary cap</p>
+                <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Platform</label>
+                        <select class="form-select" id="dfsPlatform"><option value="dk">DraftKings</option><option value="fd">FanDuel</option></select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Budget</label>
+                        <input type="number" class="form-input" id="dfsBudget" value="50000" style="width:120px;">
+                    </div>
+                    <button class="btn btn-primary" onclick="runDFSOptimizer()">Optimize Lineup</button>
+                </div>
+                <div id="dfsContainer"></div>
+            </div>
+
+            <!-- ============ BANKROLL TRACKER VIEW ============ -->
+            <div class="view" id="view-bankroll">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Bankroll Tracker</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Log bets, track ROI, and visualize your P&L</p>
+                <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+                    <button class="btn btn-primary btn-sm" onclick="showAddBetForm()">+ Log Bet</button>
+                    <button class="btn btn-secondary btn-sm" onclick="clearBankroll()">Clear All</button>
+                </div>
+                <div id="addBetFormContainer" style="display:none;margin-bottom:20px;"></div>
+                <div id="bankrollContainer"></div>
+            </div>
+
+            <!-- ============ TRADE DEADLINE VIEW ============ -->
+            <div class="view" id="view-trade-deadline">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Trade Deadline Tracker</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Countdown, rumors, and recent trades</p>
+                <div id="tradeDeadlineContainer"></div>
+            </div>
+
+            <!-- ============ EXPORT DATA VIEW ============ -->
+            <div class="view" id="view-export-data">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Export Data</h2>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Download player stats, rankings, and analytics as CSV</p>
+                <div id="exportContainer"></div>
+            </div>
+
             <!-- ============ PLAYER DEEP DIVE / PROFILE VIEW ============ -->
             <div class="view" id="view-player-profile">
                 <div id="playerProfileContent">
@@ -2392,6 +2491,13 @@ function initView(viewId) {
         case 'ai-scout': updateScoutPlayers(); break;
         case 'prop-analyzer': updatePropPlayers(); break;
         case 'power-rankings': renderPowerRankings(); break;
+        case 'depth-charts': initDepthCharts(); break;
+        case 'streak-tracker': renderStreakTracker(); break;
+        case 'playoff-odds': renderPlayoffOddsView(); break;
+        case 'dfs-optimizer': renderDFSView(); break;
+        case 'bankroll': renderBankroll(); break;
+        case 'trade-deadline': renderTradeDeadline(); break;
+        case 'export-data': renderExportView(); break;
     }
 }
 
@@ -5068,8 +5174,9 @@ function renderPlayerProfile() {
             ${playerAvatarHtml(p, 100, config.color + ', #ff9a33')}
             <div class="player-headline" style="flex:1;">
                 <h1>${p.name}</h1>
-                <div class="team-pos">${p.team} · <span class="position-tag">${p.pos}</span> · <span class="badge badge-${sport}">${config.label}</span>
+                <div class="team-pos">${favStarHtml(p.id)}${p.team} · <span class="position-tag">${p.pos}</span> · <span class="badge badge-${sport}">${config.label}</span>
                     ${p.injury ? ` · <span style="color:var(--danger);font-weight:600;">Injured: ${p.injury}</span>` : ''}
+                    <button class="btn btn-sm btn-secondary" style="margin-left:12px;font-size:0.75rem;" onclick="generateShareCard(${p.id})">📤 Share Card</button>
                 </div>
                 <div class="player-quick-stats" style="margin-top:12px;">
                     <div class="player-quick-stat"><div class="qs-value" style="color:var(--success);">${p.fantasyPts?.toFixed(1) || '—'}</div><div class="qs-label">FPTS/G</div></div>
@@ -5230,7 +5337,26 @@ function renderPlayerProfile() {
                 Projected range: <strong>${floor}</strong> (floor) to <strong>${ceiling}</strong> (ceiling) FPTS/G.
             </div>
         </div>
+
+        <!-- PLAYER NEWS -->
+        <div class="card" id="playerNewsCard" style="margin-bottom:20px;">
+            <div class="card-title" style="margin-bottom:12px;">📰 Player News</div>
+            <div id="playerNewsContent" style="color:var(--text-muted);font-size:0.85rem;">Loading news...</div>
+        </div>
     `;
+
+    // Fetch player news async
+    fetchPlayerNews(p.name, sport).then(articles => {
+        const el = document.getElementById('playerNewsContent');
+        if (!el) return;
+        if (!articles.length) { el.textContent = 'No recent news found for this player.'; return; }
+        el.innerHTML = articles.map(a => `
+            <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+                <a href="${a.links?.web?.href || '#'}" target="_blank" style="font-weight:600;font-size:0.88rem;color:var(--text-primary);">${a.headline}</a>
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">${a.description || ''}</div>
+            </div>
+        `).join('');
+    });
 }
 
 /* ============================================================
@@ -7065,6 +7191,7 @@ function renderH2H() {
     const pA = players.find(p => p.id == document.getElementById('h2hPlayerA').value);
     const pB = players.find(p => p.id == document.getElementById('h2hPlayerB').value);
     if (!pA || !pB) return;
+    saveComparison(pA.id, pB.id, sport);
     const display = document.getElementById('h2hDisplay');
 
     const metrics = sport === 'nba' ? [{k:'ppg',l:'PPG'},{k:'rpg',l:'RPG'},{k:'apg',l:'APG'},{k:'spg',l:'STL'},{k:'bpg',l:'BLK'},{k:'fg',l:'FG%'},{k:'ft',l:'FT%'},{k:'per',l:'PER'},{k:'ts',l:'TS%'},{k:'ws',l:'Win Shares'}] :
@@ -7894,6 +8021,614 @@ function renderPowerRankings() {
             Rankings based on: total roster talent (35%), average player quality (25%), star power (15%), depth (10%), momentum (10%), health (5%). Stars = players with 35+ FPTS; Depth = players with 20+ FPTS.
         </div>
     </div>`;
+}
+
+/* ============================================================
+   DEPTH CHARTS
+   ============================================================ */
+function initDepthCharts() {
+    const sport = document.getElementById('depthSport').value;
+    const teamSel = document.getElementById('depthTeam');
+    const teams = [...new Set((PLAYERS[sport] || []).map(p => p.team))].sort();
+    teamSel.innerHTML = teams.map(t => `<option value="${t}">${t}</option>`).join('');
+    renderDepthCharts();
+}
+
+function renderDepthCharts() {
+    const sport = document.getElementById('depthSport').value;
+    const team = document.getElementById('depthTeam').value;
+    const container = document.getElementById('depthChartsContainer');
+    const roster = (PLAYERS[sport] || []).filter(p => p.team === team);
+
+    if (!roster.length) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">📋</div><div class="title">No players found for ${team}</div></div>`;
+        return;
+    }
+
+    const positions = {};
+    roster.forEach(p => {
+        const pos = p.pos || p.position || 'UTIL';
+        if (!positions[pos]) positions[pos] = [];
+        positions[pos].push(p);
+    });
+
+    Object.values(positions).forEach(arr => arr.sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0)));
+
+    const posCards = Object.entries(positions).map(([pos, players]) => `
+        <div class="card" style="padding:16px;">
+            <div style="font-weight:800;font-size:0.9rem;margin-bottom:12px;color:var(--accent);">${pos}</div>
+            ${players.map((p, i) => `
+                <div style="display:flex;align-items:center;gap:10px;padding:6px 0;${i < players.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}" onclick="showPlayerProfile(${p.id})" style="cursor:pointer;">
+                    <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);width:20px;">${i === 0 ? '★' : i + 1}</span>
+                    ${playerAvatarHtml(p, 30)}
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:600;font-size:0.85rem;">${p.name}</div>
+                    </div>
+                    <span style="font-family:var(--font-mono);font-weight:700;font-size:0.82rem;color:var(--success);">${(p.fantasyPts || 0).toFixed(1)}</span>
+                </div>
+            `).join('')}
+        </div>
+    `).join('');
+
+    container.innerHTML = `
+        <div style="margin-bottom:16px;padding:12px 16px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border);">
+            <span style="font-weight:800;font-size:1.1rem;">${team}</span>
+            <span style="color:var(--text-muted);margin-left:12px;font-size:0.85rem;">${roster.length} players · ${Object.keys(positions).length} positions</span>
+        </div>
+        <div class="card-grid card-grid-3">${posCards}</div>
+    `;
+}
+
+/* ============================================================
+   STREAK TRACKER
+   ============================================================ */
+function renderStreakTracker() {
+    const sport = State.currentSport;
+    const players = [...(PLAYERS[sport] || [])].filter(p => p.fantasyPts > 0);
+    const container = document.getElementById('streakContainer');
+
+    // Simulate streaks based on trend + fantasy pts
+    const streaks = players.map(p => {
+        const base = p.fantasyPts || 0;
+        const games = [];
+        for (let i = 0; i < 10; i++) {
+            const variance = (Math.random() - 0.5) * base * 0.6;
+            const trendBonus = p.trend === 'up' ? base * 0.08 * (i / 10) : p.trend === 'down' ? -base * 0.08 * (i / 10) : 0;
+            games.push(Math.max(0, base + variance + trendBonus));
+        }
+        const last5 = games.slice(-5);
+        const avg5 = last5.reduce((s, v) => s + v, 0) / 5;
+        const hot = avg5 > base * 1.15;
+        const cold = avg5 < base * 0.85;
+        return { ...p, games, avg5, hot, cold, streak: hot ? 'HOT' : cold ? 'COLD' : 'NORMAL', diff: ((avg5 - base) / base * 100).toFixed(1) };
+    }).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+    const hotPlayers = streaks.filter(s => s.hot).slice(0, 10);
+    const coldPlayers = streaks.filter(s => s.cold).slice(0, 10);
+
+    const makeTable = (list, type) => list.map((p, i) => `
+        <div class="card" style="padding:14px;display:flex;align-items:center;gap:12px;">
+            ${playerAvatarHtml(p, 36)}
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:0.9rem;">${favStarHtml(p.id)}${p.name}</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);">${p.team} · ${p.pos}</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-weight:800;color:${type === 'hot' ? 'var(--success)' : 'var(--danger)'};font-size:1rem;">${p.diff > 0 ? '+' : ''}${p.diff}%</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">L5 avg: ${p.avg5.toFixed(1)}</div>
+            </div>
+            <span style="padding:3px 8px;border-radius:4px;font-size:0.7rem;font-weight:800;background:${type === 'hot' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'};color:${type === 'hot' ? 'var(--success)' : 'var(--danger)'};">${p.streak}</span>
+        </div>
+    `).join('');
+
+    container.innerHTML = `
+        <div class="card-grid card-grid-2">
+            <div>
+                <h3 style="font-size:1rem;font-weight:800;margin-bottom:12px;color:var(--success);">🔥 Hot Streaks</h3>
+                <div style="display:flex;flex-direction:column;gap:8px;">${makeTable(hotPlayers, 'hot') || '<div class="empty-state"><div class="title">No hot streaks detected</div></div>'}</div>
+            </div>
+            <div>
+                <h3 style="font-size:1rem;font-weight:800;margin-bottom:12px;color:var(--danger);">🥶 Cold Streaks</h3>
+                <div style="display:flex;flex-direction:column;gap:8px;">${makeTable(coldPlayers, 'cold') || '<div class="empty-state"><div class="title">No cold streaks detected</div></div>'}</div>
+            </div>
+        </div>
+    `;
+}
+
+/* ============================================================
+   PLAYOFF PROBABILITY CALCULATOR
+   ============================================================ */
+function renderPlayoffOddsView() {
+    const container = document.getElementById('playoffOddsContainer');
+    container.innerHTML = `<div class="empty-state"><div class="icon">🏈</div><div class="title">Click "Run Simulation" to calculate playoff odds</div><div class="subtitle">Uses Monte Carlo with 10,000 iterations based on current roster strength</div></div>`;
+}
+
+function runPlayoffSim() {
+    const sport = State.currentSport;
+    const container = document.getElementById('playoffOddsContainer');
+    container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Running 10,000 simulations...</div></div>';
+
+    setTimeout(() => {
+        const teams = [...new Set((PLAYERS[sport] || []).map(p => p.team))].sort();
+        const teamStrength = {};
+        teams.forEach(t => {
+            const roster = (PLAYERS[sport] || []).filter(p => p.team === t);
+            const totalFpts = roster.reduce((s, p) => s + (p.fantasyPts || 0), 0);
+            teamStrength[t] = totalFpts;
+        });
+
+        const maxStr = Math.max(...Object.values(teamStrength));
+        const SIMS = 10000;
+        const playoffSpots = sport === 'nfl' ? 14 : sport === 'nba' ? 16 : 12;
+        const results = {};
+        teams.forEach(t => { results[t] = { playoffs: 0, champion: 0 }; });
+
+        for (let sim = 0; sim < SIMS; sim++) {
+            const wins = {};
+            teams.forEach(t => {
+                const str = teamStrength[t] / maxStr;
+                const gamesPlayed = sport === 'nfl' ? 17 : sport === 'mlb' ? 162 : 82;
+                let w = 0;
+                for (let g = 0; g < gamesPlayed; g++) {
+                    if (Math.random() < (0.3 + str * 0.4 + Math.random() * 0.1)) w++;
+                }
+                wins[t] = w;
+            });
+            const sorted = teams.slice().sort((a, b) => wins[b] - wins[a]);
+            sorted.slice(0, playoffSpots).forEach(t => results[t].playoffs++);
+            results[sorted[0]].champion++;
+        }
+
+        const ranked = teams.map(t => ({
+            team: t,
+            playoffPct: (results[t].playoffs / SIMS * 100).toFixed(1),
+            champPct: (results[t].champion / SIMS * 100).toFixed(1),
+            strength: (teamStrength[t] / maxStr * 100).toFixed(0),
+        })).sort((a, b) => b.playoffPct - a.playoffPct);
+
+        container.innerHTML = `<div class="card">
+            <div class="card-header"><div class="card-title">🏆 ${sport.toUpperCase()} Playoff Probabilities</div><span class="badge badge-${sport}">${SIMS.toLocaleString()} sims</span></div>
+            <table class="data-table"><thead><tr><th>#</th><th>Team</th><th>Strength</th><th>Playoff %</th><th>Title %</th><th>Odds</th></tr></thead>
+            <tbody>${ranked.map((r, i) => `<tr>
+                <td class="rank">${i + 1}</td>
+                <td style="font-weight:700;">${r.team}</td>
+                <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:6px;background:var(--bg-input);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${r.strength}%;background:var(--accent);border-radius:3px;"></div></div><span style="font-size:0.75rem;font-family:var(--font-mono);">${r.strength}</span></div></td>
+                <td style="font-weight:700;color:${r.playoffPct > 70 ? 'var(--success)' : r.playoffPct > 40 ? 'var(--accent)' : 'var(--danger)'};">${r.playoffPct}%</td>
+                <td style="font-weight:700;color:var(--accent);">${r.champPct}%</td>
+                <td style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);">${r.champPct > 0 ? (100 / r.champPct).toFixed(0) + ':1' : '—'}</td>
+            </tr>`).join('')}</tbody></table>
+        </div>`;
+    }, 100);
+}
+
+/* ============================================================
+   DFS LINEUP OPTIMIZER
+   ============================================================ */
+function renderDFSView() {
+    const container = document.getElementById('dfsContainer');
+    container.innerHTML = `<div class="empty-state"><div class="icon">💵</div><div class="title">Configure platform & budget, then click Optimize</div><div class="subtitle">Greedy knapsack algorithm maximizes projected points under salary cap</div></div>`;
+}
+
+function runDFSOptimizer() {
+    const sport = State.currentSport;
+    const platform = document.getElementById('dfsPlatform').value;
+    const budget = parseInt(document.getElementById('dfsBudget').value) || 50000;
+    const container = document.getElementById('dfsContainer');
+    const players = [...(PLAYERS[sport] || [])].filter(p => p.fantasyPts > 0);
+
+    // Assign simulated salaries based on fantasy production
+    const maxFpts = Math.max(...players.map(p => p.fantasyPts || 0));
+    players.forEach(p => {
+        p.dfsSalary = Math.round((((p.fantasyPts || 0) / maxFpts) * 0.7 + Math.random() * 0.3) * (platform === 'dk' ? 9000 : 8500) + (platform === 'dk' ? 3500 : 3000));
+        p.dfsValue = (p.fantasyPts || 0) / (p.dfsSalary / 1000);
+    });
+
+    // Greedy by value-per-dollar
+    const sorted = players.sort((a, b) => b.dfsValue - a.dfsValue);
+    const lineup = [];
+    let remaining = budget;
+    const posNeeded = sport === 'nba'
+        ? { PG: 1, SG: 1, SF: 1, PF: 1, C: 1, UTIL: 3 }
+        : sport === 'nfl'
+        ? { QB: 1, RB: 2, WR: 3, TE: 1, FLEX: 1 }
+        : { C: 1, '1B': 1, '2B': 1, SS: 1, '3B': 1, OF: 3, UTIL: 1 };
+
+    const filled = {};
+    for (const p of sorted) {
+        if (lineup.length >= 8 || p.dfsSalary > remaining) continue;
+        const pos = p.pos || p.position || 'UTIL';
+        const slot = Object.keys(posNeeded).find(s => (pos.includes(s) || s === 'UTIL' || s === 'FLEX') && (filled[s] || 0) < posNeeded[s]);
+        if (slot) {
+            lineup.push({ ...p, slot });
+            filled[slot] = (filled[slot] || 0) + 1;
+            remaining -= p.dfsSalary;
+        }
+    }
+
+    const totalProj = lineup.reduce((s, p) => s + (p.fantasyPts || 0), 0);
+    const totalSalary = lineup.reduce((s, p) => s + p.dfsSalary, 0);
+
+    container.innerHTML = `
+        <div class="card-grid card-grid-3" style="margin-bottom:20px;">
+            <div class="card" style="padding:16px;text-align:center;">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:4px;">Projected Points</div>
+                <div style="font-size:1.6rem;font-weight:900;color:var(--success);">${totalProj.toFixed(1)}</div>
+            </div>
+            <div class="card" style="padding:16px;text-align:center;">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:4px;">Salary Used</div>
+                <div style="font-size:1.6rem;font-weight:900;color:var(--accent);">$${totalSalary.toLocaleString()}</div>
+            </div>
+            <div class="card" style="padding:16px;text-align:center;">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:4px;">Remaining</div>
+                <div style="font-size:1.6rem;font-weight:900;color:${remaining >= 0 ? 'var(--text-secondary)' : 'var(--danger)'};">$${remaining.toLocaleString()}</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><div class="card-title">💰 Optimized Lineup — ${platform === 'dk' ? 'DraftKings' : 'FanDuel'}</div></div>
+            <table class="data-table"><thead><tr><th>Slot</th><th>Player</th><th>Team</th><th>Salary</th><th>Proj FPTS</th><th>Value</th></tr></thead>
+            <tbody>${lineup.map(p => `<tr>
+                <td><span class="position-tag">${p.slot}</span></td>
+                <td style="font-weight:600;"><div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(p, 26)}${p.name}</div></td>
+                <td>${p.team}</td>
+                <td style="font-family:var(--font-mono);">$${p.dfsSalary.toLocaleString()}</td>
+                <td style="font-weight:700;color:var(--success);">${(p.fantasyPts || 0).toFixed(1)}</td>
+                <td style="font-family:var(--font-mono);color:var(--accent);">${p.dfsValue.toFixed(2)}x</td>
+            </tr>`).join('')}</tbody></table>
+        </div>
+    `;
+}
+
+/* ============================================================
+   BANKROLL TRACKER
+   ============================================================ */
+function getBankrollData() {
+    try { return JSON.parse(localStorage.getItem('sv_bankroll') || '[]'); }
+    catch { return []; }
+}
+function saveBankrollData(data) { localStorage.setItem('sv_bankroll', JSON.stringify(data)); }
+
+function showAddBetForm() {
+    const form = document.getElementById('addBetFormContainer');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    form.innerHTML = `<div class="card" style="padding:16px;">
+        <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:12px;">Log a Bet</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
+            <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="betDesc" placeholder="e.g. Lakers -3.5" style="width:200px;"></div>
+            <div class="form-group"><label class="form-label">Stake ($)</label><input type="number" class="form-input" id="betStake" value="100" style="width:100px;"></div>
+            <div class="form-group"><label class="form-label">Odds</label><input class="form-input" id="betOdds" value="-110" style="width:100px;"></div>
+            <div class="form-group"><label class="form-label">Result</label>
+                <select class="form-select" id="betResult"><option value="pending">Pending</option><option value="win">Win</option><option value="loss">Loss</option><option value="push">Push</option></select>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="addBet()">Add</button>
+        </div>
+    </div>`;
+}
+
+function addBet() {
+    const desc = document.getElementById('betDesc').value.trim();
+    const stake = parseFloat(document.getElementById('betStake').value) || 0;
+    const odds = document.getElementById('betOdds').value.trim();
+    const result = document.getElementById('betResult').value;
+    if (!desc || !stake) { showToast('Fill in description and stake', 'error'); return; }
+
+    const payout = result === 'win' ? calculatePayout(stake, odds) : result === 'push' ? stake : 0;
+    const profit = result === 'pending' ? 0 : payout - stake;
+
+    const data = getBankrollData();
+    data.push({ id: Date.now(), desc, stake, odds, result, payout, profit, date: new Date().toISOString().split('T')[0] });
+    saveBankrollData(data);
+    document.getElementById('addBetFormContainer').style.display = 'none';
+    renderBankroll();
+    showToast('Bet logged', 'success');
+}
+
+function calculatePayout(stake, oddsStr) {
+    const odds = parseInt(oddsStr);
+    if (isNaN(odds)) return stake * 2;
+    return odds > 0 ? stake + (stake * odds / 100) : stake + (stake * 100 / Math.abs(odds));
+}
+
+function updateBetResult(id, result) {
+    const data = getBankrollData();
+    const bet = data.find(b => b.id === id);
+    if (!bet) return;
+    bet.result = result;
+    bet.payout = result === 'win' ? calculatePayout(bet.stake, bet.odds) : result === 'push' ? bet.stake : 0;
+    bet.profit = result === 'pending' ? 0 : bet.payout - bet.stake;
+    saveBankrollData(data);
+    renderBankroll();
+}
+
+function clearBankroll() {
+    if (!confirm('Clear all bet history?')) return;
+    localStorage.removeItem('sv_bankroll');
+    renderBankroll();
+}
+
+function renderBankroll() {
+    const data = getBankrollData();
+    const container = document.getElementById('bankrollContainer');
+
+    const totalStaked = data.reduce((s, b) => s + b.stake, 0);
+    const totalProfit = data.filter(b => b.result !== 'pending').reduce((s, b) => s + b.profit, 0);
+    const wins = data.filter(b => b.result === 'win').length;
+    const losses = data.filter(b => b.result === 'loss').length;
+    const roi = totalStaked > 0 ? (totalProfit / totalStaked * 100).toFixed(1) : '0.0';
+
+    const statsRow = `<div class="card-grid card-grid-4" style="margin-bottom:20px;">
+        <div class="card" style="padding:14px;text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);">Total Staked</div><div style="font-size:1.3rem;font-weight:900;">$${totalStaked.toFixed(0)}</div></div>
+        <div class="card" style="padding:14px;text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);">Profit/Loss</div><div style="font-size:1.3rem;font-weight:900;color:${totalProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}</div></div>
+        <div class="card" style="padding:14px;text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);">ROI</div><div style="font-size:1.3rem;font-weight:900;color:${roi >= 0 ? 'var(--success)' : 'var(--danger)'};">${roi}%</div></div>
+        <div class="card" style="padding:14px;text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);">Record</div><div style="font-size:1.3rem;font-weight:900;">${wins}W - ${losses}L</div></div>
+    </div>`;
+
+    if (data.length === 0) {
+        container.innerHTML = statsRow + `<div class="empty-state"><div class="icon">💳</div><div class="title">No bets logged yet</div><div class="subtitle">Click "+ Log Bet" to start tracking</div></div>`;
+        return;
+    }
+
+    const rows = [...data].reverse().map(b => `<tr>
+        <td style="font-size:0.82rem;">${b.date}</td>
+        <td style="font-weight:600;">${b.desc}</td>
+        <td style="font-family:var(--font-mono);">$${b.stake}</td>
+        <td style="font-family:var(--font-mono);">${b.odds}</td>
+        <td><select class="form-select" style="width:100px;font-size:0.8rem;padding:4px 8px;" onchange="updateBetResult(${b.id},this.value)">
+            <option value="pending" ${b.result === 'pending' ? 'selected' : ''}>Pending</option>
+            <option value="win" ${b.result === 'win' ? 'selected' : ''}>Win</option>
+            <option value="loss" ${b.result === 'loss' ? 'selected' : ''}>Loss</option>
+            <option value="push" ${b.result === 'push' ? 'selected' : ''}>Push</option>
+        </select></td>
+        <td style="font-weight:700;color:${b.profit > 0 ? 'var(--success)' : b.profit < 0 ? 'var(--danger)' : 'var(--text-muted)'};">${b.profit > 0 ? '+' : ''}$${b.profit.toFixed(2)}</td>
+    </tr>`).join('');
+
+    container.innerHTML = statsRow + `<div class="card">
+        <table class="data-table"><thead><tr><th>Date</th><th>Bet</th><th>Stake</th><th>Odds</th><th>Result</th><th>P&L</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+    </div>`;
+}
+
+/* ============================================================
+   TRADE DEADLINE TRACKER
+   ============================================================ */
+function renderTradeDeadline() {
+    const container = document.getElementById('tradeDeadlineContainer');
+    const deadlines = {
+        nba: { date: '2027-02-06', label: 'NBA Trade Deadline' },
+        nfl: { date: '2026-11-03', label: 'NFL Trade Deadline' },
+        mlb: { date: '2026-07-30', label: 'MLB Trade Deadline' },
+        ncaa: { date: null, label: 'NCAA (Transfer Portal)' },
+    };
+
+    const sport = State.currentSport;
+    const dl = deadlines[sport];
+    let countdownHtml = '';
+
+    if (dl.date) {
+        const target = new Date(dl.date);
+        const now = new Date();
+        const diff = target - now;
+        if (diff > 0) {
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff % 86400000) / 3600000);
+            countdownHtml = `<div class="card" style="padding:24px;text-align:center;margin-bottom:24px;">
+                <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px;">${dl.label}</div>
+                <div style="display:flex;justify-content:center;gap:24px;">
+                    <div><div style="font-size:2.5rem;font-weight:900;color:var(--accent);">${days}</div><div style="font-size:0.75rem;color:var(--text-muted);">DAYS</div></div>
+                    <div><div style="font-size:2.5rem;font-weight:900;color:var(--text-secondary);">${hours}</div><div style="font-size:0.75rem;color:var(--text-muted);">HOURS</div></div>
+                </div>
+                <div style="margin-top:12px;font-size:0.82rem;color:var(--text-muted);">${target.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </div>`;
+        } else {
+            countdownHtml = `<div class="card" style="padding:20px;text-align:center;margin-bottom:24px;">
+                <span style="padding:4px 12px;border-radius:4px;background:var(--danger);color:#fff;font-weight:700;font-size:0.85rem;">DEADLINE PASSED</span>
+                <div style="margin-top:8px;color:var(--text-muted);font-size:0.85rem;">${dl.label} — ${target.toLocaleDateString()}</div>
+            </div>`;
+        }
+    }
+
+    // Simulated trade rumors
+    const rumors = [
+        { player: 'Jimmy Butler', from: 'GSW', to: 'Multiple teams', status: 'Exploring', confidence: 65 },
+        { player: 'Zach LaVine', from: 'SAC', to: 'ATL, MIA', status: 'Active talks', confidence: 55 },
+        { player: 'Brandon Ingram', from: 'TOR', to: 'PHX, CHI', status: 'Available', confidence: 70 },
+        { player: 'Kyle Kuzma', from: 'WAS', to: 'LAL, DAL', status: 'On the block', confidence: 80 },
+        { player: 'Dejounte Murray', from: 'NOP', to: 'MIN, LAL', status: 'Listening', confidence: 45 },
+    ];
+
+    const rumorRows = rumors.map(r => `<tr>
+        <td style="font-weight:600;">${r.player}</td>
+        <td>${r.from}</td>
+        <td>${r.to}</td>
+        <td><span style="padding:2px 8px;border-radius:4px;font-size:0.75rem;background:rgba(255,183,3,0.15);color:var(--accent);">${r.status}</span></td>
+        <td><div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:6px;background:var(--bg-input);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${r.confidence}%;background:${r.confidence > 60 ? 'var(--success)' : 'var(--warning)'};border-radius:3px;"></div></div><span style="font-size:0.75rem;font-family:var(--font-mono);">${r.confidence}%</span></div></td>
+    </tr>`).join('');
+
+    container.innerHTML = countdownHtml + `
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-header"><div class="card-title">📡 Trade Rumors</div><span class="badge" style="background:rgba(255,183,3,0.15);color:var(--accent);">RUMORS</span></div>
+            <table class="data-table"><thead><tr><th>Player</th><th>Current</th><th>Destinations</th><th>Status</th><th>Likelihood</th></tr></thead>
+            <tbody>${rumorRows}</tbody></table>
+        </div>
+        <div class="card">
+            <div class="card-header"><div class="card-title">✅ Recent Trades</div></div>
+            <div style="padding:16px;color:var(--text-muted);font-size:0.85rem;text-align:center;">No confirmed trades yet this window. Check back closer to the deadline.</div>
+        </div>
+    `;
+}
+
+/* ============================================================
+   EXPORT DATA
+   ============================================================ */
+function renderExportView() {
+    const container = document.getElementById('exportContainer');
+    container.innerHTML = `
+        <div class="card-grid card-grid-2">
+            <div class="card" style="padding:20px;cursor:pointer;" onclick="exportCSV('players')">
+                <div style="font-size:1.4rem;margin-bottom:8px;">👤</div>
+                <div style="font-weight:700;margin-bottom:4px;">Player Stats</div>
+                <div style="font-size:0.82rem;color:var(--text-muted);">All players for current sport with full stats</div>
+            </div>
+            <div class="card" style="padding:20px;cursor:pointer;" onclick="exportCSV('rankings')">
+                <div style="font-size:1.4rem;margin-bottom:8px;">🏆</div>
+                <div style="font-weight:700;margin-bottom:4px;">Power Rankings</div>
+                <div style="font-size:0.82rem;color:var(--text-muted);">Team rankings with composite scores</div>
+            </div>
+            <div class="card" style="padding:20px;cursor:pointer;" onclick="exportCSV('watchlist')">
+                <div style="font-size:1.4rem;margin-bottom:8px;">⭐</div>
+                <div style="font-weight:700;margin-bottom:4px;">My Watchlist</div>
+                <div style="font-size:0.82rem;color:var(--text-muted);">Export your favorited players</div>
+            </div>
+            <div class="card" style="padding:20px;cursor:pointer;" onclick="exportCSV('bankroll')">
+                <div style="font-size:1.4rem;margin-bottom:8px;">💳</div>
+                <div style="font-weight:700;margin-bottom:4px;">Bet History</div>
+                <div style="font-size:0.82rem;color:var(--text-muted);">Export bankroll tracker data</div>
+            </div>
+        </div>
+    `;
+}
+
+function exportCSV(type) {
+    let rows = [];
+    let filename = 'statvault_export.csv';
+
+    if (type === 'players') {
+        const sport = State.currentSport;
+        const players = PLAYERS[sport] || [];
+        const config = SPORT_CONFIG[sport];
+        const headers = ['Name', 'Team', 'Position', ...config.statCols, 'Fantasy Pts', 'Trend', 'ADP'];
+        rows.push(headers);
+        players.forEach(p => {
+            rows.push([p.name, p.team, p.pos || p.position, ...config.statKeys.map(k => p[k] ?? ''), p.fantasyPts || 0, p.trend || '', p.adp || '']);
+        });
+        filename = `statvault_${sport}_players.csv`;
+    } else if (type === 'rankings') {
+        rows.push(['Rank', 'Team', 'Score', 'Star Power', 'Depth', 'Avg Age']);
+        const sport = State.currentSport;
+        const teams = [...new Set((PLAYERS[sport] || []).map(p => p.team))];
+        teams.forEach((t, i) => {
+            const roster = (PLAYERS[sport] || []).filter(p => p.team === t);
+            const score = roster.reduce((s, p) => s + (p.fantasyPts || 0), 0);
+            rows.push([i + 1, t, score.toFixed(0), roster.filter(p => (p.fantasyPts || 0) > 35).length, roster.length, (roster.reduce((s, p) => s + (p.age || 25), 0) / roster.length).toFixed(1)]);
+        });
+        filename = 'statvault_rankings.csv';
+    } else if (type === 'watchlist') {
+        rows.push(['Name', 'Team', 'Sport', 'Position', 'Fantasy Pts']);
+        getFavorites().forEach(id => {
+            const { player, sport } = findPlayerById(id);
+            if (player) rows.push([player.name, player.team, sport, player.pos || player.position, player.fantasyPts || 0]);
+        });
+        filename = 'statvault_watchlist.csv';
+    } else if (type === 'bankroll') {
+        rows.push(['Date', 'Description', 'Stake', 'Odds', 'Result', 'Profit']);
+        getBankrollData().forEach(b => {
+            rows.push([b.date, b.desc, b.stake, b.odds, b.result, b.profit.toFixed(2)]);
+        });
+        filename = 'statvault_bets.csv';
+    }
+
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${filename}`, 'success');
+}
+
+/* ============================================================
+   PLAYER NEWS FEED (on Deep Dive profile)
+   ============================================================ */
+async function fetchPlayerNews(playerName, sport) {
+    try {
+        const sportMap = { nba: { sport: 'basketball', league: 'nba' }, nfl: { sport: 'football', league: 'nfl' }, mlb: { sport: 'baseball', league: 'mlb' } };
+        const m = sportMap[sport];
+        if (!m) return [];
+        const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=news`);
+        const data = await res.json();
+        const articles = data.articles || [];
+        const q = playerName.toLowerCase();
+        return articles.filter(a => {
+            const text = ((a.headline || '') + ' ' + (a.description || '')).toLowerCase();
+            return text.includes(q) || q.split(' ').every(w => text.includes(w));
+        }).slice(0, 5);
+    } catch { return []; }
+}
+
+/* ============================================================
+   COMPARISON HISTORY
+   ============================================================ */
+function getComparisonHistory() {
+    try { return JSON.parse(localStorage.getItem('sv_comparisons') || '[]'); }
+    catch { return []; }
+}
+
+function saveComparison(p1Id, p2Id, sport) {
+    const history = getComparisonHistory();
+    const existing = history.findIndex(h => (h.p1 === p1Id && h.p2 === p2Id) || (h.p1 === p2Id && h.p2 === p1Id));
+    if (existing >= 0) history.splice(existing, 1);
+    history.unshift({ p1: p1Id, p2: p2Id, sport, date: new Date().toISOString().split('T')[0] });
+    if (history.length > 20) history.pop();
+    localStorage.setItem('sv_comparisons', JSON.stringify(history));
+}
+
+/* ============================================================
+   SOCIAL SHARING CARDS
+   ============================================================ */
+function generateShareCard(playerId) {
+    const { player, sport } = findPlayerById(playerId);
+    if (!player) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 600; canvas.height = 340;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#0B1622'; ctx.fillRect(0, 0, 600, 340);
+    ctx.fillStyle = '#122436'; ctx.fillRect(0, 0, 600, 4);
+
+    // Accent bar
+    const colors = { nba: '#ff7e00', nfl: '#4a90d9', mlb: '#e85555', ncaa: '#52B788' };
+    ctx.fillStyle = colors[sport] || '#FFB703';
+    ctx.fillRect(0, 0, 600, 5);
+
+    // Logo text
+    ctx.fillStyle = '#FFB703'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('STATVAULT', 24, 30);
+
+    // Player name
+    ctx.fillStyle = '#F1FAEE'; ctx.font = 'bold 32px sans-serif'; ctx.fillText(player.name, 24, 80);
+    ctx.fillStyle = '#B9C7D6'; ctx.font = '16px sans-serif'; ctx.fillText(`${player.team} · ${player.pos || player.position} · ${sport.toUpperCase()}`, 24, 108);
+
+    // Stats
+    ctx.fillStyle = '#415A77'; ctx.fillRect(24, 130, 552, 1);
+    const config = SPORT_CONFIG[sport];
+    const statKeys = config.statKeys.slice(0, 4);
+    const statCols = config.statCols.slice(0, 4);
+    statKeys.forEach((k, i) => {
+        const x = 24 + i * 138;
+        ctx.fillStyle = '#B9C7D6'; ctx.font = '12px sans-serif'; ctx.fillText(statCols[i], x, 160);
+        ctx.fillStyle = '#F1FAEE'; ctx.font = 'bold 28px sans-serif'; ctx.fillText(String(player[k] ?? '—'), x, 195);
+    });
+
+    // Fantasy points
+    ctx.fillStyle = '#415A77'; ctx.fillRect(24, 220, 552, 1);
+    ctx.fillStyle = '#FFB703'; ctx.font = 'bold 42px sans-serif'; ctx.fillText((player.fantasyPts || 0).toFixed(1), 24, 275);
+    ctx.fillStyle = '#B9C7D6'; ctx.font = '14px sans-serif'; ctx.fillText('FANTASY PTS', 24, 295);
+
+    // Trend
+    ctx.fillStyle = player.trend === 'up' ? '#52B788' : player.trend === 'down' ? '#E63946' : '#B9C7D6';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText(player.trend === 'up' ? '▲ Trending Up' : player.trend === 'down' ? '▼ Trending Down' : '— Stable', 200, 275);
+
+    // Footer
+    ctx.fillStyle = '#0e1e2e'; ctx.fillRect(0, 310, 600, 30);
+    ctx.fillStyle = '#415A77'; ctx.font = '11px sans-serif'; ctx.fillText('Generated by StatVault — sports-analytics-hub-eight.vercel.app', 24, 328);
+
+    // Download
+    const link = document.createElement('a');
+    link.download = `statvault_${player.name.replace(/\s+/g, '_').toLowerCase()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Share card downloaded!', 'success');
 }
 
     </script>

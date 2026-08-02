@@ -19,6 +19,10 @@
         <div class="ticker-wrap" aria-label="Live scores ticker">
             <div class="ticker-track" id="scoreTicker"><span><b>LIVE</b> Loading today&rsquo;s score summaries&hellip;</span></div>
         </div>
+        <!-- OFFLINE INDICATOR -->
+        <div id="offlineIndicator" style="display:none;align-items:center;justify-content:center;gap:8px;padding:6px 16px;background:#f59e0b;color:#000;font-size:0.78rem;font-weight:700;text-align:center;">
+            <span>&#x26A0;&#xFE0F;</span> Offline — showing cached data
+        </div>
         <!-- HEADER -->
         <header class="app-header">
             <div style="display:flex;align-items:center;gap:16px;">
@@ -6688,6 +6692,7 @@ async function renderNewsFeed() {
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
     restoreTheme();
+    updateOnlineStatus();
     populateHeadshots();
     const restored = restoreCachedRosters();
     if (restored > 0) populateHeadshots();
@@ -6710,11 +6715,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 /* ============================================================
-   SERVICE WORKER REGISTRATION
+   SERVICE WORKER + OFFLINE MODE
    ============================================================ */
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').then(reg => {
+        // Prompt update when new SW available
+        reg.addEventListener('updatefound', () => {
+            const newSW = reg.installing;
+            newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                    showToast('New version available — refresh to update', 'info');
+                }
+            });
+        });
+    }).catch(() => {});
 }
+
+// Offline/online indicator
+function updateOnlineStatus() {
+    const indicator = document.getElementById('offlineIndicator');
+    if (!indicator) return;
+    if (navigator.onLine) {
+        indicator.style.display = 'none';
+    } else {
+        indicator.style.display = 'flex';
+    }
+}
+window.addEventListener('online', () => { updateOnlineStatus(); showToast('Back online', 'success'); });
+window.addEventListener('offline', () => { updateOnlineStatus(); showToast('You are offline — cached data will be used', 'warning'); });
 
 /* ============================================================
    FEATURE 1: HEAD-TO-HEAD COMPARISON

@@ -184,6 +184,9 @@
                 <div class="sidebar-item" onclick="showView('power-rankings')" data-view="power-rankings">
                     <span class="icon">&#x1F3C6;</span> Power Rankings
                 </div>
+                <div class="sidebar-item" onclick="showView('matchup-heatmap')" data-view="matchup-heatmap">
+                    <span class="icon">&#x1F525;</span> Matchup Heatmaps
+                </div>
             </div>
 
             <div class="sidebar-divider"></div>
@@ -970,6 +973,27 @@
                 </div>
             </div>
 
+            <!-- ============ MATCHUP HEATMAPS ============ -->
+            <div class="view" id="view-matchup-heatmap">
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Matchup Heatmaps</h2>
+                <p style="color:var(--text-muted);margin-bottom:8px;font-size:0.9rem;">Team-vs-team positional and statistical breakdowns with color-coded advantage maps</p>
+                <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Sport</label>
+                        <select class="form-select" id="hmSport" onchange="initHeatmapTeams()">
+                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option><option value="ncaa">NCAA</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Team A</label>
+                        <select class="form-select" id="hmTeamA" style="width:180px;"></select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Team B</label>
+                        <select class="form-select" id="hmTeamB" style="width:180px;"></select>
+                    </div>
+                    <button class="btn btn-primary" onclick="renderMatchupHeatmap()">Analyze Matchup</button>
+                </div>
+                <div id="hmDisplay"></div>
+            </div>
+
             <!-- ============ DRAFT TRADE CHART ============ -->
             <div class="view" id="view-draft-trade">
                 <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Draft Pick Trade Chart</h2>
@@ -1212,6 +1236,7 @@ function initView(viewId) {
         case 'ai-scout': updateScoutPlayers(); break;
         case 'prop-analyzer': updatePropPlayers(); break;
         case 'power-rankings': renderPowerRankings(); break;
+        case 'matchup-heatmap': initHeatmapTeams(); break;
         case 'depth-charts': initDepthCharts(); break;
         case 'streak-tracker': renderStreakTracker(); break;
         case 'playoff-odds': renderPlayoffOddsView(); break;
@@ -7598,6 +7623,250 @@ function renderWinProb() {
             <div style="padding:10px;background:var(--bg-input);border-radius:6px;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Home Roster Strength</div><div style="font-size:1.2rem;font-weight:800;font-family:var(--font-mono);">${homeStr.toFixed(1)}</div></div>
             <div style="padding:10px;background:var(--bg-input);border-radius:6px;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Away Roster Strength</div><div style="font-size:1.2rem;font-weight:800;font-family:var(--font-mono);">${awayStr.toFixed(1)}</div></div>
             <div style="padding:10px;background:var(--bg-input);border-radius:6px;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Home Court Advantage</div><div style="font-size:1.2rem;font-weight:800;font-family:var(--font-mono);">+${homeAdv}</div></div>
+        </div>
+    </div>`;
+}
+
+/* ============================================================
+   MATCHUP HEATMAPS — Team-vs-Team Positional Breakdown
+   ============================================================ */
+function initHeatmapTeams() {
+    const sport = document.getElementById('hmSport').value;
+    const teams = getTeamsForSport(sport);
+    const optsA = teams.map((t, i) => `<option value="${t}" ${i === 0 ? 'selected' : ''}>${t}</option>`).join('');
+    const optsB = teams.map((t, i) => `<option value="${t}" ${i === 1 ? 'selected' : ''}>${t}</option>`).join('');
+    document.getElementById('hmTeamA').innerHTML = optsA;
+    document.getElementById('hmTeamB').innerHTML = optsB;
+}
+
+function renderMatchupHeatmap() {
+    const sport = document.getElementById('hmSport').value;
+    const teamA = document.getElementById('hmTeamA').value;
+    const teamB = document.getElementById('hmTeamB').value;
+    const display = document.getElementById('hmDisplay');
+    if (teamA === teamB) { display.innerHTML = '<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Select different teams</div></div>'; return; }
+
+    const players = PLAYERS[sport] || [];
+    const rosterA = players.filter(p => p.team === teamA);
+    const rosterB = players.filter(p => p.team === teamB);
+    if (!rosterA.length || !rosterB.length) {
+        display.innerHTML = '<div class="empty-state"><div class="icon">&#x1F50D;</div><div class="title">No roster data</div><div class="subtitle">Need player data for both teams</div></div>';
+        return;
+    }
+
+    // Get stat config per sport
+    const statConfig = sport === 'nba'
+        ? [{k:'ppg',l:'PPG'},{k:'rpg',l:'RPG'},{k:'apg',l:'APG'},{k:'spg',l:'STL'},{k:'bpg',l:'BLK'},{k:'fg',l:'FG%'},{k:'ft',l:'FT%'},{k:'per',l:'PER'},{k:'ts',l:'TS%'},{k:'ws',l:'WS'}]
+        : sport === 'nfl'
+        ? [{k:'passYds',l:'Pass Yds'},{k:'rushYds',l:'Rush Yds'},{k:'recYds',l:'Rec Yds'},{k:'td',l:'TD'},{k:'targets',l:'Tgt'},{k:'fantasyPts',l:'FPTS'}]
+        : sport === 'mlb'
+        ? [{k:'avg',l:'AVG'},{k:'hr',l:'HR'},{k:'rbi',l:'RBI'},{k:'ops',l:'OPS'},{k:'sb',l:'SB'},{k:'war',l:'WAR'}]
+        : [{k:'fantasyPts',l:'FPTS'}];
+
+    // Aggregate team stats
+    const aggTeam = (roster) => {
+        const agg = {};
+        for (const s of statConfig) {
+            const vals = roster.filter(p => p[s.k] !== undefined).map(p => p[s.k]);
+            agg[s.k] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+        }
+        return agg;
+    };
+    const aggA = aggTeam(rosterA);
+    const aggB = aggTeam(rosterB);
+
+    // Team summary cards
+    const winsA = statConfig.filter(s => aggA[s.k] > aggB[s.k]).length;
+    const winsB = statConfig.filter(s => aggB[s.k] > aggA[s.k]).length;
+
+    // 1. RADAR CHART — team aggregate comparison
+    const radarSize = 260, cx = radarSize, cy = radarSize;
+    const n = Math.min(statConfig.length, 10);
+    const radarStats = statConfig.slice(0, n);
+    let gridSvg = '', labelsSvg = '';
+    for (let ring = 1; ring <= 5; ring++) {
+        const r = (ring / 5) * (radarSize - 40);
+        let pts = [];
+        for (let i = 0; i < n; i++) {
+            const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+            pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+        }
+        gridSvg += `<polygon points="${pts.join(' ')}" fill="none" stroke="var(--border)" stroke-width="0.5" opacity="${ring === 5 ? 0.6 : 0.3}"/>`;
+    }
+    let ptsA = [], ptsB = [];
+    for (let i = 0; i < n; i++) {
+        const s = radarStats[i];
+        const allVals = players.filter(p => p[s.k] !== undefined).map(p => p[s.k]);
+        const minV = Math.min(...allVals, 0), maxV = Math.max(...allVals);
+        const range = maxV - minV || 1;
+        const normA = Math.max(0, Math.min(1, (aggA[s.k] - minV) / range));
+        const normB = Math.max(0, Math.min(1, (aggB[s.k] - minV) / range));
+        const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+        const maxR = radarSize - 40;
+        ptsA.push(`${cx + maxR * normA * Math.cos(angle)},${cy + maxR * normA * Math.sin(angle)}`);
+        ptsB.push(`${cx + maxR * normB * Math.cos(angle)},${cy + maxR * normB * Math.sin(angle)}`);
+        const lx = cx + (maxR + 24) * Math.cos(angle), ly = cy + (maxR + 24) * Math.sin(angle);
+        const winner = aggA[s.k] > aggB[s.k] ? 'var(--accent)' : aggB[s.k] > aggA[s.k] ? '#ef4444' : 'var(--text-muted)';
+        labelsSvg += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="${winner}" font-size="11" font-weight="700" font-family="var(--font-mono)">${s.l}</text>`;
+    }
+
+    // Axis lines
+    let axisLines = '';
+    for (let i = 0; i < n; i++) {
+        const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+        const maxR = radarSize - 40;
+        axisLines += `<line x1="${cx}" y1="${cy}" x2="${cx + maxR * Math.cos(angle)}" y2="${cy + maxR * Math.sin(angle)}" stroke="var(--border)" stroke-width="0.5" opacity="0.4"/>`;
+    }
+
+    const radarSvg = `<svg viewBox="0 0 ${radarSize * 2} ${radarSize * 2}" style="max-width:480px;width:100%;margin:0 auto;display:block;">
+        ${gridSvg}${axisLines}
+        <polygon points="${ptsA.join(' ')}" fill="rgba(99,102,241,0.2)" stroke="var(--accent)" stroke-width="2.5"/>
+        <polygon points="${ptsB.join(' ')}" fill="rgba(239,68,68,0.15)" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="6,3"/>
+        ${labelsSvg}
+    </svg>`;
+
+    // 2. HEATMAP GRID — stat-by-stat color-coded cells
+    function heatColor(diff) {
+        if (diff > 0.6) return 'rgba(34,197,94,0.35)';
+        if (diff > 0.3) return 'rgba(34,197,94,0.2)';
+        if (diff > 0.05) return 'rgba(34,197,94,0.1)';
+        if (diff < -0.6) return 'rgba(239,68,68,0.35)';
+        if (diff < -0.3) return 'rgba(239,68,68,0.2)';
+        if (diff < -0.05) return 'rgba(239,68,68,0.1)';
+        return 'transparent';
+    }
+
+    const heatRows = statConfig.map(s => {
+        const allVals = players.filter(p => p[s.k] !== undefined).map(p => p[s.k]);
+        const maxV = Math.max(...allVals) || 1;
+        const vA = aggA[s.k], vB = aggB[s.k];
+        const diff = maxV > 0 ? (vA - vB) / maxV : 0;
+        const barPct = Math.min(100, Math.abs(diff) * 100);
+        const aWins = vA > vB;
+        return `<tr class="hm-row">
+            <td style="padding:10px 14px;font-family:var(--font-mono);font-weight:700;font-size:0.9rem;color:${aWins ? 'var(--accent)' : 'var(--text-primary)'};">${typeof vA === 'number' ? (vA < 1 && vA > 0 ? vA.toFixed(3) : vA.toFixed(1)) : vA}</td>
+            <td style="padding:10px 0;width:120px;">
+                <div style="position:relative;height:8px;background:var(--bg-input);border-radius:4px;overflow:hidden;">
+                    <div style="position:absolute;${aWins ? 'right' : 'left'}:50%;width:${barPct/2}%;height:100%;background:${aWins ? 'var(--accent)' : '#ef4444'};border-radius:4px;${aWins ? 'border-top-left-radius:0;border-bottom-left-radius:0;' : 'border-top-right-radius:0;border-bottom-right-radius:0;'}"></div>
+                    <div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:var(--text-muted);opacity:0.4;"></div>
+                </div>
+            </td>
+            <td style="padding:10px 14px;text-align:center;font-weight:700;font-size:0.8rem;text-transform:uppercase;background:${heatColor(diff)};border-radius:6px;">${s.l}</td>
+            <td style="padding:10px 0;width:120px;">
+                <div style="position:relative;height:8px;background:var(--bg-input);border-radius:4px;overflow:hidden;">
+                    <div style="position:absolute;${!aWins ? 'left' : 'right'}:50%;width:${barPct/2}%;height:100%;background:${!aWins ? '#ef4444' : 'var(--accent)'};border-radius:4px;"></div>
+                    <div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:var(--text-muted);opacity:0.4;"></div>
+                </div>
+            </td>
+            <td style="padding:10px 14px;text-align:right;font-family:var(--font-mono);font-weight:700;font-size:0.9rem;color:${!aWins ? '#ef4444' : 'var(--text-primary)'};">${typeof vB === 'number' ? (vB < 1 && vB > 0 ? vB.toFixed(3) : vB.toFixed(1)) : vB}</td>
+        </tr>`;
+    }).join('');
+
+    // 3. POSITIONAL HEATMAP — group players by position
+    const positions = [...new Set([...rosterA, ...rosterB].map(p => p.pos))].filter(Boolean).sort();
+    const primaryStat = sport === 'nba' ? 'ppg' : sport === 'nfl' ? 'fantasyPts' : sport === 'mlb' ? 'war' : 'fantasyPts';
+    const primaryLabel = sport === 'nba' ? 'PPG' : sport === 'nfl' ? 'FPTS' : sport === 'mlb' ? 'WAR' : 'FPTS';
+
+    const posCards = positions.map(pos => {
+        const posA = rosterA.filter(p => p.pos === pos).sort((a, b) => (b[primaryStat] || 0) - (a[primaryStat] || 0));
+        const posB = rosterB.filter(p => p.pos === pos).sort((a, b) => (b[primaryStat] || 0) - (a[primaryStat] || 0));
+        const avgA = posA.length ? posA.reduce((s, p) => s + (p[primaryStat] || 0), 0) / posA.length : 0;
+        const avgB = posB.length ? posB.reduce((s, p) => s + (p[primaryStat] || 0), 0) / posB.length : 0;
+        const diff = avgA - avgB;
+        const advantage = diff > 0.5 ? teamA : diff < -0.5 ? teamB : 'Even';
+        const advColor = diff > 0.5 ? 'var(--accent)' : diff < -0.5 ? '#ef4444' : 'var(--text-muted)';
+        const bgTint = diff > 0.5 ? 'rgba(99,102,241,0.06)' : diff < -0.5 ? 'rgba(239,68,68,0.06)' : 'transparent';
+
+        const topA = posA.slice(0, 2).map(p => `<div style="font-size:0.78rem;display:flex;justify-content:space-between;"><span>${p.name}</span><span style="font-family:var(--font-mono);font-weight:600;">${(p[primaryStat] || 0).toFixed(1)}</span></div>`).join('');
+        const topB = posB.slice(0, 2).map(p => `<div style="font-size:0.78rem;display:flex;justify-content:space-between;"><span>${p.name}</span><span style="font-family:var(--font-mono);font-weight:600;">${(p[primaryStat] || 0).toFixed(1)}</span></div>`).join('');
+
+        return `<div class="card hm-pos-card" style="padding:14px;background:${bgTint};border-left:3px solid ${advColor};">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span class="position-tag" style="font-size:0.82rem;">${pos}</span>
+                <span style="font-size:0.72rem;font-weight:700;color:${advColor};text-transform:uppercase;">${advantage === 'Even' ? 'Even' : `${advantage} +${Math.abs(diff).toFixed(1)}`}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                    <div style="font-size:0.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:4px;">${teamA} (${posA.length})</div>
+                    ${topA || '<div style="font-size:0.78rem;color:var(--text-muted);">None</div>'}
+                    <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">Avg: <strong>${avgA.toFixed(1)}</strong> ${primaryLabel}</div>
+                </div>
+                <div>
+                    <div style="font-size:0.68rem;font-weight:700;color:#ef4444;text-transform:uppercase;margin-bottom:4px;">${teamB} (${posB.length})</div>
+                    ${topB || '<div style="font-size:0.78rem;color:var(--text-muted);">None</div>'}
+                    <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">Avg: <strong>${avgB.toFixed(1)}</strong> ${primaryLabel}</div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    // 4. EDGE MATRIX — who has more advantages
+    const edgeA = statConfig.filter(s => aggA[s.k] > aggB[s.k]).map(s => s.l);
+    const edgeB = statConfig.filter(s => aggB[s.k] > aggA[s.k]).map(s => s.l);
+
+    display.innerHTML = `
+    <!-- Summary badges -->
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;margin-bottom:20px;align-items:center;">
+        <div class="card" style="text-align:center;padding:16px;">
+            <div style="font-size:2.2rem;font-weight:900;color:var(--accent);">${winsA}</div>
+            <div style="font-size:0.9rem;font-weight:700;">${teamA}</div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">${rosterA.length} players</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Categories Won</div>
+            <div style="font-size:1.6rem;font-weight:900;font-family:var(--font-mono);color:var(--text-primary);">${winsA} — ${winsB}</div>
+        </div>
+        <div class="card" style="text-align:center;padding:16px;">
+            <div style="font-size:2.2rem;font-weight:900;color:#ef4444;">${winsB}</div>
+            <div style="font-size:0.9rem;font-weight:700;">${teamB}</div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">${rosterB.length} players</div>
+        </div>
+    </div>
+
+    <!-- Radar Chart -->
+    <div class="card" style="padding:20px;margin-bottom:20px;">
+        <div class="card-title" style="margin-bottom:8px;">Team Comparison Radar</div>
+        <div style="display:flex;gap:24px;justify-content:center;margin-bottom:12px;">
+            <span style="display:flex;align-items:center;gap:6px;font-size:0.82rem;"><span style="width:14px;height:3px;background:var(--accent);display:inline-block;border-radius:2px;"></span><strong>${teamA}</strong></span>
+            <span style="display:flex;align-items:center;gap:6px;font-size:0.82rem;"><span style="width:14px;height:3px;background:#ef4444;display:inline-block;border-radius:2px;border:none;background-image:repeating-linear-gradient(90deg,#ef4444 0,#ef4444 4px,transparent 4px,transparent 7px);"></span><strong>${teamB}</strong></span>
+        </div>
+        ${radarSvg}
+    </div>
+
+    <!-- Stat Heatmap Table -->
+    <div class="card" style="padding:20px;margin-bottom:20px;">
+        <div class="card-title" style="margin-bottom:12px;">Statistical Heatmap</div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:separate;border-spacing:0 4px;font-size:0.87rem;">
+                <thead><tr>
+                    <th style="padding:8px 14px;text-align:left;color:var(--accent);font-size:0.78rem;text-transform:uppercase;">${teamA}</th>
+                    <th></th>
+                    <th style="padding:8px 14px;text-align:center;color:var(--text-muted);font-size:0.72rem;">STAT</th>
+                    <th></th>
+                    <th style="padding:8px 14px;text-align:right;color:#ef4444;font-size:0.78rem;text-transform:uppercase;">${teamB}</th>
+                </tr></thead>
+                <tbody>${heatRows}</tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edge Summary -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card" style="padding:14px;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">${teamA} Advantages</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">${edgeA.map(e => `<span class="badge badge-snap" style="background:rgba(99,102,241,0.15);color:var(--accent);">${e}</span>`).join('') || '<span style="color:var(--text-muted);font-size:0.82rem;">None</span>'}</div>
+        </div>
+        <div class="card" style="padding:14px;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#ef4444;margin-bottom:8px;">${teamB} Advantages</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">${edgeB.map(e => `<span class="badge badge-snap" style="background:rgba(239,68,68,0.12);color:#ef4444;">${e}</span>`).join('') || '<span style="color:var(--text-muted);font-size:0.82rem;">None</span>'}</div>
+        </div>
+    </div>
+
+    <!-- Positional Heatmap -->
+    <div class="card" style="padding:20px;">
+        <div class="card-title" style="margin-bottom:14px;">Positional Breakdown</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+            ${posCards}
         </div>
     </div>`;
 }

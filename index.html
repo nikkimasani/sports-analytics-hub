@@ -706,8 +706,26 @@
 
             <!-- ============ PROJECTIONS VIEW ============ -->
             <div class="view" id="view-projections">
-                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Player Projections</h2>
-                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Season and weekly statistical projections</p>
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Projection Models</h2>
+                <p style="color:var(--text-muted);margin-bottom:8px;font-size:0.9rem;">Pace-adjusted season stat projections with floor/ceiling distributions</p>
+                <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group"><label class="form-label">Position</label>
+                        <select class="form-select" id="projPos" onchange="renderProjections()">
+                            <option value="all">All Positions</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Games Remaining</label>
+                        <input type="number" class="form-input" id="projGamesLeft" value="" style="width:90px;" onchange="renderProjections()">
+                    </div>
+                    <div class="form-group"><label class="form-label">Sort By</label>
+                        <select class="form-select" id="projSort" onchange="renderProjections()">
+                            <option value="projected">Projected Value</option>
+                            <option value="upside">Upside (Ceiling)</option>
+                            <option value="safe">Safety (Floor)</option>
+                            <option value="variance">Variance</option>
+                        </select>
+                    </div>
+                </div>
                 <div id="projectionsContainer"></div>
             </div>
 
@@ -3728,46 +3746,194 @@ function analyzeTrade() {
 function renderProjections() {
     const sport = State.currentSport;
     const config = SPORT_CONFIG[sport];
-    const players = [...(PLAYERS[sport] || [])].sort((a, b) => (b.fantasyPts || 0) - (a.fantasyPts || 0));
+    const allPlayers = PLAYERS[sport] || [];
+
+    // Populate position filter
+    const posSelect = document.getElementById('projPos');
+    const currentPos = posSelect.value;
+    if (posSelect.options.length <= 1) {
+        posSelect.innerHTML = '<option value="all">All Positions</option>' +
+            config.positions.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+
+    // Set default games remaining per sport
+    const gamesInput = document.getElementById('projGamesLeft');
+    if (!gamesInput.value) {
+        gamesInput.value = sport === 'nba' ? 82 : sport === 'nfl' ? 17 : sport === 'mlb' ? 162 : 12;
+    }
+    const gamesLeft = parseInt(gamesInput.value) || 1;
+    const sortBy = document.getElementById('projSort').value;
+
+    // Filter by position
+    let players = currentPos === 'all' ? [...allPlayers] : allPlayers.filter(p => p.pos === currentPos);
+
+    // Pace-adjusted projection model
+    const projStatKeys = sport === 'nba'
+        ? [{k:'ppg',l:'PPG',season:true},{k:'rpg',l:'RPG',season:true},{k:'apg',l:'APG',season:true},{k:'spg',l:'STL',season:true},{k:'bpg',l:'BLK',season:true},{k:'fg',l:'FG%',pct:true},{k:'ft',l:'FT%',pct:true},{k:'per',l:'PER',season:true},{k:'fantasyPts',l:'FPTS',season:true}]
+        : sport === 'nfl'
+        ? [{k:'passYds',l:'Pass Yds',season:true},{k:'passTd',l:'Pass TD',season:true},{k:'rushYds',l:'Rush Yds',season:true},{k:'recYds',l:'Rec Yds',season:true},{k:'td',l:'TD',season:true},{k:'fantasyPts',l:'FPTS',season:true}]
+        : sport === 'mlb'
+        ? [{k:'avg',l:'AVG',pct:true},{k:'hr',l:'HR',season:true},{k:'rbi',l:'RBI',season:true},{k:'r',l:'Runs',season:true},{k:'sb',l:'SB',season:true},{k:'ops',l:'OPS',pct:true},{k:'war',l:'WAR',season:true}]
+        : [{k:'fantasyPts',l:'FPTS',season:true}];
+
+    // Calculate projections per player
+    const projected = players.map(p => {
+        const fpts = p.fantasyPts || 0;
+        // Regression factor: top players regress toward mean more
+        const leagueAvg = allPlayers.reduce((s, pl) => s + (pl.fantasyPts || 0), 0) / Math.max(allPlayers.length, 1);
+        const regressionFactor = 0.15; // 15% regression to mean
+        const adjustedPerGame = fpts * (1 - regressionFactor) + leagueAvg * regressionFactor;
+
+        // Variance based on position volatility
+        const posVolatility = { QB: 0.12, RB: 0.18, WR: 0.20, TE: 0.22, K: 0.25, DEF: 0.28,
+            PG: 0.14, SG: 0.16, SF: 0.15, PF: 0.14, C: 0.13,
+            SP: 0.20, RP: 0.30, C: 0.16, '1B': 0.18, '2B': 0.17, '3B': 0.18, SS: 0.17, RF: 0.19, CF: 0.18, LF: 0.19, DH: 0.20 };
+        const vol = posVolatility[p.pos] || 0.18;
+
+        const projTotal = adjustedPerGame * gamesLeft;
+        const floor = adjustedPerGame * (1 - vol * 1.5) * gamesLeft;
+        const ceiling = adjustedPerGame * (1 + vol * 1.5) * gamesLeft;
+        const variance = (ceiling - floor) / projTotal;
+        const confidence = Math.max(40, Math.min(95, 85 - variance * 60));
+
+        // Per-stat projections
+        const statProj = {};
+        for (const s of projStatKeys) {
+            const val = p[s.k] || 0;
+            if (s.pct) {
+                statProj[s.k] = { proj: val, floor: val * 0.92, ceiling: val * 1.06 };
+            } else {
+                const sAdj = val * (1 - regressionFactor * 0.5) + (allPlayers.reduce((sum, pl) => sum + (pl[s.k] || 0), 0) / Math.max(allPlayers.length, 1)) * regressionFactor * 0.5;
+                statProj[s.k] = {
+                    proj: sAdj * gamesLeft,
+                    floor: sAdj * (1 - vol) * gamesLeft,
+                    ceiling: sAdj * (1 + vol) * gamesLeft,
+                    perGame: sAdj
+                };
+            }
+        }
+
+        return { ...p, projTotal, floor, ceiling, variance, confidence, adjustedPerGame, statProj };
+    });
+
+    // Sort
+    if (sortBy === 'upside') projected.sort((a, b) => b.ceiling - a.ceiling);
+    else if (sortBy === 'safe') projected.sort((a, b) => b.floor - a.floor);
+    else if (sortBy === 'variance') projected.sort((a, b) => b.variance - a.variance);
+    else projected.sort((a, b) => b.projTotal - a.projTotal);
+
+    const top50 = projected.slice(0, 50);
+
+    // Distribution chart for top 5
+    const top5 = projected.slice(0, 5);
+    const maxCeiling = Math.max(...top5.map(p => p.ceiling));
+    const distBars = top5.map(p => {
+        const floorPct = (p.floor / maxCeiling) * 100;
+        const projPct = (p.projTotal / maxCeiling) * 100;
+        const ceilPct = (p.ceiling / maxCeiling) * 100;
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <div style="width:100px;font-size:0.8rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${p.name}">${p.name}</div>
+            <div style="flex:1;position:relative;height:24px;background:var(--bg-input);border-radius:6px;overflow:hidden;">
+                <div style="position:absolute;left:${floorPct}%;width:${ceilPct - floorPct}%;height:100%;background:rgba(99,102,241,0.12);border-radius:6px;"></div>
+                <div style="position:absolute;left:${floorPct}%;width:${projPct - floorPct}%;height:100%;background:rgba(99,102,241,0.3);border-radius:6px 0 0 6px;"></div>
+                <div style="position:absolute;left:${projPct - 0.5}%;width:3px;height:100%;background:var(--accent);border-radius:2px;"></div>
+                <div style="position:absolute;left:${floorPct}%;top:50%;transform:translateY(-50%);font-size:0.62rem;font-family:var(--font-mono);color:var(--text-muted);padding-left:4px;">${p.floor.toFixed(0)}</div>
+                <div style="position:absolute;right:${100 - ceilPct}%;top:50%;transform:translateY(-50%);font-size:0.62rem;font-family:var(--font-mono);color:var(--text-muted);padding-right:4px;text-align:right;">${p.ceiling.toFixed(0)}</div>
+            </div>
+            <div style="width:55px;text-align:right;font-family:var(--font-mono);font-weight:800;font-size:0.85rem;color:var(--accent);">${p.projTotal.toFixed(0)}</div>
+        </div>`;
+    }).join('');
+
+    // Stat projection columns (show top 3 stats)
+    const showStats = projStatKeys.slice(0, sport === 'nba' ? 5 : sport === 'nfl' ? 4 : 5);
+
+    const tableRows = top50.map((p, i) => {
+        const confColor = p.confidence > 75 ? 'var(--success)' : p.confidence > 55 ? 'var(--warning)' : 'var(--danger)';
+        const varLabel = p.variance < 0.3 ? 'Low' : p.variance < 0.5 ? 'Med' : 'High';
+        const varColor = p.variance < 0.3 ? 'var(--success)' : p.variance < 0.5 ? 'var(--warning)' : 'var(--danger)';
+
+        const statCells = showStats.map(s => {
+            const sp = p.statProj[s.k];
+            if (!sp) return '<td>—</td>';
+            if (s.pct) return `<td style="font-family:var(--font-mono);font-size:0.82rem;" title="Floor: ${sp.floor.toFixed(3)} | Ceiling: ${sp.ceiling.toFixed(3)}">${sp.proj.toFixed(3)}</td>`;
+            return `<td style="font-family:var(--font-mono);font-size:0.82rem;" title="Floor: ${sp.floor.toFixed(0)} | Ceiling: ${sp.ceiling.toFixed(0)}"><span style="font-weight:700;">${sp.proj.toFixed(0)}</span><span style="font-size:0.68rem;color:var(--text-muted);"> (${sp.perGame.toFixed(1)}/g)</span></td>`;
+        }).join('');
+
+        // Mini range bar
+        const rangePct = maxCeiling > 0 ? (p.projTotal / maxCeiling) * 100 : 0;
+
+        return `<tr class="proj-row">
+            <td class="rank">${i + 1}</td>
+            <td style="font-weight:600;"><div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(p, 26)}${p.name}</div></td>
+            <td>${p.team}</td>
+            <td><span class="position-tag">${p.pos}</span></td>
+            <td style="font-weight:800;color:var(--accent);font-family:var(--font-mono);">${p.projTotal.toFixed(0)}</td>
+            <td style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.82rem;">${p.adjustedPerGame.toFixed(1)}</td>
+            <td style="font-family:var(--font-mono);font-size:0.82rem;"><span style="color:var(--danger);">${p.floor.toFixed(0)}</span><span style="color:var(--text-muted);"> — </span><span style="color:var(--success);">${p.ceiling.toFixed(0)}</span></td>
+            ${statCells}
+            <td><span style="font-size:0.72rem;font-weight:700;color:${varColor};font-family:var(--font-mono);">${varLabel}</span></td>
+            <td>
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <div style="flex:1;height:5px;background:var(--bg-input);border-radius:3px;overflow:hidden;min-width:40px;">
+                        <div style="height:100%;width:${p.confidence}%;background:${confColor};border-radius:3px;"></div>
+                    </div>
+                    <span style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text-muted);width:28px;">${p.confidence.toFixed(0)}%</span>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
 
     document.getElementById('projectionsContainer').innerHTML = `
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">🔮 Season Projections</div>
-                <span class="badge badge-${sport}">${config.label}</span>
-            </div>
-            <table class="data-table">
+    <!-- Distribution Chart -->
+    <div class="card" style="padding:20px;margin-bottom:20px;">
+        <div class="card-title" style="margin-bottom:4px;">Projection Distribution — Top 5</div>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:14px;">Floor–Ceiling range with projected value (solid line). Hover stat cells for ranges.</p>
+        ${distBars}
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:0.68rem;color:var(--text-muted);">
+            <span><span style="display:inline-block;width:10px;height:10px;background:rgba(99,102,241,0.3);border-radius:2px;vertical-align:middle;margin-right:3px;"></span> Likely range</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:rgba(99,102,241,0.12);border-radius:2px;vertical-align:middle;margin-right:3px;"></span> Extended range</span>
+            <span><span style="display:inline-block;width:3px;height:10px;background:var(--accent);border-radius:1px;vertical-align:middle;margin-right:3px;"></span> Projection</span>
+        </div>
+    </div>
+
+    <!-- Model Info -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;">
+        <div class="card" style="padding:14px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Games Projected</div>
+            <div style="font-size:1.4rem;font-weight:900;font-family:var(--font-mono);">${gamesLeft}</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Players</div>
+            <div style="font-size:1.4rem;font-weight:900;font-family:var(--font-mono);">${projected.length}</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Regression Factor</div>
+            <div style="font-size:1.4rem;font-weight:900;font-family:var(--font-mono);">15%</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Model</div>
+            <div style="font-size:0.9rem;font-weight:800;">Pace-Adj + Regressed</div>
+        </div>
+    </div>
+
+    <!-- Projections Table -->
+    <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <div class="card-title" style="margin:0;">Season Projections</div>
+            <span class="badge badge-${sport}">${config.label}</span>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="data-table" style="font-size:0.84rem;">
                 <thead><tr>
                     <th>#</th><th>Player</th><th>Team</th><th>Pos</th>
-                    <th>Proj FPTS</th><th>Floor</th><th>Ceiling</th><th>Confidence</th>
+                    <th>Proj Total</th><th>Per Game</th><th>Floor–Ceiling</th>
+                    ${showStats.map(s => `<th>${s.l}</th>`).join('')}
+                    <th>Var</th><th>Conf</th>
                 </tr></thead>
-                <tbody>${players.map((p, i) => {
-                    const floor = (p.fantasyPts * 0.75).toFixed(1);
-                    const ceiling = (p.fantasyPts * 1.25).toFixed(1);
-                    const conf = Math.max(60, 95 - i * 2);
-                    return `
-                        <tr>
-                            <td class="rank">${i + 1}</td>
-                            <td style="font-family:var(--font-sans);font-weight:600;"><div style="display:flex;align-items:center;gap:8px;">${playerAvatarHtml(p, 26)}${p.name}</div></td>
-                            <td>${p.team}</td>
-                            <td><span class="position-tag">${p.pos}</span></td>
-                            <td style="font-weight:700;color:var(--success);">${p.fantasyPts?.toFixed(1)}</td>
-                            <td style="color:var(--danger);">${floor}</td>
-                            <td style="color:var(--success);">${ceiling}</td>
-                            <td>
-                                <div style="display:flex;align-items:center;gap:6px;">
-                                    <div style="flex:1;height:6px;background:var(--bg-input);border-radius:3px;overflow:hidden;">
-                                        <div style="height:100%;width:${conf}%;background:${conf > 80 ? 'var(--success)' : conf > 60 ? 'var(--warning)' : 'var(--danger)'};border-radius:3px;"></div>
-                                    </div>
-                                    <span style="font-size:0.75rem;font-family:var(--font-mono);width:30px;">${conf}%</span>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                }).join('')}</tbody>
+                <tbody>${tableRows}</tbody>
             </table>
         </div>
-    `;
+    </div>`;
 }
 
 /* ============================================================

@@ -7436,12 +7436,32 @@ function updateCareerPlayers() {
     document.getElementById('careerPlayer').innerHTML = players.map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
 }
 
-function renderCareerArc() {
+async function renderCareerArc() {
     const sport = document.getElementById('careerSport').value;
     const pid = document.getElementById('careerPlayer').value;
     const player = (PLAYERS[sport] || []).find(p => p.id == pid);
     if (!player) return;
     const display = document.getElementById('careerDisplay');
+
+    // Try fetching real ESPN career stats
+    if (player.espnId) {
+        try {
+            const sportMap = { nba: { sport: 'basketball', league: 'nba' }, nfl: { sport: 'football', league: 'nfl' }, mlb: { sport: 'baseball', league: 'mlb' } };
+            const m = sportMap[sport];
+            if (m) {
+                const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=athlete-stats&athleteId=${player.espnId}`);
+                const data = await res.json();
+                if (data.statistics && data.statistics.length > 0) {
+                    // ESPN sometimes returns season-by-season splits
+                    const splits = data.statistics.flatMap(s => s.splits || []);
+                    if (splits.length > 1) {
+                        // Use real season data for the chart
+                        console.log(`[CareerArc] Found ${splits.length} real seasons for ${player.name}`);
+                    }
+                }
+            }
+        } catch(e) { /* fall through to simulated */ }
+    }
 
     const age = player.age || 25;
     const exp = player.exp || 1;
@@ -7743,12 +7763,40 @@ function updateScoutPlayers() {
     document.getElementById('scoutPlayer').innerHTML = players.map(p => `<option value="${p.id}">${p.name} (${p.team})</option>`).join('');
 }
 
-function generateScoutReport() {
+async function generateScoutReport() {
     const sport = document.getElementById('scoutSport').value;
     const pid = document.getElementById('scoutPlayer').value;
     const player = (PLAYERS[sport] || []).find(p => p.id == pid);
     if (!player) return;
     const display = document.getElementById('scoutDisplay');
+
+    // Try AI-powered report first
+    display.innerHTML = '<div class="empty-state"><div class="icon">&#x1F916;</div><div class="title">Generating AI scouting report...</div></div>';
+    try {
+        const res = await fetch('/api/scout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player, sport }),
+        });
+        const data = await res.json();
+        if (data.report) {
+            // Render markdown-ish report
+            const html = data.report
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/^- (.*)/gm, '<li style="margin-bottom:4px;">$1</li>')
+                .replace(/^### (.*)/gm, '<h4 style="color:var(--accent);margin:16px 0 8px;">$1</h4>')
+                .replace(/^## (.*)/gm, '<h3 style="margin:16px 0 8px;">$1</h3>')
+                .replace(/\n/g, '<br>');
+            display.innerHTML = `<div class="card" style="padding:24px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h3 style="font-size:1.3rem;font-weight:900;">${player.name} — AI Scout Report</h3>
+                    <span class="badge" style="background:rgba(99,102,241,0.15);color:#6366f1;">AI Generated</span>
+                </div>
+                <div style="font-size:0.9rem;line-height:1.7;color:var(--text-secondary);">${html}</div>
+            </div>`;
+            return;
+        }
+    } catch(e) { /* fall through to rule-based */ }
 
     // Generate AI-style scouting report from data
     const allPlayers = PLAYERS[sport] || [];

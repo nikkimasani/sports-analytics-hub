@@ -14,7 +14,7 @@ const https = require('https');
 
 const VALID_SPORTS = ['basketball', 'football', 'baseball'];
 const VALID_LEAGUES = ['nba', 'nfl', 'mlb', 'college-football', 'mens-college-basketball'];
-const VALID_ENDPOINTS = ['athletes', 'scoreboard', 'teams', 'standings', 'allteams', 'athlete-stats', 'athlete-gamelog', 'news'];
+const VALID_ENDPOINTS = ['athletes', 'scoreboard', 'teams', 'standings', 'allteams', 'athlete-stats', 'athlete-gamelog', 'news', 'summary'];
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -64,6 +64,11 @@ function buildEspnUrl(sport, league, endpoint, query) {
     return `${base}/${sport}/${league}/athletes/${query.athleteId}/statistics`;
   }
 
+  // Game summary (play-by-play, win probability, boxscore)
+  if (endpoint === 'summary' && query.eventId) {
+    return `${base}/${sport}/${league}/summary?event=${query.eventId}`;
+  }
+
   // News: /sports/{sport}/{league}/news
   if (endpoint === 'news') {
     return `${base}/${sport}/${league}/news?limit=20`;
@@ -107,7 +112,7 @@ module.exports = async (req, res) => {
     return res.end(JSON.stringify({ error: 'Method not allowed' }));
   }
 
-  const { sport, league, endpoint, team, page, limit, athleteId } = req.query || {};
+  const { sport, league, endpoint, team, page, limit, athleteId, eventId } = req.query || {};
 
   // --- Validation ---
   if (!sport || !league || !endpoint) {
@@ -142,6 +147,13 @@ module.exports = async (req, res) => {
     );
   }
 
+  if (endpoint === 'summary' && !req.query.eventId) {
+    res.writeHead(400, { ...CORS_HEADERS, 'Content-Type': 'application/json' });
+    return res.end(
+      JSON.stringify({ error: 'summary endpoint requires an "eventId" query param' })
+    );
+  }
+
   if ((endpoint === 'athlete-stats' || endpoint === 'athlete-gamelog') && !req.query.athleteId) {
     res.writeHead(400, { ...CORS_HEADERS, 'Content-Type': 'application/json' });
     return res.end(
@@ -150,7 +162,7 @@ module.exports = async (req, res) => {
   }
 
   // --- Build URL & fetch ---
-  const url = buildEspnUrl(sport, league, endpoint, { team, page, limit, athleteId });
+  const url = buildEspnUrl(sport, league, endpoint, { team, page, limit, athleteId, eventId });
   const cacheSec = getCacheSeconds(endpoint);
 
   try {

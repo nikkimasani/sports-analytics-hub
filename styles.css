@@ -1584,3 +1584,24 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
     50% { transform: scale(1.3); }
     to { transform: scale(1); }
 }
+
+/* Win Probability Charts */
+.wp-mode-tab {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all .2s;
+    font-weight: 600;
+}
+.wp-mode-tab.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.wp-hover-zone { cursor: crosshair; }
+#wpSvgChart { transition: opacity .3s; }
+#wpSvgChart circle { transition: r .15s ease-out; }
+#wpSvgChart circle:hover { r: 8; }

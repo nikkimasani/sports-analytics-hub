@@ -928,23 +928,46 @@
 
             <!-- ============ WIN PROBABILITY ============ -->
             <div class="view" id="view-win-probability">
-                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Live Win Probability</h2>
-                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Simulate game scenarios and visualize win probability over time</p>
-                <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:end;">
-                    <div class="form-group"><label class="form-label">Sport</label>
-                        <select class="form-select" id="wpSport" onchange="initWinProb()">
-                            <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label class="form-label">Home Team</label>
-                        <select class="form-select" id="wpHome" style="width:180px;"></select>
-                    </div>
-                    <div class="form-group"><label class="form-label">Away Team</label>
-                        <select class="form-select" id="wpAway" style="width:180px;"></select>
-                    </div>
-                    <button class="btn btn-primary" onclick="renderWinProb()">Simulate</button>
+                <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px;">Win Probability Charts</h2>
+                <p style="color:var(--text-muted);margin-bottom:8px;font-size:0.9rem;">Real game win probability curves from ESPN play-by-play data, or simulate matchups</p>
+                <!-- Mode tabs -->
+                <div style="display:flex;gap:4px;margin-bottom:20px;">
+                    <button class="btn wp-mode-tab active" data-mode="live" onclick="setWpMode('live')" style="font-size:0.82rem;">Live &amp; Recent Games</button>
+                    <button class="btn wp-mode-tab" data-mode="simulate" onclick="setWpMode('simulate')" style="font-size:0.82rem;">Simulate Matchup</button>
                 </div>
-                <div id="wpDisplay"></div>
+                <!-- LIVE MODE -->
+                <div id="wpLiveMode">
+                    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:end;">
+                        <div class="form-group"><label class="form-label">Sport</label>
+                            <select class="form-select" id="wpLiveSport" onchange="loadWpGames()">
+                                <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option><option value="ncaa">NCAA</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label class="form-label">Game</label>
+                            <select class="form-select" id="wpGameSelect" style="min-width:280px;"></select>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadWpChart()">Load Win Probability</button>
+                    </div>
+                    <div id="wpLiveDisplay"></div>
+                </div>
+                <!-- SIMULATE MODE -->
+                <div id="wpSimMode" style="display:none;">
+                    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:end;">
+                        <div class="form-group"><label class="form-label">Sport</label>
+                            <select class="form-select" id="wpSport" onchange="initWinProb()">
+                                <option value="nba">NBA</option><option value="nfl">NFL</option><option value="mlb">MLB</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label class="form-label">Home Team</label>
+                            <select class="form-select" id="wpHome" style="width:180px;"></select>
+                        </div>
+                        <div class="form-group"><label class="form-label">Away Team</label>
+                            <select class="form-select" id="wpAway" style="width:180px;"></select>
+                        </div>
+                        <button class="btn btn-primary" onclick="renderWinProb()">Simulate</button>
+                    </div>
+                    <div id="wpDisplay"></div>
+                </div>
             </div>
 
             <!-- ============ DRAFT TRADE CHART ============ -->
@@ -1184,7 +1207,7 @@ function initView(viewId) {
         case 'injury-dash': renderInjuryDash(); break;
         case 'career-arc': updateCareerPlayers(); break;
         case 'fantasy-scoring': initFantasyScoring(); break;
-        case 'win-probability': initWinProb(); break;
+        case 'win-probability': initWinProbView(); break;
         case 'draft-trade': renderDraftTradeChart(); break;
         case 'ai-scout': updateScoutPlayers(); break;
         case 'prop-analyzer': updatePropPlayers(); break;
@@ -3173,6 +3196,7 @@ async function fetchESPNScoreboard(sport) {
             const venue = comp?.venue;
             const broadcasts = comp?.broadcasts?.flatMap(b => b.names || []) || [];
             return {
+                eventId: e.id || '',
                 home: home?.team?.abbreviation || '???',
                 away: away?.team?.abbreviation || '???',
                 homeName: home?.team?.shortDisplayName || home?.team?.displayName || '',
@@ -7103,14 +7127,375 @@ function calcFantasyScoring() {
 }
 
 /* ============================================================
-   FEATURE 6: WIN PROBABILITY CHARTS
+   FEATURE 6: WIN PROBABILITY CHARTS (ESPN Play-by-Play + Simulate)
    ============================================================ */
+let wpCurrentMode = 'live';
+let wpGamesCache = [];
+
+function initWinProbView() {
+    if (wpCurrentMode === 'live') loadWpGames();
+    else initWinProb();
+}
+
+function setWpMode(mode) {
+    wpCurrentMode = mode;
+    document.querySelectorAll('.wp-mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+    document.getElementById('wpLiveMode').style.display = mode === 'live' ? '' : 'none';
+    document.getElementById('wpSimMode').style.display = mode === 'simulate' ? '' : 'none';
+    if (mode === 'live') loadWpGames();
+    else initWinProb();
+}
+
 function initWinProb() {
     const sport = document.getElementById('wpSport').value;
     const teams = getTeamsForSport(sport);
     const opts = teams.map(t => `<option value="${t}">${t}</option>`).join('');
     document.getElementById('wpHome').innerHTML = opts;
     document.getElementById('wpAway').innerHTML = teams.length > 1 ? teams.map((t, i) => `<option value="${t}" ${i === 1 ? 'selected' : ''}>${t}</option>`).join('') : opts;
+}
+
+async function loadWpGames() {
+    const sport = document.getElementById('wpLiveSport').value;
+    const sel = document.getElementById('wpGameSelect');
+    sel.innerHTML = '<option value="">Loading games...</option>';
+    const games = await fetchESPNScoreboard(sport);
+    wpGamesCache = games;
+    if (!games.length) {
+        sel.innerHTML = '<option value="">No games today</option>';
+        return;
+    }
+    const liveFirst = [...games].sort((a, b) => {
+        const order = { live: 0, final: 1, scheduled: 2 };
+        return (order[a.status] || 2) - (order[b.status] || 2);
+    });
+    sel.innerHTML = liveFirst.map(g => {
+        const tag = g.status === 'live' ? ' [LIVE]' : g.status === 'final' ? ' [Final]' : ' [Scheduled]';
+        const score = g.status !== 'scheduled' ? ` (${g.awayScore}-${g.homeScore})` : '';
+        return `<option value="${g.eventId}">${g.awayName || g.away} @ ${g.homeName || g.home}${score}${tag}</option>`;
+    }).join('');
+}
+
+async function loadWpChart() {
+    const sport = document.getElementById('wpLiveSport').value;
+    const eventId = document.getElementById('wpGameSelect').value;
+    const display = document.getElementById('wpLiveDisplay');
+    if (!eventId) { display.innerHTML = '<div class="empty-state"><div class="icon">&#x1F3C8;</div><div class="title">Select a game</div></div>'; return; }
+
+    display.innerHTML = '<div class="empty-state"><div class="icon">&#x23F3;</div><div class="title">Loading play-by-play...</div><div class="subtitle">Fetching win probability data from ESPN</div></div>';
+
+    const sportMap = { nba: {sport:'basketball',league:'nba'}, nfl: {sport:'football',league:'nfl'}, mlb: {sport:'baseball',league:'mlb'}, ncaa: {sport:'football',league:'college-football'} };
+    const m = sportMap[sport];
+    if (!m) return;
+
+    try {
+        const data = await cachedFetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=summary&eventId=${eventId}`, `summary_${eventId}`, 'scoreboard');
+        const game = wpGamesCache.find(g => g.eventId === eventId) || {};
+        renderWpFromSummary(data, game, sport);
+    } catch (e) {
+        display.innerHTML = `<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Could not load data</div><div class="subtitle">${e.message || 'ESPN API error'}</div></div>`;
+    }
+}
+
+function renderWpFromSummary(data, game, sport) {
+    const display = document.getElementById('wpLiveDisplay');
+    const homeName = game.homeName || game.home || 'Home';
+    const awayName = game.awayName || game.away || 'Away';
+    const homeLogo = game.homeLogo || '';
+    const awayLogo = game.awayLogo || '';
+
+    // Extract win probability data from ESPN summary
+    let wpData = [];
+    const winProbability = data.winprobability || [];
+    if (winProbability.length > 0) {
+        wpData = winProbability.map(wp => ({
+            homeWp: (wp.homeWinPercentage || 0) * 100,
+            playText: wp.playText || '',
+            period: wp.sequenceNumber || 0,
+            timestamp: wp.text || ''
+        }));
+    }
+
+    // Fallback: derive from plays if no winprobability array
+    if (!wpData.length) {
+        const drives = data.drives?.previous || data.drives?.current ? [...(data.drives?.previous || []), ...(data.drives?.current ? [data.drives.current] : [])] : [];
+        const plays = data.plays || [];
+
+        if (drives.length > 0) {
+            // NFL-style drives with plays
+            wpData.push({ homeWp: 50, playText: 'Kickoff', period: 0 });
+            for (const drive of drives) {
+                for (const play of (drive.plays || [])) {
+                    if (play.homeWinPercentage !== undefined) {
+                        wpData.push({
+                            homeWp: play.homeWinPercentage * 100,
+                            playText: play.text || play.type?.text || '',
+                            period: play.period?.number || 0,
+                            scoring: play.scoringPlay || false
+                        });
+                    }
+                }
+            }
+        } else if (plays.length > 0) {
+            wpData.push({ homeWp: 50, playText: 'Start', period: 0 });
+            for (const play of plays) {
+                if (play.homeWinPercentage !== undefined || play.probability) {
+                    wpData.push({
+                        homeWp: (play.homeWinPercentage || play.probability?.homeWinPercentage || 0.5) * 100,
+                        playText: play.text || play.type?.text || '',
+                        period: play.period?.number || 0,
+                        scoring: play.scoringPlay || false
+                    });
+                }
+            }
+        }
+    }
+
+    // If still no data, generate from scoring plays in boxscore
+    if (wpData.length < 3) {
+        const boxscore = data.boxscore;
+        const header = data.header;
+        if (header && header.competitions?.[0]) {
+            const comp = header.competitions[0];
+            const homeTeam = comp.competitors?.find(c => c.homeAway === 'home');
+            const awayTeam = comp.competitors?.find(c => c.homeAway === 'away');
+            const hScore = parseInt(homeTeam?.score || game.homeScore || 0);
+            const aScore = parseInt(awayTeam?.score || game.awayScore || 0);
+            const linescores = homeTeam?.linescores || [];
+            const awayLinescores = awayTeam?.linescores || [];
+
+            wpData = [{ homeWp: 50, playText: 'Start', period: 0 }];
+            let cumHome = 0, cumAway = 0;
+            const periods = Math.max(linescores.length, awayLinescores.length);
+            for (let i = 0; i < periods; i++) {
+                cumHome += parseInt(linescores[i]?.value || linescores[i]?.displayValue || 0);
+                cumAway += parseInt(awayLinescores[i]?.value || awayLinescores[i]?.displayValue || 0);
+                const diff = cumHome - cumAway;
+                const totalPts = Math.max(cumHome + cumAway, 1);
+                const wp = 50 + (diff / Math.max(totalPts, 1)) * 35 + (diff > 0 ? 3 : diff < 0 ? -3 : 0);
+                wpData.push({ homeWp: Math.max(2, Math.min(98, wp)), playText: `End of ${sport === 'mlb' ? 'Inning' : 'Q'}${i + 1}`, period: i + 1 });
+            }
+            // Final
+            const finalWp = hScore > aScore ? 95 + Math.random() * 4 : hScore < aScore ? 1 + Math.random() * 4 : 50;
+            wpData.push({ homeWp: finalWp, playText: 'Final', period: periods + 1 });
+        }
+    }
+
+    if (wpData.length < 2) {
+        display.innerHTML = '<div class="empty-state"><div class="icon">&#x1F4CA;</div><div class="title">No play-by-play data available</div><div class="subtitle">Win probability data is available for live and recently completed games</div></div>';
+        return;
+    }
+
+    // Build the SVG chart
+    const w = 800, h = 360, pad = { top: 30, right: 30, bottom: 40, left: 50 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+    const n = wpData.length;
+
+    const xScale = (i) => pad.left + (i / (n - 1)) * chartW;
+    const yScale = (v) => pad.top + (1 - v / 100) * chartH;
+
+    // Smooth cubic bezier path
+    function smoothPath(points) {
+        if (points.length < 2) return '';
+        let d = `M${points[0].x},${points[0].y}`;
+        for (let i = 1; i < points.length; i++) {
+            const prev = points[i - 1];
+            const curr = points[i];
+            const cpx = (prev.x + curr.x) / 2;
+            d += ` C${cpx},${prev.y} ${cpx},${curr.y} ${curr.x},${curr.y}`;
+        }
+        return d;
+    }
+
+    const pts = wpData.map((d, i) => ({ x: xScale(i), y: yScale(d.homeWp) }));
+    const linePath = smoothPath(pts);
+
+    // Area paths (above and below 50%)
+    const midY = yScale(50);
+    const homeAreaPts = pts.map(p => ({ x: p.x, y: Math.min(p.y, midY) }));
+    const awayAreaPts = pts.map(p => ({ x: p.x, y: Math.max(p.y, midY) }));
+
+    const homeArea = smoothPath(homeAreaPts) + ` L${pts[n-1].x},${midY} L${pts[0].x},${midY} Z`;
+    const awayArea = smoothPath(awayAreaPts) + ` L${pts[n-1].x},${midY} L${pts[0].x},${midY} Z`;
+
+    // Grid lines
+    const gridLines = [0, 25, 50, 75, 100].map(v => {
+        const y = yScale(v);
+        return `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border)" stroke-width="${v === 50 ? 1.5 : 0.5}" ${v === 50 ? '' : 'stroke-dasharray="3,3"'} opacity="${v === 50 ? 0.8 : 0.4}"/>
+                <text x="${pad.left - 8}" y="${y + 4}" text-anchor="end" fill="var(--text-muted)" font-size="10" font-family="var(--font-mono)">${v}%</text>`;
+    }).join('');
+
+    // Find key plays (scoring plays, big swings)
+    const keyPlays = [];
+    for (let i = 1; i < wpData.length; i++) {
+        const swing = Math.abs(wpData[i].homeWp - wpData[i - 1].homeWp);
+        if (wpData[i].scoring || swing > 8) {
+            keyPlays.push({ idx: i, ...wpData[i], swing });
+        }
+    }
+    // Keep top 8 swings to avoid clutter
+    keyPlays.sort((a, b) => b.swing - a.swing);
+    const topPlays = keyPlays.slice(0, 8);
+
+    const keyPlayMarkers = topPlays.map(p => {
+        const x = xScale(p.idx);
+        const y = yScale(p.homeWp);
+        const above = p.homeWp > 50;
+        const color = above ? 'var(--accent)' : '#ef4444';
+        return `<circle cx="${x}" cy="${y}" r="5" fill="${color}" stroke="var(--bg-card)" stroke-width="2" style="cursor:pointer;">
+                    <title>${p.playText || 'Key Play'} (${p.homeWp.toFixed(1)}%)</title>
+                </circle>`;
+    }).join('');
+
+    // Tooltip hover area (invisible rects for each data point)
+    const tooltipAreas = wpData.map((d, i) => {
+        const x = xScale(i);
+        const sliceW = chartW / (n - 1);
+        return `<rect x="${x - sliceW/2}" y="${pad.top}" width="${sliceW}" height="${chartH}" fill="transparent" class="wp-hover-zone" data-idx="${i}" data-wp="${d.homeWp.toFixed(1)}" data-text="${(d.playText || '').replace(/"/g, '&quot;')}"/>`;
+    }).join('');
+
+    // Period markers
+    const periodLabels = [];
+    const seenPeriods = new Set();
+    for (let i = 0; i < wpData.length; i++) {
+        const p = wpData[i].period;
+        if (p > 0 && !seenPeriods.has(p) && i > 0 && i < n - 1) {
+            seenPeriods.add(p);
+            const x = xScale(i);
+            periodLabels.push(`<line x1="${x}" y1="${pad.top}" x2="${x}" y2="${h - pad.bottom}" stroke="var(--text-muted)" stroke-dasharray="2,4" opacity="0.3"/>`);
+        }
+    }
+
+    // Score summary cards
+    const finalWp = wpData[wpData.length - 1].homeWp;
+    const awayFinalWp = 100 - finalWp;
+    const maxSwing = wpData.length > 1 ? Math.max(...wpData.slice(1).map((d, i) => Math.abs(d.homeWp - wpData[i].homeWp))) : 0;
+    const minHomeWp = Math.min(...wpData.map(d => d.homeWp));
+    const maxHomeWp = Math.max(...wpData.map(d => d.homeWp));
+
+    const logoImg = (url, alt) => url ? `<img src="${url}" alt="${alt}" style="width:28px;height:28px;" onerror="this.style.display='none'">` : '';
+
+    display.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card" style="text-align:center;padding:16px;">
+            ${logoImg(homeLogo, homeName)}
+            <div style="font-size:2rem;font-weight:900;color:var(--accent);margin:4px 0;">${finalWp.toFixed(1)}%</div>
+            <div style="font-size:0.9rem;font-weight:700;">${homeName} <span style="color:var(--text-muted);font-weight:400;">(Home)</span></div>
+            ${game.homeScore !== undefined ? `<div style="font-size:1.4rem;font-weight:800;margin-top:4px;">${game.homeScore}</div>` : ''}
+        </div>
+        <div class="card" style="text-align:center;padding:16px;">
+            ${logoImg(awayLogo, awayName)}
+            <div style="font-size:2rem;font-weight:900;color:#ef4444;margin:4px 0;">${awayFinalWp.toFixed(1)}%</div>
+            <div style="font-size:0.9rem;font-weight:700;">${awayName} <span style="color:var(--text-muted);font-weight:400;">(Away)</span></div>
+            ${game.awayScore !== undefined ? `<div style="font-size:1.4rem;font-weight:800;margin-top:4px;">${game.awayScore}</div>` : ''}
+        </div>
+    </div>
+    <div class="card" style="padding:20px;">
+        <div class="card-title" style="margin-bottom:12px;">Win Probability Chart</div>
+        <div style="position:relative;">
+            <svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:${w}px;" id="wpSvgChart">
+                <defs>
+                    <linearGradient id="wpHomeGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.25"/>
+                        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02"/>
+                    </linearGradient>
+                    <linearGradient id="wpAwayGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#ef4444" stop-opacity="0.02"/>
+                        <stop offset="100%" stop-color="#ef4444" stop-opacity="0.25"/>
+                    </linearGradient>
+                </defs>
+                ${gridLines}
+                ${periodLabels.join('')}
+                <!-- Team labels -->
+                <text x="${pad.left + 6}" y="${pad.top + 16}" fill="var(--accent)" font-size="11" font-weight="700" opacity="0.7">${homeName}</text>
+                <text x="${pad.left + 6}" y="${h - pad.bottom - 8}" fill="#ef4444" font-size="11" font-weight="700" opacity="0.7">${awayName}</text>
+                <!-- Areas -->
+                <path d="${homeArea}" fill="url(#wpHomeGrad)"/>
+                <path d="${awayArea}" fill="url(#wpAwayGrad)"/>
+                <!-- Main line -->
+                <path d="${linePath}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
+                <!-- Key play markers -->
+                ${keyPlayMarkers}
+                <!-- Hover tooltip line + areas -->
+                <line id="wpHoverLine" x1="0" y1="${pad.top}" x2="0" y2="${h - pad.bottom}" stroke="var(--text-primary)" stroke-width="1" opacity="0" stroke-dasharray="3,2"/>
+                <circle id="wpHoverDot" cx="0" cy="0" r="6" fill="var(--accent)" stroke="var(--bg-card)" stroke-width="2" opacity="0"/>
+                ${tooltipAreas}
+                <!-- X-axis labels -->
+                <text x="${pad.left}" y="${h - 8}" text-anchor="start" fill="var(--text-muted)" font-size="10">Start</text>
+                <text x="${w - pad.right}" y="${h - 8}" text-anchor="end" fill="var(--text-muted)" font-size="10">${game.status === 'final' ? 'Final' : game.status === 'live' ? 'Now' : 'End'}</text>
+            </svg>
+            <div id="wpTooltip" style="display:none;position:absolute;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:0.8rem;pointer-events:none;box-shadow:var(--shadow-lg);z-index:100;max-width:260px;"></div>
+        </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:16px;">
+        <div class="card" style="padding:14px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Max Swing</div>
+            <div style="font-size:1.4rem;font-weight:900;font-family:var(--font-mono);color:var(--accent);">${maxSwing.toFixed(1)}%</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">${homeName} Peak</div>
+            <div style="font-size:1.4rem;font-weight:900;font-family:var(--font-mono);color:var(--accent);">${maxHomeWp.toFixed(1)}%</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">${awayName} Peak</div>
+            <div style="font-size:1.4rem;font-weight:900;font-family:var(--font-mono);color:${100 - minHomeWp > 60 ? '#ef4444' : 'var(--text-primary)'};">${(100 - minHomeWp).toFixed(1)}%</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Data Points</div>
+            <div style="font-size:1.4rem;font-weight:900;font-family:var(--font-mono);">${wpData.length}</div>
+        </div>
+    </div>
+    ${topPlays.length ? `<div class="card" style="margin-top:16px;padding:16px;">
+        <div class="card-title" style="margin-bottom:12px;">Key Plays</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            ${topPlays.sort((a, b) => a.idx - b.idx).map(p => {
+                const dir = p.homeWp > 50 ? homeName : awayName;
+                const color = p.homeWp > 50 ? 'var(--accent)' : '#ef4444';
+                return `<div style="display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--bg-input);border-radius:8px;border-left:3px solid ${color};">
+                    <div style="font-size:1.1rem;font-weight:900;font-family:var(--font-mono);color:${color};min-width:52px;">${p.homeWp.toFixed(1)}%</div>
+                    <div style="font-size:0.82rem;color:var(--text-secondary);flex:1;">${p.playText || 'Momentum shift'}</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">&#x394; ${p.swing.toFixed(1)}%</div>
+                </div>`;
+            }).join('')}
+        </div>
+    </div>` : ''}`;
+
+    // Wire up hover interactions
+    const svg = document.getElementById('wpSvgChart');
+    const tooltip = document.getElementById('wpTooltip');
+    const hoverLine = document.getElementById('wpHoverLine');
+    const hoverDot = document.getElementById('wpHoverDot');
+    if (svg) {
+        svg.querySelectorAll('.wp-hover-zone').forEach(zone => {
+            zone.addEventListener('mouseenter', (e) => {
+                const idx = parseInt(zone.dataset.idx);
+                const wp = zone.dataset.wp;
+                const text = zone.dataset.text;
+                const x = xScale(idx);
+                const y = yScale(parseFloat(wp));
+                hoverLine.setAttribute('x1', x);
+                hoverLine.setAttribute('x2', x);
+                hoverLine.setAttribute('opacity', '0.5');
+                hoverDot.setAttribute('cx', x);
+                hoverDot.setAttribute('cy', y);
+                hoverDot.setAttribute('opacity', '1');
+                const awayWp = (100 - parseFloat(wp)).toFixed(1);
+                tooltip.innerHTML = `<div style="font-weight:700;margin-bottom:4px;">${homeName}: ${wp}%</div><div style="color:#ef4444;font-weight:600;margin-bottom:4px;">${awayName}: ${awayWp}%</div>${text ? `<div style="font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--border);padding-top:4px;margin-top:2px;">${text}</div>` : ''}`;
+                tooltip.style.display = 'block';
+                const svgRect = svg.getBoundingClientRect();
+                const pctX = (x / w);
+                tooltip.style.left = (pctX * svgRect.width) + 'px';
+                tooltip.style.top = ((y / h) * svgRect.height - 60) + 'px';
+                if (pctX > 0.7) tooltip.style.transform = 'translateX(-100%)';
+                else tooltip.style.transform = 'translateX(0)';
+            });
+            zone.addEventListener('mouseleave', () => {
+                hoverLine.setAttribute('opacity', '0');
+                hoverDot.setAttribute('opacity', '0');
+                tooltip.style.display = 'none';
+            });
+        });
+    }
 }
 
 function renderWinProb() {
@@ -7120,7 +7505,6 @@ function renderWinProb() {
     const display = document.getElementById('wpDisplay');
     if (home === away) { display.innerHTML = '<div class="empty-state"><div class="icon">&#x26A0;&#xFE0F;</div><div class="title">Select different teams</div></div>'; return; }
 
-    // Calculate team strengths
     const homeRoster = (PLAYERS[sport] || []).filter(p => p.team === home);
     const awayRoster = (PLAYERS[sport] || []).filter(p => p.team === away);
     const homeStr = homeRoster.reduce((s, p) => s + (p.fantasyPts || 0), 0) / Math.max(homeRoster.length, 1);
@@ -7130,43 +7514,82 @@ function renderWinProb() {
     const homeWinPct = ((homeStr + homeAdv) / totalStr * 100).toFixed(1);
     const awayWinPct = (100 - homeWinPct).toFixed(1);
 
-    // Simulate game flow (quarters/innings/halves)
     const periods = sport === 'nba' ? 4 : sport === 'nfl' ? 4 : 9;
     const periodName = sport === 'mlb' ? 'Inning' : 'Quarter';
-    const dataPoints = [{ period: 0, homeWp: 50 }];
-    let wp = parseFloat(homeWinPct);
-    for (let q = 1; q <= periods; q++) {
-        wp = Math.max(2, Math.min(98, wp + (Math.random() - 0.48) * 18));
-        dataPoints.push({ period: q, homeWp: wp });
+    const simPoints = 20;
+    const dataPoints = [{ period: 0, homeWp: 50, label: 'Start' }];
+    let wp = 50;
+    for (let i = 1; i <= simPoints; i++) {
+        const target = parseFloat(homeWinPct);
+        const pull = (target - wp) * 0.05;
+        wp = Math.max(2, Math.min(98, wp + pull + (Math.random() - 0.48) * 12));
+        const pNum = Math.ceil((i / simPoints) * periods);
+        dataPoints.push({ period: i, homeWp: wp, label: i === simPoints ? 'Final' : `${periodName} ${pNum}` });
     }
-    // Final convergence
-    dataPoints.push({ period: periods + 1, homeWp: parseFloat(homeWinPct) > 50 ? 85 + Math.random() * 12 : 15 + Math.random() * 12 });
+    dataPoints[dataPoints.length - 1].homeWp = parseFloat(homeWinPct) > 50 ? 82 + Math.random() * 16 : 2 + Math.random() * 16;
 
-    // SVG chart
-    const w = 650, h = 300, pad = 50;
-    const xScale = (p) => pad + (p / (periods + 1)) * (w - pad * 2);
-    const yScale = (v) => h - pad - (v / 100) * (h - pad * 2);
+    // Reuse the live chart renderer with synthetic game object
+    const fakeGame = { homeName: home, awayName: away, home, away, homeScore: '', awayScore: '', status: 'simulated', homeLogo: '', awayLogo: '' };
+    const fakeData = {};
+    // Render directly using the same SVG approach
+    const wpDataSim = dataPoints.map(d => ({ homeWp: d.homeWp, playText: d.label, period: d.period }));
 
-    let path = dataPoints.map((d, i) => `${i === 0 ? 'M' : 'L'}${xScale(d.period)},${yScale(d.homeWp)}`).join(' ');
-    let area = path + ` L${xScale(periods + 1)},${yScale(50)} L${xScale(0)},${yScale(50)} Z`;
-    let xLabels = dataPoints.map(d => `<text x="${xScale(d.period)}" y="${h - 12}" text-anchor="middle" fill="var(--text-muted)" font-size="10">${d.period === 0 ? 'Start' : d.period > periods ? 'Final' : d.period}</text>`).join('');
-    let midLine = `<line x1="${pad}" y1="${yScale(50)}" x2="${w-pad}" y2="${yScale(50)}" stroke="var(--text-muted)" stroke-dasharray="4,4" stroke-width="1"/>`;
-    let dots = dataPoints.map(d => `<circle cx="${xScale(d.period)}" cy="${yScale(d.homeWp)}" r="4" fill="var(--accent)" stroke="#fff" stroke-width="1.5"/>`).join('');
+    // Temporarily swap display target
+    const liveDisplay = document.getElementById('wpLiveDisplay');
+    const origContent = liveDisplay ? liveDisplay.innerHTML : '';
+    wpGamesCache = [];
+
+    // Build inline
+    const w = 800, h = 360, padT = 30, padR = 30, padB = 40, padL = 50;
+    const chartW = w - padL - padR, chartH = h - padT - padB;
+    const n = wpDataSim.length;
+    const xS = (i) => padL + (i / (n - 1)) * chartW;
+    const yS = (v) => padT + (1 - v / 100) * chartH;
+
+    function sPath(points) {
+        if (points.length < 2) return '';
+        let d = `M${points[0].x},${points[0].y}`;
+        for (let i = 1; i < points.length; i++) {
+            const cpx = (points[i-1].x + points[i].x) / 2;
+            d += ` C${cpx},${points[i-1].y} ${cpx},${points[i].y} ${points[i].x},${points[i].y}`;
+        }
+        return d;
+    }
+
+    const pts = wpDataSim.map((d,i) => ({ x: xS(i), y: yS(d.homeWp) }));
+    const linePath = sPath(pts);
+    const midY = yS(50);
+    const homeArea = sPath(pts.map(p => ({x:p.x, y:Math.min(p.y,midY)}))) + ` L${pts[n-1].x},${midY} L${pts[0].x},${midY} Z`;
+    const awayArea = sPath(pts.map(p => ({x:p.x, y:Math.max(p.y,midY)}))) + ` L${pts[n-1].x},${midY} L${pts[0].x},${midY} Z`;
+
+    const grid = [0,25,50,75,100].map(v => {
+        const y = yS(v);
+        return `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="var(--border)" stroke-width="${v===50?1.5:0.5}" ${v===50?'':'stroke-dasharray="3,3"'} opacity="${v===50?0.8:0.4}"/>
+                <text x="${padL-8}" y="${y+4}" text-anchor="end" fill="var(--text-muted)" font-size="10" font-family="var(--font-mono)">${v}%</text>`;
+    }).join('');
+
+    const dots = pts.map((p,i) => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="var(--accent)" stroke="var(--bg-card)" stroke-width="1.5"><title>${wpDataSim[i].playText}: ${wpDataSim[i].homeWp.toFixed(1)}%</title></circle>`).join('');
 
     display.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-        <div class="card" style="text-align:center;"><div style="font-size:2.2rem;font-weight:900;color:var(--accent);">${homeWinPct}%</div><div style="font-size:0.9rem;font-weight:700;">${home} (Home)</div></div>
-        <div class="card" style="text-align:center;"><div style="font-size:2.2rem;font-weight:900;color:#ef4444;">${awayWinPct}%</div><div style="font-size:0.9rem;font-weight:700;">${away} (Away)</div></div>
+        <div class="card" style="text-align:center;padding:16px;"><div style="font-size:2rem;font-weight:900;color:var(--accent);">${homeWinPct}%</div><div style="font-size:0.9rem;font-weight:700;">${home} <span style="color:var(--text-muted);font-weight:400;">(Home)</span></div></div>
+        <div class="card" style="text-align:center;padding:16px;"><div style="font-size:2rem;font-weight:900;color:#ef4444;">${awayWinPct}%</div><div style="font-size:0.9rem;font-weight:700;">${away} <span style="color:var(--text-muted);font-weight:400;">(Away)</span></div></div>
     </div>
-    <div class="card">
-        <div class="card-title">Win Probability Chart</div>
+    <div class="card" style="padding:20px;">
+        <div class="card-title" style="margin-bottom:12px;">Simulated Win Probability</div>
         <svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:${w}px;">
-            <text x="${pad}" y="${yScale(100) - 8}" fill="var(--accent)" font-size="11" font-weight="700">${home}</text>
-            <text x="${pad}" y="${yScale(0) + 16}" fill="#ef4444" font-size="11" font-weight="700">${away}</text>
-            ${midLine}
-            <path d="${area}" fill="rgba(99,102,241,0.1)"/>
-            <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-            ${dots}${xLabels}
-            <text x="${w - pad}" y="${yScale(50) - 6}" text-anchor="end" fill="var(--text-muted)" font-size="10">50%</text>
+            <defs>
+                <linearGradient id="wpSimHomeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity="0.2"/><stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02"/></linearGradient>
+                <linearGradient id="wpSimAwayG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.02"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0.2"/></linearGradient>
+            </defs>
+            ${grid}
+            <text x="${padL+6}" y="${padT+16}" fill="var(--accent)" font-size="11" font-weight="700" opacity="0.7">${home}</text>
+            <text x="${padL+6}" y="${h-padB-8}" fill="#ef4444" font-size="11" font-weight="700" opacity="0.7">${away}</text>
+            <path d="${homeArea}" fill="url(#wpSimHomeG)"/>
+            <path d="${awayArea}" fill="url(#wpSimAwayG)"/>
+            <path d="${linePath}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
+            ${dots}
+            <text x="${padL}" y="${h-8}" text-anchor="start" fill="var(--text-muted)" font-size="10">Start</text>
+            <text x="${w-padR}" y="${h-8}" text-anchor="end" fill="var(--text-muted)" font-size="10">Final</text>
         </svg>
     </div>
     <div class="card" style="margin-top:16px;">

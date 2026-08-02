@@ -1,6 +1,6 @@
-const CACHE_VERSION = 'statvault-v3';
-const STATIC_CACHE = 'statvault-static-v3';
-const DATA_CACHE = 'statvault-data-v3';
+const CACHE_VERSION = 'statvault-v4';
+const STATIC_CACHE = 'statvault-static-v4';
+const DATA_CACHE = 'statvault-data-v4';
 
 // App shell — always cached for offline use
 const APP_SHELL = [

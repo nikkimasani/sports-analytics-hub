@@ -237,18 +237,26 @@
 
             <!-- ============ LIVE SCORES VIEW ============ -->
             <div class="view" id="view-live">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
                     <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-0.5px;">Live Scores</h2>
-                    <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                         <span id="liveLastUpdated" style="font-size:0.75rem;color:var(--text-muted);"></span>
                         <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;">
                             <input type="checkbox" id="liveAutoRefresh" checked onchange="toggleLiveAutoRefresh()" style="accent-color:var(--accent);">
-                            Auto (30s)
+                            Auto (60s)
                         </label>
                         <button class="btn btn-sm btn-secondary" onclick="renderLiveScores()" style="font-size:0.78rem;">↻ Refresh</button>
                     </div>
                 </div>
-                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem;">Real-time scores and game updates</p>
+                <!-- Sport filter tabs for live scores -->
+                <div id="liveSportTabs" style="display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--border);">
+                    <button class="live-sport-tab active" data-sport="current" onclick="setLiveSport('current')">Current Sport</button>
+                    <button class="live-sport-tab" data-sport="all" onclick="setLiveSport('all')">All Sports</button>
+                    <button class="live-sport-tab" data-sport="nba" onclick="setLiveSport('nba')">NBA</button>
+                    <button class="live-sport-tab" data-sport="nfl" onclick="setLiveSport('nfl')">NFL</button>
+                    <button class="live-sport-tab" data-sport="mlb" onclick="setLiveSport('mlb')">MLB</button>
+                    <button class="live-sport-tab" data-sport="ncaa" onclick="setLiveSport('ncaa')">NCAA</button>
+                </div>
                 <div id="liveScoresContainer" class="card-grid card-grid-3"></div>
             </div>
 
@@ -1371,18 +1379,40 @@ function createDashWidget(widget, sport, players, config) {
         </div>`).join('') : '<div style="font-size:0.8rem;color:var(--text-muted);padding:4px 0;">No cold streaks</div>';
     } else if (widget.id === 'scores') {
         bodyHtml = '<div id="dashScoresMini" style="font-size:0.85rem;color:var(--text-muted);padding:8px 0;">Loading scores...</div>';
-        // Populate async after render
-        setTimeout(() => {
+        // Populate async with real game cards
+        setTimeout(async () => {
             const el = document.getElementById('dashScoresMini');
             if (!el) return;
-            const ticker = document.getElementById('scoreTicker');
-            if (ticker && ticker.innerHTML.trim()) {
-                el.innerHTML = ticker.innerHTML;
-                el.style.cssText = 'display:flex;gap:12px;overflow-x:auto;padding:8px 0;';
-            } else {
-                el.innerHTML = '<div style="text-align:center;padding:12px;color:var(--text-muted);">No live scores available</div>';
-            }
-        }, 500);
+            try {
+                const games = await fetchESPNScoreboard(State.currentSport);
+                if (games.length) {
+                    const sorted = [...games].sort((a, b) => {
+                        const o = { live: 0, scheduled: 1, final: 2 };
+                        return (o[a.status] ?? 1) - (o[b.status] ?? 1);
+                    });
+                    el.style.cssText = 'display:flex;gap:12px;overflow-x:auto;padding:8px 0;scroll-snap-type:x mandatory;';
+                    el.innerHTML = sorted.slice(0, 6).map(g => {
+                        const isLive = g.status === 'live';
+                        const isFinal = g.status === 'final';
+                        const awayW = isFinal && g.awayScore > g.homeScore;
+                        const homeW = isFinal && g.homeScore > g.awayScore;
+                        return `<div style="min-width:160px;padding:10px 14px;background:var(--bg-input);border-radius:var(--radius);border:1px solid ${isLive ? 'var(--danger)' : 'var(--border)'};scroll-snap-align:start;flex-shrink:0;">
+                            <div style="font-size:0.65rem;color:${isLive ? 'var(--danger)' : 'var(--text-muted)'};font-weight:700;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:4px;">${isLive ? '<div class="live-dot" style="width:6px;height:6px;"></div>' : ''}${g.quarter || g.time || (isFinal ? 'Final' : 'Upcoming')}</div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                                <span style="font-weight:${awayW ? '800' : '600'};font-size:0.82rem;">${g.away}</span>
+                                <span style="font-family:var(--font-mono);font-weight:${awayW ? '900' : '700'};${awayW ? 'color:var(--accent);' : ''}">${g.status === 'scheduled' ? '-' : g.awayScore}</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-weight:${homeW ? '800' : '600'};font-size:0.82rem;">${g.home}</span>
+                                <span style="font-family:var(--font-mono);font-weight:${homeW ? '900' : '700'};${homeW ? 'color:var(--accent);' : ''}">${g.status === 'scheduled' ? '-' : g.homeScore}</span>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    el.innerHTML = '<div style="text-align:center;padding:12px;color:var(--text-muted);">No live scores available</div>';
+                }
+            } catch { el.innerHTML = '<div style="text-align:center;padding:12px;color:var(--text-muted);">No live scores available</div>'; }
+        }, 100);
     }
 
     card.innerHTML = headerHtml + '<div class="dash-widget-body">' + bodyHtml + '</div>';
@@ -3128,16 +3158,19 @@ async function fetchESPNScoreboard(sport) {
     const m = sportMap[sport];
     if (!m) return [];
     try {
-        const res = await fetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=scoreboard`);
-        const data = await res.json();
+        const data = await cachedFetch(`/api/espn?sport=${m.sport}&league=${m.league}&endpoint=scoreboard`, `scoreboard_${sport}`, 'scoreboard');
         return (data.events || []).map(e => {
             const comp = e.competitions?.[0];
             const home = comp?.competitors?.find(c => c.homeAway === 'home');
             const away = comp?.competitors?.find(c => c.homeAway === 'away');
             const status = comp?.status;
+            const venue = comp?.venue;
+            const broadcasts = comp?.broadcasts?.flatMap(b => b.names || []) || [];
             return {
                 home: home?.team?.abbreviation || '???',
                 away: away?.team?.abbreviation || '???',
+                homeName: home?.team?.shortDisplayName || home?.team?.displayName || '',
+                awayName: away?.team?.shortDisplayName || away?.team?.displayName || '',
                 homeScore: parseInt(home?.score || 0),
                 awayScore: parseInt(away?.score || 0),
                 quarter: status?.type?.shortDetail || '',
@@ -3145,76 +3178,116 @@ async function fetchESPNScoreboard(sport) {
                 status: status?.type?.completed ? 'final' : status?.type?.state === 'in' ? 'live' : 'scheduled',
                 homeLogo: home?.team?.logo || '',
                 awayLogo: away?.team?.logo || '',
+                venue: venue ? `${venue.fullName || ''}${venue.address?.city ? ', ' + venue.address.city : ''}` : '',
+                broadcast: broadcasts.length ? broadcasts.join(', ') : '',
             };
         });
     } catch(e) { return []; }
 }
 
-async function renderLiveScores() {
-    const sport = State.currentSport;
-    const container = document.getElementById('liveScoresContainer');
+let liveSportFilter = 'current';
+function setLiveSport(filter) {
+    liveSportFilter = filter;
+    document.querySelectorAll('.live-sport-tab').forEach(t => t.classList.toggle('active', t.dataset.sport === filter));
+    renderLiveScores();
+}
 
-    // Show loading state
-    container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Loading Scores...</div><div class="subtitle">Fetching live data from ESPN</div></div>';
+function buildGameCardHtml(g) {
+    const statusBadge = g.status === 'live'
+        ? '<div class="live-game-badge"><div class="live-dot"></div><span>LIVE</span></div>'
+        : g.status === 'final'
+        ? '<div class="final-game-badge">FINAL</div>'
+        : '';
+    const statusLine = g.status === 'live' ? (g.quarter || '')
+        : g.status === 'final' ? (g.quarter || 'Final')
+        : (g.quarter || g.time || 'Scheduled');
+    const venueHtml = g.venue ? `<div class="game-venue">${g.venue}</div>` : '';
+    const broadcastHtml = g.broadcast ? `<div class="game-broadcast">${g.broadcast}</div>` : '';
+    const sportTag = g.sportLabel ? `<span class="badge badge-snap" style="font-size:0.62rem;position:absolute;top:10px;left:10px;">${g.sportLabel}</span>` : '';
+    const winHighlight = g.status === 'final';
+    const awayWon = winHighlight && g.awayScore > g.homeScore;
+    const homeWon = winHighlight && g.homeScore > g.awayScore;
 
-    // Fallback hardcoded data
-    const fallbackGames = {
-        nba: [
-            { home: 'BOS', away: 'MIL', homeScore: 108, awayScore: 103, quarter: 'Q4', time: '2:34', status: 'live' },
-            { home: 'LAL', away: 'GSW', homeScore: 95, awayScore: 91, quarter: 'Q3', time: '8:12', status: 'live' },
-            { home: 'DEN', away: 'OKC', homeScore: 0, awayScore: 0, quarter: '', time: '7:00 PM', status: 'scheduled' },
-            { home: 'PHX', away: 'DAL', homeScore: 115, awayScore: 110, quarter: 'Final', time: '', status: 'final' },
-        ],
-        nfl: [
-            { home: 'KC', away: 'BAL', homeScore: 21, awayScore: 17, quarter: 'Q3', time: '5:42', status: 'live' },
-            { home: 'PHI', away: 'DAL', homeScore: 0, awayScore: 0, quarter: '', time: '4:25 PM', status: 'scheduled' },
-        ],
-        mlb: [
-            { home: 'LAD', away: 'NYY', homeScore: 5, awayScore: 3, quarter: 'T7', time: '', status: 'live' },
-            { home: 'ATL', away: 'PHI', homeScore: 0, awayScore: 0, quarter: '', time: '7:20 PM', status: 'scheduled' },
-        ],
-        ncaa: [
-            { home: 'Alabama', away: 'Georgia', homeScore: 24, awayScore: 21, quarter: 'Q4', time: '3:15', status: 'live' },
-            { home: 'Ohio St', away: 'Michigan', homeScore: 0, awayScore: 0, quarter: '', time: '12:00 PM', status: 'scheduled' },
-        ],
-    };
-
-    // Try ESPN API first, fall back to hardcoded
-    let sportGames = await fetchESPNScoreboard(sport);
-    if (!sportGames.length) {
-        sportGames = fallbackGames[sport] || [];
-    }
-    updateScoreTicker(sportGames, sport);
-
-    container.innerHTML = sportGames.length ? sportGames.map(g => `
-        <div class="card" style="position:relative;overflow:hidden;">
-            ${g.status === 'live' ? '<div style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--danger);animation:pulse 1.5s infinite;"></div><span style="font-size:0.72rem;font-weight:700;color:var(--danger);text-transform:uppercase;">Live</span></div>' : ''}
-            <div style="text-align:center;padding:8px 0;">
-                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;">
-                    ${g.status === 'live' ? g.quarter + (g.time ? ' · ' + g.time : '') : g.status === 'final' ? (g.quarter || 'Final') : (g.quarter || g.time)}
+    return `<div class="card live-game-card ${g.status === 'live' ? 'live-game-active' : ''}" style="position:relative;overflow:hidden;">
+        ${sportTag}${statusBadge}
+        <div style="text-align:center;padding:8px 0;">
+            <div class="game-status-line">${statusLine}</div>
+            <div class="game-matchup">
+                <div class="game-team ${awayWon ? 'team-winner' : ''}">
+                    ${g.awayLogo ? `<img src="${g.awayLogo}" alt="${g.away}" style="width:36px;height:36px;margin-bottom:4px;" onerror="this.style.display='none'">` : ''}
+                    <div class="game-team-name">${g.awayName || g.away}</div>
+                    <div class="game-team-abbr">${g.away}</div>
+                    <div class="game-score ${awayWon ? 'score-winner' : ''}">${g.status === 'scheduled' ? '-' : g.awayScore}</div>
                 </div>
-                <div style="display:flex;align-items:center;justify-content:center;gap:24px;">
-                    <div style="text-align:center;">
-                        ${g.awayLogo ? `<img src="${g.awayLogo}" alt="${g.away}" style="width:32px;height:32px;margin-bottom:4px;">` : ''}
-                        <div style="font-weight:800;font-size:1.1rem;margin-bottom:2px;">${g.away}</div>
-                        <div style="font-family:var(--font-mono);font-weight:900;font-size:2rem;">${g.awayScore}</div>
-                    </div>
-                    <div style="color:var(--text-muted);font-weight:700;">@</div>
-                    <div style="text-align:center;">
-                        ${g.homeLogo ? `<img src="${g.homeLogo}" alt="${g.home}" style="width:32px;height:32px;margin-bottom:4px;">` : ''}
-                        <div style="font-weight:800;font-size:1.1rem;margin-bottom:2px;">${g.home}</div>
-                        <div style="font-family:var(--font-mono);font-weight:900;font-size:2rem;">${g.homeScore}</div>
-                    </div>
+                <div class="game-at">@</div>
+                <div class="game-team ${homeWon ? 'team-winner' : ''}">
+                    ${g.homeLogo ? `<img src="${g.homeLogo}" alt="${g.home}" style="width:36px;height:36px;margin-bottom:4px;" onerror="this.style.display='none'">` : ''}
+                    <div class="game-team-name">${g.homeName || g.home}</div>
+                    <div class="game-team-abbr">${g.home}</div>
+                    <div class="game-score ${homeWon ? 'score-winner' : ''}">${g.status === 'scheduled' ? '-' : g.homeScore}</div>
                 </div>
             </div>
+            ${venueHtml}${broadcastHtml}
         </div>
-    `).join('') : '<div class="empty-state"><div class="icon">📺</div><div class="title">No Games Today</div><div class="subtitle">Check back on game day for live scores.</div></div>';
+    </div>`;
+}
 
-    // Update timestamp
+async function renderLiveScores() {
+    const container = document.getElementById('liveScoresContainer');
+    if (!container) return;
+
+    container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Loading Scores...</div><div class="subtitle">Fetching live data from ESPN</div></div>';
+
+    const sportsToFetch = liveSportFilter === 'all' ? ['nba', 'nfl', 'mlb', 'ncaa']
+        : liveSportFilter === 'current' ? [State.currentSport]
+        : [liveSportFilter];
+
+    const sportLabels = { nba: 'NBA', nfl: 'NFL', mlb: 'MLB', ncaa: 'NCAA' };
+    const allGames = [];
+
+    const results = await Promise.allSettled(sportsToFetch.map(s => fetchESPNScoreboard(s)));
+    results.forEach((r, i) => {
+        const sport = sportsToFetch[i];
+        const games = r.status === 'fulfilled' ? r.value : [];
+        games.forEach(g => {
+            g.sportLabel = sportsToFetch.length > 1 ? sportLabels[sport] : '';
+            allGames.push(g);
+        });
+    });
+
+    // Sort: live first, then scheduled, then final
+    const statusOrder = { live: 0, scheduled: 1, final: 2 };
+    allGames.sort((a, b) => (statusOrder[a.status] ?? 1) - (statusOrder[b.status] ?? 1));
+
+    // Update ticker with primary sport games
+    const primaryGames = liveSportFilter === 'current' ? allGames : allGames.filter(g => g.sportLabel === sportLabels[State.currentSport] || !g.sportLabel);
+    if (primaryGames.length) updateScoreTicker(primaryGames, State.currentSport);
+
+    if (allGames.length) {
+        const liveGames = allGames.filter(g => g.status === 'live');
+        const scheduledGames = allGames.filter(g => g.status === 'scheduled');
+        const finalGames = allGames.filter(g => g.status === 'final');
+
+        let html = '';
+        if (liveGames.length) {
+            html += `<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-bottom:-8px;"><div class="live-dot"></div><span style="font-weight:700;font-size:0.85rem;">In Progress (${liveGames.length})</span></div>`;
+            html += liveGames.map(buildGameCardHtml).join('');
+        }
+        if (scheduledGames.length) {
+            html += `<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:8px 0 -8px;"><span style="font-weight:700;font-size:0.85rem;color:var(--text-muted);">Upcoming (${scheduledGames.length})</span></div>`;
+            html += scheduledGames.map(buildGameCardHtml).join('');
+        }
+        if (finalGames.length) {
+            html += `<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:8px 0 -8px;"><span style="font-weight:700;font-size:0.85rem;color:var(--text-muted);">Final (${finalGames.length})</span></div>`;
+            html += finalGames.map(buildGameCardHtml).join('');
+        }
+        container.innerHTML = html;
+    } else {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📺</div><div class="title">No Games Today</div><div class="subtitle">Check back on game day for live scores.</div></div>';
+    }
+
     const ts = document.getElementById('liveLastUpdated');
     if (ts) ts.textContent = 'Updated ' + new Date().toLocaleTimeString();
-
-    // Start auto-refresh if checked
     startLiveAutoRefresh();
 }
 
@@ -3391,7 +3464,7 @@ function startLiveAutoRefresh() {
         liveRefreshTimer = setInterval(() => {
             if (State.currentView === 'live') renderLiveScores();
             else { clearInterval(liveRefreshTimer); liveRefreshTimer = null; }
-        }, 30000);
+        }, 60000);
     }
 }
 function toggleLiveAutoRefresh() {
@@ -4818,15 +4891,26 @@ function getHeadshot(playerName) {
     return null; // Only return confirmed headshots
 }
 
+function playerSilhouetteSvg(sz) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 80 80" style="border-radius:50%;flex-shrink:0;"><rect width="80" height="80" fill="var(--bg-input,#1e293b)"/><circle cx="40" cy="28" r="14" fill="var(--text-muted,#64748b)" opacity=".5"/><ellipse cx="40" cy="72" rx="22" ry="18" fill="var(--text-muted,#64748b)" opacity=".4"/></svg>`;
+}
+
 function playerAvatarHtml(player, size, gradientColors) {
     const sz = size || 72;
     const grad = gradientColors || 'var(--accent), #ff9a33';
+    const initials = player.name.split(' ').map(n => n[0]).join('');
     const hs = player.headshot || getHeadshot(player.name);
     if (hs) {
-        return `<img src="${hs}" alt="${player.name}" style="width:${sz}px;height:${sz}px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-        <div class="player-avatar" style="width:${sz}px;height:${sz}px;font-size:${sz*0.35}px;display:none;background:linear-gradient(135deg,${grad});">${player.name.split(' ').map(n=>n[0]).join('')}</div>`;
+        return `<img src="${hs}" alt="${player.name}" style="width:${sz}px;height:${sz}px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0;" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="player-avatar" style="width:${sz}px;height:${sz}px;font-size:${sz*0.35}px;display:none;background:linear-gradient(135deg,${grad});">${initials}</div>`;
     }
-    return `<div class="player-avatar" style="width:${sz}px;height:${sz}px;font-size:${sz*0.35}px;background:linear-gradient(135deg,${grad});">${player.name.split(' ').map(n=>n[0]).join('')}</div>`;
+    // No headshot: show initials with gradient, silhouette SVG for large sizes
+    if (sz >= 48) {
+        return `<div class="player-avatar" style="width:${sz}px;height:${sz}px;position:relative;background:linear-gradient(135deg,${grad});overflow:hidden;">
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:${sz*0.32}px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3);z-index:1;">${initials}</div>
+        </div>`;
+    }
+    return `<div class="player-avatar" style="width:${sz}px;height:${sz}px;font-size:${sz*0.35}px;background:linear-gradient(135deg,${grad});">${initials}</div>`;
 }
 
 /* ============================================================
@@ -7320,20 +7404,78 @@ function analyzeProp() {
 }
 
 /* ============================================================
-   FEATURE 10: LEAGUE POWER RANKINGS
+   FEATURE 10: LEAGUE POWER RANKINGS (Enhanced w/ ESPN standings)
    ============================================================ */
-function renderPowerRankings() {
+const PR_CACHE_KEY = 'sv_power_rankings_prev';
+function getPrevPowerRankings(sport) {
+    try { return JSON.parse(localStorage.getItem(PR_CACHE_KEY + '_' + sport) || '{}'); } catch { return {}; }
+}
+function savePowerRankings(sport, rankMap) {
+    try { localStorage.setItem(PR_CACHE_KEY + '_' + sport, JSON.stringify(rankMap)); } catch {}
+}
+
+async function renderPowerRankings() {
     const sport = document.getElementById('prSport').value;
     const display = document.getElementById('prDisplay');
     const teams = getTeamsForSport(sport);
     const allPlayers = PLAYERS[sport] || [];
+
+    display.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><div class="title">Generating Rankings...</div><div class="subtitle">Fetching standings data from ESPN</div></div>';
+
+    // Fetch ESPN standings for W/L data
+    const sportMap = { nba: {sport:'basketball',league:'nba'}, nfl: {sport:'football',league:'nfl'}, mlb: {sport:'baseball',league:'mlb'} };
+    const espnStandings = {};
+    const sm = sportMap[sport];
+    if (sm) {
+        try {
+            const data = await cachedFetch(`/api/espn?sport=${sm.sport}&league=${sm.league}&endpoint=standings`, `standings_${sport}`, 'standings');
+            const groups = data.children || [];
+            for (const group of groups) {
+                const entries = group.standings?.entries || [];
+                for (const entry of entries) {
+                    const abbr = entry.team?.abbreviation;
+                    if (!abbr) continue;
+                    const stats = {};
+                    (entry.stats || []).forEach(s => { stats[s.name] = parseFloat(s.value) || 0; stats[s.name + '_display'] = s.displayValue ?? s.value; });
+                    espnStandings[abbr] = {
+                        wins: stats.wins || 0,
+                        losses: stats.losses || 0,
+                        winPct: stats.winPercent || 0,
+                        streak: stats.streak_display || '',
+                        pointDiff: (stats.pointsFor || 0) - (stats.pointsAgainst || 0),
+                        logo: entry.team?.logos?.[0]?.href || '',
+                        name: entry.team?.displayName || abbr,
+                    };
+                }
+                // Also check children (divisions)
+                for (const sub of (group.children || [])) {
+                    for (const entry of (sub.standings?.entries || [])) {
+                        const abbr = entry.team?.abbreviation;
+                        if (!abbr || espnStandings[abbr]) continue;
+                        const stats = {};
+                        (entry.stats || []).forEach(s => { stats[s.name] = parseFloat(s.value) || 0; stats[s.name + '_display'] = s.displayValue ?? s.value; });
+                        espnStandings[abbr] = {
+                            wins: stats.wins || 0,
+                            losses: stats.losses || 0,
+                            winPct: stats.winPercent || 0,
+                            streak: stats.streak_display || '',
+                            pointDiff: (stats.pointsFor || 0) - (stats.pointsAgainst || 0),
+                            logo: entry.team?.logos?.[0]?.href || '',
+                            name: entry.team?.displayName || abbr,
+                        };
+                    }
+                }
+            }
+        } catch(e) { /* continue with local data only */ }
+    }
+
+    const prevRanks = getPrevPowerRankings(sport);
 
     const rankings = teams.map(team => {
         const roster = allPlayers.filter(p => p.team === team);
         const rosterSize = roster.length;
         if (!rosterSize) return null;
 
-        // Composite metrics
         const avgFpts = roster.reduce((s, p) => s + (p.fantasyPts || 0), 0) / rosterSize;
         const totalFpts = roster.reduce((s, p) => s + (p.fantasyPts || 0), 0);
         const starPower = roster.filter(p => (p.fantasyPts || 0) > 35).length;
@@ -7344,26 +7486,51 @@ function renderPowerRankings() {
         const momentum = trending - declining;
         const injured = roster.filter(p => p.injury && p.injury.trim()).length;
 
-        // Weighted composite score
-        const score = (totalFpts * 0.35) + (avgFpts * 8) + (starPower * 15) + (depth * 8) + (momentum * 5) - (injured * 10) - (Math.max(0, avgAge - 27) * 3);
+        // ESPN standings bonus
+        const espn = espnStandings[team] || {};
+        const winPctBonus = (espn.winPct || 0) * 100; // 0-100 scale
+        const ptDiffBonus = (espn.pointDiff || 0) * 0.3;
 
-        return { team, roster: rosterSize, avgFpts, totalFpts, starPower, depth, avgAge, momentum, injured, score, trending, declining };
+        // Composite: local talent (50%) + ESPN record (35%) + momentum (15%)
+        const talentScore = (totalFpts * 0.3) + (avgFpts * 6) + (starPower * 12) + (depth * 6);
+        const recordScore = winPctBonus * 2.5 + ptDiffBonus;
+        const momentumScore = (momentum * 5) - (injured * 8) - (Math.max(0, avgAge - 27) * 2);
+        const score = talentScore + recordScore + momentumScore;
+
+        return {
+            team, roster: rosterSize, avgFpts, totalFpts, starPower, depth, avgAge,
+            momentum, injured, score, trending, declining,
+            wins: espn.wins || 0, losses: espn.losses || 0,
+            winPct: espn.winPct || 0, streak: espn.streak || '',
+            pointDiff: espn.pointDiff || 0, logo: espn.logo || '',
+            teamName: espn.name || team,
+        };
     }).filter(Boolean).sort((a, b) => b.score - a.score);
 
+    // Save current ranks for next comparison
+    const currentRankMap = {};
+    rankings.forEach((r, i) => { currentRankMap[r.team] = i + 1; });
+    savePowerRankings(sport, currentRankMap);
+
     const maxScore = rankings[0]?.score || 1;
+    const hasESPN = Object.keys(espnStandings).length > 0;
 
     display.innerHTML = `<div class="card">
-        <div class="card-title">${sport.toUpperCase()} Power Rankings</div>
+        <div class="card-title" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            ${sport.toUpperCase()} Power Rankings
+            ${hasESPN ? '<span class="badge badge-live" style="font-size:0.62rem;">ESPN DATA</span>' : '<span class="badge badge-snap" style="font-size:0.62rem;">LOCAL DATA</span>'}
+        </div>
         <div style="overflow-x:auto;">
             <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
                 <thead><tr style="border-bottom:2px solid var(--border);">
                     <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;width:40px;">#</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;width:40px;"></th>
                     <th style="padding:8px 10px;text-align:left;color:var(--text-muted);font-size:0.72rem;">Team</th>
+                    ${hasESPN ? '<th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Record</th>' : ''}
                     <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Score</th>
                     <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Stars</th>
                     <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Depth</th>
-                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Avg Age</th>
-                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Momentum</th>
+                    <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Trend</th>
                     <th style="padding:8px 10px;text-align:center;color:var(--text-muted);font-size:0.72rem;">Tier</th>
                     <th style="padding:8px 10px;color:var(--text-muted);font-size:0.72rem;">Rating</th>
                 </tr></thead>
@@ -7371,22 +7538,41 @@ function renderPowerRankings() {
                     const tier = i < 5 ? 'Contender' : i < 12 ? 'Playoff' : i < 20 ? 'Fringe' : 'Rebuilding';
                     const tierColor = i < 5 ? 'var(--success)' : i < 12 ? 'var(--accent)' : i < 20 ? 'var(--warning)' : 'var(--danger)';
                     const barPct = (r.score / maxScore * 100).toFixed(0);
-                    return `<tr style="border-bottom:1px solid var(--border);${i < 5 ? 'background:rgba(34,197,94,0.04);' : ''}">
-                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:900;color:${i < 3 ? 'var(--accent)' : 'var(--text-muted)'};">${i + 1}</td>
-                        <td style="padding:8px 10px;font-weight:700;">${r.team}</td>
+                    const prev = prevRanks[r.team];
+                    const change = prev ? prev - (i + 1) : 0;
+                    const changeHtml = change > 0
+                        ? `<span class="pr-change pr-up" title="Up ${change}">▲${change}</span>`
+                        : change < 0
+                        ? `<span class="pr-change pr-down" title="Down ${Math.abs(change)}">▼${Math.abs(change)}</span>`
+                        : prev ? '<span class="pr-change pr-same">—</span>' : '<span class="pr-change pr-new">NEW</span>';
+                    return `<tr class="pr-row" style="border-bottom:1px solid var(--border);${i < 5 ? 'background:rgba(34,197,94,0.04);' : ''}" data-rank="${i+1}">
+                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:900;font-size:1.05rem;color:${i < 3 ? 'var(--accent)' : 'var(--text-muted)'};">${i + 1}</td>
+                        <td style="padding:4px 6px;text-align:center;">${changeHtml}</td>
+                        <td style="padding:8px 10px;font-weight:700;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                ${r.logo ? `<img src="${r.logo}" width="24" height="24" style="border-radius:2px;" onerror="this.style.display='none'">` : ''}
+                                <div>
+                                    <div>${r.team}</div>
+                                    ${r.teamName !== r.team ? `<div style="font-size:0.68rem;color:var(--text-muted);font-weight:400;">${r.teamName}</div>` : ''}
+                                </div>
+                            </div>
+                        </td>
+                        ${hasESPN ? `<td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);"><span style="font-weight:700;">${r.wins}-${r.losses}</span>${r.streak ? ` <span style="font-size:0.72rem;color:${r.streak.startsWith('W') ? 'var(--success)' : 'var(--danger)'};font-weight:600;">${r.streak}</span>` : ''}</td>` : ''}
                         <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;">${r.score.toFixed(0)}</td>
                         <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${r.starPower}</td>
                         <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${r.depth}</td>
-                        <td style="padding:8px 10px;text-align:center;font-family:var(--font-mono);">${r.avgAge.toFixed(1)}</td>
                         <td style="padding:8px 10px;text-align:center;font-weight:700;color:${r.momentum > 0 ? 'var(--success)' : r.momentum < 0 ? 'var(--danger)' : 'var(--text-muted)'};">${r.momentum > 0 ? '+' : ''}${r.momentum}</td>
-                        <td style="padding:8px 10px;text-align:center;"><span style="padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;background:${tierColor};color:#fff;">${tier}</span></td>
-                        <td style="padding:8px 10px;width:120px;"><div style="background:var(--bg-input);border-radius:4px;height:12px;overflow:hidden;"><div style="height:100%;width:${barPct}%;background:linear-gradient(90deg,${tierColor},var(--accent));border-radius:4px;"></div></div></td>
+                        <td style="padding:8px 10px;text-align:center;"><span class="pr-tier-badge" style="background:${tierColor};">${tier}</span></td>
+                        <td style="padding:8px 10px;width:120px;"><div style="background:var(--bg-input);border-radius:4px;height:14px;overflow:hidden;"><div class="pr-rating-bar" style="height:100%;width:${barPct}%;background:linear-gradient(90deg,${tierColor},var(--accent));border-radius:4px;"></div></div></td>
                     </tr>`;
                 }).join('')}</tbody>
             </table>
         </div>
         <div style="margin-top:16px;padding:10px 14px;background:var(--bg-input);border-radius:6px;font-size:0.78rem;color:var(--text-muted);">
-            Rankings based on: total roster talent (35%), average player quality (25%), star power (15%), depth (10%), momentum (10%), health (5%). Stars = players with 35+ FPTS; Depth = players with 20+ FPTS.
+            ${hasESPN
+                ? 'Rankings combine ESPN standings (35%) + roster talent (50%) + momentum (15%). Record, win%, and point differential sourced from live ESPN data.'
+                : 'Rankings based on roster talent, star power, depth, momentum, and health. Connect to ESPN for W/L-based rankings.'}
+            Stars = 35+ FPTS; Depth = 20+ FPTS. Rank changes vs. last generated rankings.
         </div>
     </div>`;
 }

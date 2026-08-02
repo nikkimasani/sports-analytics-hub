@@ -1302,3 +1302,260 @@ input, select, textarea { font-family: inherit; color: var(--chalk); }
 @media (max-width: 768px) {
     .sidebar.open ~ .sidebar-overlay { display:block; }
 }
+
+/* ============================================================
+   FEATURE 1: LIVE SCORES ENHANCED
+   ============================================================ */
+.live-sport-tab {
+    padding: 10px 18px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: color .15s, border-color .15s;
+}
+.live-sport-tab:hover { color: var(--text-primary); }
+.live-sport-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 800;
+}
+
+.live-game-card {
+    transition: transform .15s, box-shadow .15s;
+}
+.live-game-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+}
+.live-game-active {
+    border: 1px solid rgba(239,68,68,.3) !important;
+    box-shadow: 0 0 12px rgba(239,68,68,.08);
+}
+.live-game-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--danger);
+    text-transform: uppercase;
+}
+.final-game-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+.game-status-line {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+.game-matchup {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+.game-team {
+    text-align: center;
+    min-width: 70px;
+}
+.game-team-name {
+    font-weight: 700;
+    font-size: 0.82rem;
+    margin-bottom: 2px;
+    display: none;
+}
+.game-team-abbr {
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+}
+.game-score {
+    font-family: var(--font-mono);
+    font-weight: 900;
+    font-size: 2rem;
+}
+.score-winner { color: var(--accent); }
+.team-winner .game-team-abbr { color: var(--accent); }
+.game-at {
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 1rem;
+}
+.game-venue {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.game-broadcast {
+    font-size: 0.65rem;
+    color: var(--accent);
+    font-weight: 600;
+    margin-top: 2px;
+    text-transform: uppercase;
+}
+
+/* ============================================================
+   FEATURE 4: POWER RANKINGS ENHANCED
+   ============================================================ */
+.pr-change {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    min-width: 28px;
+}
+.pr-up { color: var(--success); animation: pr-slide-up .4s ease-out; }
+.pr-down { color: var(--danger); animation: pr-slide-down .4s ease-out; }
+.pr-same { color: var(--text-muted); font-size: 0.75rem; }
+.pr-new { color: var(--accent); font-size: 0.6rem; letter-spacing: .04em; }
+
+@keyframes pr-slide-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pr-slide-down {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pr-tier-badge {
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    display: inline-block;
+    animation: pr-tier-pop .3s ease-out;
+}
+@keyframes pr-tier-pop {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.pr-rating-bar {
+    transition: width .6s ease-out;
+}
+
+.pr-row {
+    animation: pr-row-in .3s ease-out both;
+}
+.pr-row[data-rank="1"] { animation-delay: 0s; }
+.pr-row[data-rank="2"] { animation-delay: .03s; }
+.pr-row[data-rank="3"] { animation-delay: .06s; }
+.pr-row[data-rank="4"] { animation-delay: .09s; }
+.pr-row[data-rank="5"] { animation-delay: .12s; }
+.pr-row[data-rank="6"] { animation-delay: .15s; }
+.pr-row[data-rank="7"] { animation-delay: .18s; }
+.pr-row[data-rank="8"] { animation-delay: .21s; }
+.pr-row[data-rank="9"] { animation-delay: .24s; }
+.pr-row[data-rank="10"] { animation-delay: .27s; }
+
+@keyframes pr-row-in {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* ============================================================
+   FEATURE 3: MOBILE RESPONSIVE PASS
+   ============================================================ */
+@media (max-width: 768px) {
+    /* Live scores tabs scroll horizontally */
+    #liveSportTabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    #liveSportTabs::-webkit-scrollbar { display: none; }
+    .live-sport-tab { padding: 8px 12px; font-size: 0.7rem; white-space: nowrap; flex-shrink: 0; }
+
+    /* Game cards stack single column */
+    .live-game-card { min-width: 0 !important; }
+    .game-matchup { gap: 14px; }
+    .game-score { font-size: 1.5rem; }
+    .game-team-abbr { font-size: 0.95rem; }
+
+    /* Touch-friendly buttons */
+    .btn { min-height: 40px; padding: 8px 16px; }
+    .btn-sm { min-height: 34px; }
+
+    /* Form inputs full-width on mobile */
+    .form-group { width: 100%; }
+    .form-select, .form-input { width: 100%; min-height: 40px; }
+
+    /* Stat tiles: 2 columns */
+    .stat-grid, [id="dashboardStats"] {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+    .stat-tile { padding: 10px !important; }
+    .stat-tile .value { font-size: 1.1rem !important; }
+
+    /* Power rankings table scroll */
+    .pr-change { font-size: 0.6rem; min-width: 22px; }
+    .pr-tier-badge { font-size: 0.62rem; padding: 2px 6px; }
+
+    /* Header improvements */
+    .header-brand { font-size: 1rem !important; }
+    .version-tag { display: none; }
+
+    /* Sidebar smooth slide */
+    .sidebar {
+        transition: transform .25s ease-out !important;
+        box-shadow: 4px 0 20px rgba(0,0,0,.3);
+    }
+
+    /* Dashboard widget drag handle more tappable */
+    .dash-widget .card-header { min-height: 44px; }
+}
+
+@media (max-width: 480px) {
+    /* Single column everything */
+    .game-matchup { gap: 10px; }
+    .game-score { font-size: 1.3rem; }
+    .game-team img { width: 28px !important; height: 28px !important; }
+    .game-venue, .game-broadcast { font-size: 0.6rem; }
+
+    /* Tighter live sport tabs */
+    .live-sport-tab { padding: 6px 8px; font-size: 0.65rem; }
+
+    /* Score ticker smaller */
+    .ticker-track { font-size: 0.58rem; }
+
+    /* Sidebar narrower */
+    .sidebar.mobile-open, .sidebar.open { width: 240px !important; }
+    .sidebar-item { padding: 10px 14px !important; font-size: 0.82rem; }
+
+    /* Power rankings compact */
+    .pr-row td { padding: 6px 6px !important; font-size: 0.78rem; }
+}
+
+@media (max-width: 380px) {
+    .sport-pills { display: none !important; }
+    .header-brand .logo-icon { display: none; }
+    .game-score { font-size: 1.1rem; }
+    .live-sport-tab { padding: 5px 6px; font-size: 0.6rem; }
+}

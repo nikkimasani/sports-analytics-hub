@@ -26,14 +26,14 @@ async function fetchJson(url) {
 }
 
 function buildEspnUrl(sport, league, endpoint, query) {
-  const base = 'https://site.api.espn.com/apis/site/v2/sports';
+  const base = 'https://site.web.api.espn.com/apis/site/v2/sports';
   if (endpoint === 'athletes' && query.team) return `${base}/${sport}/${league}/teams/${query.team}/roster`;
   if (endpoint === 'athlete-stats' && query.athleteId) return `${base}/${sport}/${league}/athletes/${query.athleteId}`;
   if (endpoint === 'athlete-gamelog' && query.athleteId) return `${base}/${sport}/${league}/athletes/${query.athleteId}/statistics`;
   if (endpoint === 'summary' && query.eventId) return `${base}/${sport}/${league}/summary?event=${query.eventId}`;
   if (endpoint === 'news') return `${base}/${sport}/${league}/news?limit=20`;
   if (endpoint === 'allteams') return `${base}/${sport}/${league}/teams?limit=200`;
-  if (endpoint === 'standings') return `https://site.api.espn.com/apis/v2/sports/${sport}/${league}/standings?level=3`;
+  if (endpoint === 'standings') return `https://site.web.api.espn.com/apis/v2/sports/${sport}/${league}/standings?level=3`;
   const params = new URLSearchParams();
   if (query.page) params.set('page', query.page);
   if (query.limit) params.set('limit', query.limit);

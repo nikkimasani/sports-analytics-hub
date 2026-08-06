@@ -3270,7 +3270,7 @@ async function fetchESPNScoreboard(sport) {
     } catch(e) { return []; }
 }
 
-let liveSportFilter = 'current';
+let liveSportFilter = 'all';
 function setLiveSport(filter) {
     liveSportFilter = filter;
     document.querySelectorAll('.live-sport-tab').forEach(t => t.classList.toggle('active', t.dataset.sport === filter));
@@ -3368,7 +3368,7 @@ async function renderLiveScores() {
         }
         container.innerHTML = html;
     } else {
-        container.innerHTML = '<div class="empty-state"><div class="icon">📺</div><div class="title">No Games Today</div><div class="subtitle">Check back on game day for live scores.</div></div>';
+        container.innerHTML = '<div class="empty-state"><div class="icon">📺</div><div class="title">No Games Scheduled</div><div class="subtitle">No games are currently scheduled in the selected league(s).</div></div>';
     }
 
     const ts = document.getElementById('liveLastUpdated');

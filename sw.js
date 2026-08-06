@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'statvault-v4';
+const CACHE_VERSION = 'statvault-v5';
 const STATIC_CACHE = 'statvault-static-v4';
 const DATA_CACHE = 'statvault-data-v4';
 

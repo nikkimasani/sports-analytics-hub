@@ -462,6 +462,14 @@
                             <option value="auction">Auction</option>
                             <option value="dynasty">Dynasty</option>
                         </select>
+                        <select class="form-select" style="width:115px;" id="draftLeagueSize" onchange="updateDraftOrderOptions()" aria-label="League size">
+                            <option value="8">8 teams</option>
+                            <option value="10" selected>10 teams</option>
+                            <option value="12">12 teams</option>
+                            <option value="14">14 teams</option>
+                            <option value="16">16 teams</option>
+                        </select>
+                        <select class="form-select" style="width:120px;" id="draftPosition" aria-label="Your draft position"></select>
                         <button class="btn btn-primary" onclick="startDraft()">▶ Start Draft</button>
                     </div>
                 </div>
@@ -489,6 +497,7 @@
                             <div style="display:flex;gap:8px;">
                                 <button class="btn btn-sm btn-secondary" onclick="undoPick()">↩ Undo</button>
                                 <button class="btn btn-sm btn-primary" onclick="autoPick()">⚡ Auto Pick</button>
+                                <button class="btn btn-sm btn-secondary" onclick="resetDraft()">↺ Reset</button>
                             </div>
                         </div>
                         <div class="draft-picks-grid" id="draftPicksGrid">
@@ -584,7 +593,10 @@
                             </select>
                         </div>
                     </div>
-                    <button class="btn btn-primary btn-lg" style="margin-top:12px;" onclick="startMockDraft()">🎲 Start Mock Draft</button>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+                        <button class="btn btn-primary btn-lg" onclick="startMockDraft()">🎲 Run Full Mock Draft</button>
+                        <button class="btn btn-secondary btn-lg" onclick="resetMockDraft()">↺ Reset Mock Draft</button>
+                    </div>
                 </div>
 
                 <div id="mockDraftResults"></div>
@@ -897,6 +909,10 @@
                     </div>
                     <button class="btn btn-primary" onclick="runSeasonSim()">Run Simulation</button>
                 </div>
+                <details class="card" style="margin-bottom:20px;padding:12px 16px;font-size:0.82rem;color:var(--text-muted);">
+                    <summary style="cursor:pointer;color:var(--text-primary);font-weight:700;">How this simulator works</summary>
+                    <p style="margin:10px 0 0;line-height:1.55;">It runs the selected number of seasons. Team strength comes from the tracked players’ fantasy-point production. Completed games from ESPN are locked in when available; remaining games are decided from those strength ratings plus random variance. The top teams by simulated wins receive playoff odds, and the best regular-season team in each run is counted as the title winner. Treat the output as a directional model, not a live odds feed.</p>
+                </details>
                 <div id="simDisplay"></div>
             </div>
 
@@ -1222,8 +1238,28 @@ function setSport(sport) {
     document.querySelectorAll('.sport-pill').forEach(p => {
         p.classList.toggle('active', p.dataset.sport === sport);
     });
+    syncSportControls(sport);
     refreshScoreTicker();
     initView(State.currentView);
+}
+
+// A single league choice should mean the same thing everywhere in the app.
+// Only update controls that actually offer the selected league (some tools are
+// intentionally unavailable for NCAA data).
+function syncSportControls(sport) {
+    document.querySelectorAll('select[id]').forEach(select => {
+        if (!/(sport|sportfilter)$/i.test(select.id)) return;
+        if ([...select.options].some(option => option.value === sport)) select.value = sport;
+    });
+}
+
+function updateDraftOrderOptions() {
+    const leagueSize = parseInt(document.getElementById('draftLeagueSize')?.value || '10');
+    const select = document.getElementById('draftPosition');
+    if (!select) return;
+    const previous = parseInt(select.value || '1');
+    select.innerHTML = Array.from({ length: leagueSize }, (_, i) => `<option value="${i + 1}">My pick: ${i + 1}</option>`).join('');
+    select.value = Math.min(previous, leagueSize).toString();
 }
 
 /* ============================================================
@@ -2816,6 +2852,8 @@ function initDraft() {
     const sport = document.getElementById('draftSport')?.value || State.currentSport;
     const players = PLAYERS[sport] || [];
 
+    updateDraftOrderOptions();
+
     const sorted = [...players].sort((a, b) => (a.adp || 999) - (b.adp || 999));
     document.getElementById('draftPlayerList').innerHTML = sorted.map(p => `
         <div class="draft-player-card" id="draft-player-${p.id}" onclick="selectDraftPlayer(${p.id})">
@@ -2858,15 +2896,28 @@ function startDraft() {
         format,
         round: 1,
         pick: 1,
-        totalTeams: 10,
-        myTeam: 3,
+        totalTeams: parseInt(document.getElementById('draftLeagueSize')?.value || '10'),
+        myTeam: parseInt(document.getElementById('draftPosition')?.value || '1'),
         picks: [],
         available: players.map(p => p.id),
         myRoster: [],
     };
 
     renderDraftBoard();
-    showToast('Draft started! You pick at position #3.', 'info');
+    showToast(`Live draft started! You pick from slot #${State.draftState.myTeam}.`, 'info');
+}
+
+function resetDraft() {
+    State.draftState = null;
+    selectedDraftPlayer = null;
+    const grid = document.getElementById('draftPicksGrid');
+    if (grid) grid.innerHTML = `<div class="empty-state"><div class="icon">📋</div><div class="title">Draft reset</div><div class="subtitle">Set your league size and draft slot, then start a fresh live simulation.</div></div>`;
+    const round = document.getElementById('currentRound');
+    const pick = document.getElementById('currentPick');
+    if (round) round.textContent = '1';
+    if (pick) pick.textContent = 'Pick 1';
+    initDraft();
+    showToast('Live draft reset.', 'info');
 }
 
 function renderDraftBoard() {
@@ -3232,6 +3283,13 @@ function startMockDraft() {
     `;
 
     showToast(`Mock draft complete! Grade: ${grade} — ${totalPts.toFixed(1)} projected points.`, 'success');
+}
+
+function resetMockDraft() {
+    State.mockDraftState = null;
+    const results = document.getElementById('mockDraftResults');
+    if (results) results.innerHTML = `<div class="empty-state"><div class="icon">↺</div><div class="title">Mock draft reset</div><div class="subtitle">Adjust your settings and run a new simulation whenever you are ready.</div></div>`;
+    showToast('Mock draft reset.', 'info');
 }
 
 /* ============================================================
@@ -7092,6 +7150,7 @@ async function renderCareerArc() {
     const declineStart = sport === 'nba' ? 31 : sport === 'nfl' ? 30 : sport === 'mlb' ? 33 : 23;
     const retireAge = sport === 'nba' ? 38 : sport === 'nfl' ? 36 : sport === 'mlb' ? 40 : 23;
     const mainStat = sport === 'nba' ? player.ppg : sport === 'mlb' ? (player.pos === 'SP' ? player.era : player.avg) : (player.pos === 'QB' ? player.passYds : player.pos === 'RB' ? player.rushYds : player.recYds);
+    const currentVal = mainStat || 20;
     const statLabel = sport === 'nba' ? 'PPG' : sport === 'mlb' ? (player.pos === 'SP' ? 'ERA' : 'AVG') : (player.pos === 'QB' ? 'Pass Yds' : player.pos === 'RB' ? 'Rush Yds' : 'Rec Yds');
     const inverted = (sport === 'mlb' && player.pos === 'SP');
 
@@ -7217,7 +7276,6 @@ async function renderCareerArc() {
         // Generate simulated career curve data points
         dataSource = 'Simulated';
         points = [];
-        const currentVal = mainStat || 20;
         for (let a = startAge; a <= retireAge; a++) {
             let factor;
             if (a <= peakAge) factor = 0.7 + 0.3 * ((a - startAge) / Math.max(peakAge - startAge, 1));
@@ -9449,6 +9507,14 @@ function generateShareCard(playerId) {
     link.click();
     showToast('Share card downloaded!', 'success');
 }
+
+// Keep every in-page league selector in lockstep with the top selector.
+// Programmatic value changes do not emit a change event, so this is loop-free.
+document.addEventListener('change', (event) => {
+    const select = event.target;
+    if (!(select instanceof HTMLSelectElement) || !/(sport|sportfilter)$/i.test(select.id)) return;
+    if (select.value !== State.currentSport) setSport(select.value);
+});
 
     </script>
 </body>

@@ -60,7 +60,7 @@
         <!-- SIDEBAR -->
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-section">
-                <div class="sidebar-section-title">Dashboard</div>
+                <button type="button" class="sidebar-section-title" onclick="showView('dashboard')">Dashboard</button>
                 <div class="sidebar-item active" onclick="showView('dashboard')" data-view="dashboard">
                     <span class="icon">📊</span> Overview
                 </div>
@@ -78,7 +78,7 @@
             <div class="sidebar-divider"></div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">Statistics</div>
+                <button type="button" class="sidebar-section-title" onclick="showView('players')">Statistics</button>
                 <div class="sidebar-item" onclick="showView('players')" data-view="players">
                     <span class="icon">👤</span> Player Stats
                 </div>
@@ -102,7 +102,7 @@
             <div class="sidebar-divider"></div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">Analytics</div>
+                <button type="button" class="sidebar-section-title" onclick="showView('models')">Analytics</button>
                 <div class="sidebar-item" onclick="showView('models')" data-view="models">
                     <span class="icon">🧠</span> Prediction Models
                 </div>
@@ -117,7 +117,7 @@
             <div class="sidebar-divider"></div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">Fantasy</div>
+                <button type="button" class="sidebar-section-title" onclick="showView('fantasy-hub')">Fantasy</button>
                 <div class="sidebar-item" onclick="showView('fantasy-hub')" data-view="fantasy-hub">
                     <span class="icon">🎯</span> Fantasy Hub
                 </div>
@@ -144,7 +144,7 @@
             <div class="sidebar-divider"></div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">Tools</div>
+                <button type="button" class="sidebar-section-title" onclick="showView('data-lab')">Tools</button>
                 <div class="sidebar-item" onclick="showView('data-lab')" data-view="data-lab">
                     <span class="icon">📊</span> Data Lab
                 </div>
@@ -165,7 +165,7 @@
             <div class="sidebar-divider"></div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">Advanced</div>
+                <button type="button" class="sidebar-section-title" onclick="showView('head-to-head')">Advanced</button>
                 <div class="sidebar-item" onclick="showView('head-to-head')" data-view="head-to-head">
                     <span class="icon">&#x2694;&#xFE0F;</span> Head-to-Head
                 </div>
@@ -204,7 +204,7 @@
             <div class="sidebar-divider"></div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">More Tools</div>
+                <button type="button" class="sidebar-section-title" onclick="showView('depth-charts')">More Tools</button>
                 <div class="sidebar-item" onclick="showView('depth-charts')" data-view="depth-charts">
                     <span class="icon">&#x1F4CB;</span> Depth Charts
                 </div>
@@ -5310,7 +5310,7 @@ function sparklineHtml(player, width, height) {
     const w = width || 80;
     const h = height || 28;
     const id = 'spark-' + player.id + '-' + Math.random().toString(36).slice(2,6);
-    const color = player.trend === 'up' ? '#2e7d32' : player.trend === 'down' ? '#c62828' : '#666';
+    const color = player.trend === 'up' ? '#2e7d32' : player.trend === 'down' ? '#c62828' : '#666666';
     setTimeout(() => {
         const data = generateTrendData(player);
         drawSparkline(id, data, color);
